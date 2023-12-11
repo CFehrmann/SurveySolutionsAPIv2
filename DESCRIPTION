@@ -1,0 +1,28 @@
+Package: SurveySolutionsAPIv2
+Title: Comprehensive API access to your Survey Solutions Server (httr2
+    version)
+Version: 0.1.0
+Authors@R: 
+    person("Michael", "Wild", , "mwild@worldbank.org", role = c("aut", "cre"))
+Description: This packages implements all the currently available POST,
+    GET, and PATCH calls to the Survey Solutions RESTfull API. It contains
+    several convenience functions to facilitate these operations, and can
+    handle small impact evaluations as well as large scale cenuses. It is
+    based on the httr2 package, and is officially replacing the httr based
+    version.
+License: MIT + file LICENSE
+Imports: 
+    curl,
+    data.table,
+    dplyr,
+    httr,
+    httr2,
+    jsonlite,
+    lubridate,
+    readr,
+    stats,
+    stringr
+Encoding: UTF-8
+Language: en
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
