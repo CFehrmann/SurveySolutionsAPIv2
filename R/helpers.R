@@ -187,6 +187,9 @@
          "httr2_http_401" = {
            stop("Unauthorized", call. = FALSE)
          },
+         "httr2_http_403" = {
+           stop("Forbidden", call. = FALSE)
+         },
          # Default case if the error type is not handled above
          stop("An unknown error occurred", call. = FALSE)
   )

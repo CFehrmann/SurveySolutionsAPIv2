@@ -47,8 +47,10 @@ suso_getSV <- function(server = suso_get_api_key("susoServer"),
   # generate and execute first request with limit 100 & offset 0
   url<-.addQuery(url, Limit=100, offset=1)
 
-  resp<-req_perform(url)
-
+  tryCatch(
+  {resp<-req_perform(url)},
+  error = .http_error_handler
+  )
   # get the response data
   if(resp_has_body(resp)){
     # get body by content type
@@ -93,19 +95,11 @@ suso_getSV <- function(server = suso_get_api_key("susoServer"),
     # failures, but length of tmpfiles must be subset!
     if(length(requests) != length(responses)) {
       stop("Length of requests and responses is not the same")
-      # # i. get the feailed requests
-      # requests_fail<-requests[which(is.null(responses))]
-      # # ii. get the corresponding tmpfiles
-      # tmpfiles_fail<-tmpfiles[which(is.null(responses))]
-      # # iii. get the successful requests
-      # responses<-responses |>
-      #   resps_successes()
-      # # iv. get the corresponding tmpfiles
     }
 
     # transform response from json tempfile takes 2.51 seconds
     full_data2<-lapply(tmpfiles, .transformresponses_jsonlite, "Users") |>
-      data.table::rbindlist()
+      data.table::rbindlist(fill = TRUE)
     # remove tempfile
     unlink(tmpfiles)
 
@@ -114,7 +108,7 @@ suso_getSV <- function(server = suso_get_api_key("susoServer"),
     # With User class for later use
     #test_json$Users<-data.table::rbindlist(list(full_data1, full_data2))
     #test_json<-UserClass(test_json)
-    test_json<-data.table::rbindlist(list(full_data1, full_data2))
+    test_json<-data.table::rbindlist(list(full_data1, full_data2), fill = TRUE)
     # modify data types
     if(nrow(test_json>0)) {
       test_json[, CreationDate := lubridate::as_datetime(CreationDate)][]
@@ -200,8 +194,10 @@ suso_getINT <- function(server=suso_get_api_key("susoServer"),
     # generate and execute first request with limit 100 & offset 0
     url<-.addQuery(url, Limit=100, offset=1)
 
-    resp<-req_perform(url)
-
+    tryCatch(
+      {resp<-req_perform(url)},
+      error = .http_error_handler
+    )
     # get the response data
     if(resp_has_body(resp)){
       # get body by content type
@@ -285,10 +281,10 @@ suso_getINT <- function(server=suso_get_api_key("susoServer"),
 
   # if sv_id is provided, then get interviewers for this supervisor
   if(!is.null(sv_id)){
-   # check if sv_id is valid
+    # check if sv_id is valid
     .checkUUIDFormat(sv_id)
     # get interviewers for this supervisor
-   test_json<-.svget(sv_id)
+    test_json<-.svget(sv_id)
 
   } else {
 
@@ -474,37 +470,37 @@ suso_getUSR<-function(server=suso_get_api_key("susoServer"), apiUser = suso_get_
     .checkUUIDFormat(user_id)
     url<-url |>
       req_url_path_append(user_id)
-    } else if(!is.null(user_email)) {
-      .checkEmailFormat(user_email)
-      url<-url |>
-        req_url_path_append(user_email)
-      } else if(!is.null(user_name)) {
-        url<-url |>
-          req_url_path_append(user_name)
+  } else if(!is.null(user_email)) {
+    .checkEmailFormat(user_email)
+    url<-url |>
+      req_url_path_append(user_email)
+  } else if(!is.null(user_name)) {
+    url<-url |>
+      req_url_path_append(user_name)
 
-      } else {
-        stop("Please provide at least one of uid, user_name, or user_email")
+  } else {
+    stop("Please provide at least one of uid, user_name, or user_email")
+  }
+
+  # perfor request with tryCatch
+  tryCatch({
+    resp<-req_perform(url)
+
+    # get the response data
+    if(resp_has_body(resp)){
+      # get body by content type
+      if(resp_content_type(resp) == "application/json") {
+        test_json<-resp_body_json(resp, simplifyVector = TRUE)
+        # Export only records
+        test_json<-data.table(t(unlist(test_json)))
+        # Set date time to utc with lubridate
+        if(nrow(test_json)>0) test_json[,CreationDate:=as_datetime(CreationDate)][]
+        return(test_json)
       }
-
-   # perfor request with tryCatch
-   tryCatch({
-     resp<-req_perform(url)
-
-     # get the response data
-     if(resp_has_body(resp)){
-       # get body by content type
-       if(resp_content_type(resp) == "application/json") {
-         test_json<-resp_body_json(resp, simplifyVector = TRUE)
-         # Export only records
-         test_json<-data.table(t(unlist(test_json)))
-         # Set date time to utc with lubridate
-         if(nrow(test_json)>0) test_json[,CreationDate:=as_datetime(CreationDate)][]
-         return(test_json)
-       }
-     }
-   }, error = function(e) {
-     stop("User not found")
-   })
+    }
+  }, error = function(e) {
+    stop("User not found")
+  })
 }
 
 
