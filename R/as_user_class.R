@@ -5,11 +5,11 @@
 #'
 #'
 #' @param x list returned by api call
-#'
+#' @param ... additional attributes to be added to the assignmentClass
 #'
 #' @export
 
-UserClass<-function(x) {
+UserClass<-function(x, ...) {
   nx<-names(x)
   if("Users" %in% nx) {
     iddt<-data.table::data.table(x$Users)
@@ -23,6 +23,12 @@ UserClass<-function(x) {
   ## add other information as attributes by loop over remaining names
   for(attr in attrloop) {
     data.table::setattr(iddt, tolower(attr), x[[attr]])
+  }
+  # ... must be non empty named list-->Contains all arguments passed to the function EXPLICITLY
+  if(!is.null(...) && is.list(...) && length(...) > 0) {
+    for(attr in names(...)) {
+      data.table::setattr(iddt, tolower(attr), ...[[attr]])
+    }
   }
   invisible(iddt)
 }

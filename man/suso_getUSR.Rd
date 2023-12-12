@@ -11,7 +11,7 @@ suso_getUSR(
   user_id = NULL,
   user_name = NULL,
   user_email = NULL,
-  workspace = NULL,
+  workspace = suso_get_api_key("workspace"),
   token = NULL
 )
 }

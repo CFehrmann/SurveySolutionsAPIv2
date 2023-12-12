@@ -16,6 +16,7 @@
 #' the assignment details for a specific assignment ID
 #' @param responsibleID the ID of the responsible user (Supervisor or Interviewer).
 #' Retrieves all assignments for this user.
+#' @param ShowArchive if TRUE, only archived assignments are included in the list
 #' @param order.by determines the column by which the assignment list should be ordered, one of
 #' \emph{Id}, \emph{ResponsibleName}, \emph{InterviewsCount}, \emph{Quantity}, \emph{UpdatedAtUtc}, \emph{CreatedAtUtc},
 #' followed by ordering direction "ASC" or "DESC", e.g. "Id DESC" or "CreatedAtUtc ASC"
@@ -69,11 +70,12 @@ suso_get_assignments<-function(server = suso_get_api_key("susoServer"),
                                apiUser = suso_get_api_key("susoUser"),
                                apiPass = suso_get_api_key("susoPass"),
                                token = NULL,
-                               workspace = NULL,
+                               workspace = suso_get_api_key("workspace"),
                                questID = NULL,
                                AssId=NULL,
                                version= NULL,
                                responsibleID = NULL,
+                               ShowArchive = FALSE,
                                order.by=c("Id ASC", "Id DESC", "ResponsibleName DESC", "ResponsibleName ASC",
                                           "InterviewsCount DESC", "InterviewsCount ASC", "Quantity DESC",
                                           "Quantity ASC", "UpdatedAtUtc DESC", "UpdatedAtUtc ASC",
@@ -88,10 +90,6 @@ suso_get_assignments<-function(server = suso_get_api_key("susoServer"),
 
   # check (.helpers.R)
   .check_basics(token, server, apiUser, apiPass)
-
-  # check input types
-  # .checkNum(x = AssId)
-  # .checkNum(x = version)
 
   # check for valid operations.type if provided
   # if not return empty character vector
@@ -111,11 +109,8 @@ suso_get_assignments<-function(server = suso_get_api_key("susoServer"),
     url<-.baseurl_baseauth(server, workspace, apiUser, apiPass, "assignments")
   }
 
-  # pass on function args for assignmentClass attributes, takes all args,
-  # except server, apiUser, apiPass, token
-  args<-as.list(match.call())[-1]
-  # remove server, apiUser, apiPass, token, by name with grepl
-  args<-args[!grepl("server|apiUser|apiPass|token", names(args))]
+  # get argument for class
+  args<-.getargsforclass(workspace = workspace)
 
   # A. get all assignments (with parameters)
   if(length(operations.type)==0 && is.null(AssId)){
@@ -136,6 +131,11 @@ suso_get_assignments<-function(server = suso_get_api_key("susoServer"),
     # add responsibleID if not null
     if(!is.null(responsibleID)){
       url<-.addQuery(url, Responsible = responsibleID)
+    }
+
+    # add ShowArchive if TRUE
+    if(ShowArchive){
+      url<-.addQuery(url, ShowArchive = TRUE)
     }
 
     # generate and execute first request with limit 100 & offset 0
@@ -350,15 +350,173 @@ suso_get_assignments<-function(server = suso_get_api_key("susoServer"),
 
     }
   }
-
-  ##################################################### END ################################################
 }
 
 
 
+#' Survey Solutions API call for assingment manipulation
+#'
+#' \code{suso_set_assignments} allows to (re-)assign, change limits or audio
+#' recording settings, as well as archiving/unarchive and close assignments.
+#'
+#' @param server Survey Solutions server address
+#' @param apiUser Survey Solutions API user
+#' @param apiPass Survey Solutions API password
+#' @param token If Survey Solutions server token is provided \emph{apiUser} and \emph{apiPass} will be ignored
+#' @param workspace If workspace name is provide requests are made regarding this specific workspace
+#' @param AssId the assignment id for which the change is required
+#' @param payload requirements depend on the operations type. See details bellow.
+#' @param operations.type specifies the desired operation, one of recordAudio, archive/unarchive, (re-)assign
+#' changeQuantity, or close, if specified, requires in some case also \emph{pauyload} to be specified. See details bellow.
+#'
+#' @details If operations.type is \emph{recordAudio}, \code{TRUE/FALSE} is required as payload, if it is \emph{archive} or \emph{unarchive},
+#' no payload is required, if it is \emph{assign} the payload must be the uid of the new responsible, if it is \emph{changeQuantity} the payload
+#' must be the new integer number of assignments, if it is \emph{close} no payload is required.
+#'
+#'
+#' @return Returns an S3 object of assignmentClass
+#'
+#' @examples
+#' \dontrun{
+#'
+#' # (re-)assign existing assignment
+#' asslist<-suso_set_assignments(
+#'                    workspace = "myworkspace",
+#'                    AssId = 10,
+#'                    payload = "43f3d2bd-7959-4706-97ae-2653b5685c9e",
+#'                    operations.type = "assign"
+#'                    )
+#' # get all assignment for specific responsible
+#' asslist<-suso_set_assignments(
+#'                    workspace = "myworkspace",
+#'                    responsibleID = "a67d2b82-bf28-40cf-bd1a-7901225c0885"
+#'                    )
+#' # get the overall count
+#' getinfo(asslist, "totalcount")
+#'
+#' #get all single assignment details
+#' asslist<-suso_set_assignments(
+#'                    workspace = "myworkspace",
+#'                    AssId = 1
+#'                    )
+#' # retrieve the uid of the person responsible
+#' getinfo(asslist, "responsibleid")
+#'
+#' }
+#'
+#' @export
+#' @import data.table
+
+suso_set_assignments<-function(server = suso_get_api_key("susoServer"),
+                               apiUser = suso_get_api_key("susoUser"),
+                               apiPass = suso_get_api_key("susoPass"),
+                               token = NULL,
+                               workspace = suso_get_api_key("workspace"),
+                               AssId=NULL,
+                               payload = NULL,
+                               operations.type = c("recordAudio",
+                                                   "archive",
+                                                   "assign",
+                                                   "changeQuantity",
+                                                   "close",
+                                                   "unarchive")) {
 
 
+  # workspace default
+  workspace<-.ws_default(ws = workspace)
 
+  # check (.helpers.R)
+  .check_basics(token, server, apiUser, apiPass)
 
+  # check operations.type
+  operations.type<-match.arg(operations.type)
 
+  # check AssId
+  .checkNum(x = AssId)
+
+  # operation type payload:
+  # rec audio requires payload, returns 204 if success
+  # archive requires no payload, returns identifying data
+  # assign requires payload, returns identifying data
+  # changeQuantity requires simple payload, returns identifying data
+  # close requires no payload, returns identifying data
+  # unarchive requires no payload, returns identifying data
+
+  # check payload by operations type
+  # recordAudio requires TRUE/FALSE
+  if(operations.type=="recordAudio") {
+    if(!is.logical(payload)) {
+      stop("payload must be TRUE/FALSE")
+    }
+  }
+  # change quantity requires positive integer or -1
+  if(operations.type=="changeQuantity") {
+    if(!is.numeric(payload)) {
+      stop("payload must be numeric")
+    }
+    if(!(payload==-1|payload>0)) {
+      stop("payload must be positive integer or -1")
+    }
+    # transform to integer
+    payload<-as.integer(payload)
+  }
+
+  # assign requires uuid
+  if(operations.type=="assign") {
+    .checkUUIDFormat(payload)
+  }
+
+  # unbox payload
+  if(operations.type=="recordAudio") js_ch<-list(Enabled=unbox(payload))
+  if(operations.type=="assign") js_ch<-list(Responsible=unbox(payload))
+  if(operations.type=="changeQuantity") js_ch<-as.character(payload)
+  if(operations.type=="close" | operations.type=="archive" | operations.type=="unarchive") js_ch<-NULL
+
+  # Build the URL, first for token, then for base auth
+  if(!is.null(token)){
+    url<-.baseurl_token(server, workspace, token, "assignments")
+  } else {
+    url<-.baseurl_baseauth(server, workspace, apiUser, apiPass, "assignments")
+  }
+
+  # add PATCH to method
+  url<-url |>
+    httr2::req_method("PATCH")
+
+  # add AssId and operations.type to path
+  url<-url |>
+    httr2::req_url_path_append(AssId, operations.type)
+
+  # add payload to body
+  url<-url |>
+    httr2::req_body_json(js_ch)
+
+  # get argument for class
+  args<-.getargsforclass(workspace = workspace)
+
+  # Perform request
+  tryCatch(
+    { resp<-url |>
+      httr2::req_perform()
+
+    # get the response data
+    if(resp_has_body(resp)){
+      # get body by content type
+      if(resp_content_type(resp) == "application/json") {
+        test_json<-resp_body_json(resp, simplifyVector = TRUE)
+        test_json<-assignmentClass(test_json, args)
+        return(test_json)
+      }
+    } else {
+      # return empty assignmentClass
+      test_json<-list()
+      test_json$Assignments<-data.table::data.table(NULL)
+      test_json<-assignmentClass(test_json, args)
+      return(test_json)
+    }
+    },
+    error = .http_error_handler
+  )
+
+}
 

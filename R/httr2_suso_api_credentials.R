@@ -34,6 +34,7 @@ print.suso_api <- function(x, ...) {
 #' @param suso_user Survey Solutions API user
 #' @param suso_password Survey Solutions API password
 #' @param suso_token If Survey Solutions server token is provided \emph{suso_user} and \emph{suso_password} will be ignored
+#' @param workspace server workspace, if nothing provided, defaults to primary
 #'
 #' @details
 #' Use \code{suso_set_key} to make API keys available for all the \code{suso_}
@@ -52,8 +53,11 @@ suso_set_key <- function(
   suso_server = "",
   suso_user = "",
   suso_password = "",
+  workspace = "",
   suso_token = ""
 ) {
+  # workspace default
+  workspace<-.ws_default(ws = workspace)
   # get options
   options <- getOption("SurveySolutionsAPI")
   # sanitize string to ssl (http?)
@@ -63,6 +67,7 @@ suso_set_key <- function(
   options[['suso']][['susoServer']] <- suso_server
   options[['suso']][['susoUser']] <- suso_user
   options[['suso']][['susoPass']] <- suso_password
+  options[['suso']][['workspace']] <- workspace
   class(options) <- "suso_api"
   options(SurveySolutionsAPI = options)
   invisible(NULL)
@@ -81,7 +86,8 @@ suso_clear_keys <- function() {
     suso = list(
       susoServer = NA_character_,
       susoUser = NA_character_,
-      susoPass = NA_character_
+      susoPass = NA_character_,
+      workspace = NA_character_
     )
   )
   attr(options, "class") <- "suso_api"
@@ -95,13 +101,13 @@ suso_clear_keys <- function() {
 #'
 #' Get credentials, used as input in API calls
 #'
-#' @param api One of susoServer, susoUser, susoPass
+#' @param api one of susoServer, susoUser, susoPass, or workspace
 #'
 #' @import data.table
 #'
 #' @export
 #'
-suso_get_api_key <- function(api = c("susoServer", "susoUser", "susoPass")) {
+suso_get_api_key <- function(api = c("susoServer", "susoUser", "susoPass", "workspace")) {
 
   api<-match.arg(api)
   ## Return value for selected API component
@@ -115,10 +121,11 @@ suso_get_api_key <- function(api = c("susoServer", "susoUser", "susoPass")) {
 #'
 #' Helper function
 #'
-#' @param api one of susoServer, susoUser or susoPass
+#' @param api one of susoServer, susoUser, susoPass, or workspace
 #'
 #' @export
-suso_get_default_key <- function(api = c("susoServer", "susoUser", "susoPass")) {
+suso_get_default_key <- function(api = c("susoServer", "susoUser", "susoPass", "workspace")) {
+  api<-match.arg(api)
   key <- getOption("SurveySolutionsAPI")[['suso']][[api]]
   if(is.na(key)) stop("No API credentials available Use either suso_set_key() to set a key, or provide it as a function argument directly", call. = F)
   return(key)
@@ -141,7 +148,7 @@ suso_get_default_key <- function(api = c("susoServer", "susoUser", "susoPass")) 
 suso_PwCheck<-function(server=suso_get_api_key("susoServer"),
                        apiUser=suso_get_api_key("susoUser"),
                        apiPass=suso_get_api_key("susoPass"),
-                       workspace = NULL,
+                       workspace = suso_get_api_key("workspace"),
                        token = NULL) {
   ## workspace default
   workspace<-.ws_default(ws = workspace)

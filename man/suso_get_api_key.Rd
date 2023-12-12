@@ -4,10 +4,10 @@
 \alias{suso_get_api_key}
 \title{Get credentials}
 \usage{
-suso_get_api_key(api = c("susoServer", "susoUser", "susoPass"))
+suso_get_api_key(api = c("susoServer", "susoUser", "susoPass", "workspace"))
 }
 \arguments{
-\item{api}{One of susoServer, susoUser, susoPass}
+\item{api}{one of susoServer, susoUser, susoPass, or workspace}
 }
 \description{
 Get API credentials

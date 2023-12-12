@@ -4,10 +4,12 @@
 \alias{UserClass}
 \title{User Classes & Methods}
 \usage{
-UserClass(x)
+UserClass(x, ...)
 }
 \arguments{
 \item{x}{list returned by api call}
+
+\item{...}{additional attributes to be added to the assignmentClass}
 }
 \description{
 Users class extends the data.table class to include relevant methods

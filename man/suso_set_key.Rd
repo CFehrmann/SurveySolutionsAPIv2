@@ -8,6 +8,7 @@ suso_set_key(
   suso_server = "",
   suso_user = "",
   suso_password = "",
+  workspace = "",
   suso_token = ""
 )
 }
@@ -17,6 +18,8 @@ suso_set_key(
 \item{suso_user}{Survey Solutions API user}
 
 \item{suso_password}{Survey Solutions API password}
+
+\item{workspace}{server workspace, if nothing provided, defaults to primary}
 
 \item{suso_token}{If Survey Solutions server token is provided \emph{suso_user} and \emph{suso_password} will be ignored}
 }

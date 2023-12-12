@@ -8,7 +8,7 @@ suso_getINT(
   server = suso_get_api_key("susoServer"),
   apiUser = suso_get_api_key("susoUser"),
   apiPass = suso_get_api_key("susoPass"),
-  workspace = NULL,
+  workspace = suso_get_api_key("workspace"),
   token = NULL,
   sv_id = NULL
 )
@@ -25,7 +25,7 @@ no workspace is provided defaults to primary workspace.}
 
 \item{token}{If Survey Solutions server token is provided \emph{usr} and \emph{pass} will be ignored}
 
-\item{sv_id}{supervisor id, if NULL all interviewers in the workspace are returned}
+\item{sv_id}{supervisor id, if NULL all interviewers in the workspace are returned, and a column with sv_id is added}
 }
 \description{
 Get list of all interviewers by supervisor id, or a list of all interviewers in the workspace.

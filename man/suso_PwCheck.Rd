@@ -8,7 +8,7 @@ suso_PwCheck(
   server = suso_get_api_key("susoServer"),
   apiUser = suso_get_api_key("susoUser"),
   apiPass = suso_get_api_key("susoPass"),
-  workspace = NULL,
+  workspace = suso_get_api_key("workspace"),
   token = NULL
 )
 }

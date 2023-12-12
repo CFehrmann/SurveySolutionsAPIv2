@@ -151,6 +151,46 @@
   }
 }
 
+# get args for class
+.getargsforclass<-function(workspace = NULL) {
+  # except server, apiUser, apiPass, token
+  #args<-as.list(sys.call(-1))[-1]
+  args<-as.list(match.call(
+    definition = sys.function(-1),
+    call = sys.call(-1)
+  ))[-1]
+  # defaults<-as.list(
+  #   formals(
+  #     sys.function(-1)
+  #   )
+  # )
+  # remove server, apiUser, apiPass, token, by name with grepl
+  args<-args[!grepl("server|apiUser|apiPass|token", names(args))]
+  args$workspace<-workspace
+  return(args)
+}
+
+# error handler
+.http_error_handler <- function(error_condition) {
+  # Use a switch or if-else to handle different types of errors
+  error_type <- class(error_condition)[1]
+  switch(error_type,
+         "httr2_http_404" = {
+           rlang::abort("Assignment or assignee not found", parent = error_condition)
+         },
+         "httr2_http_406" = {
+           rlang::abort("Assignee cannot be assigned to assignment", parent = error_condition)
+         },
+         "httr2_http_400" = {
+           stop("User id cannot be parsed", call. = FALSE)
+         },
+         "httr2_http_401" = {
+           stop("Unauthorized", call. = FALSE)
+         },
+         # Default case if the error type is not handled above
+         stop("An unknown error occurred", call. = FALSE)
+  )
+}
 
 # PARADATA ONLY ADD LATER
 # Response Time

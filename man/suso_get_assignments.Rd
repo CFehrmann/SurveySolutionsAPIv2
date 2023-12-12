@@ -9,11 +9,12 @@ suso_get_assignments(
   apiUser = suso_get_api_key("susoUser"),
   apiPass = suso_get_api_key("susoPass"),
   token = NULL,
-  workspace = NULL,
+  workspace = suso_get_api_key("workspace"),
   questID = NULL,
   AssId = NULL,
   version = NULL,
   responsibleID = NULL,
+  ShowArchive = FALSE,
   order.by = c("Id ASC", "Id DESC", "ResponsibleName DESC", "ResponsibleName ASC",
     "InterviewsCount DESC", "InterviewsCount ASC", "Quantity DESC", "Quantity ASC",
     "UpdatedAtUtc DESC", "UpdatedAtUtc ASC", "CreatedAtUtc DESC", "CreatedAtUtc ASC"),
@@ -41,6 +42,8 @@ the assignment details for a specific assignment ID}
 
 \item{responsibleID}{the ID of the responsible user (Supervisor or Interviewer).
 Retrieves all assignments for this user.}
+
+\item{ShowArchive}{if TRUE, only archived assignments are included in the list}
 
 \item{order.by}{determines the column by which the assignment list should be ordered, one of
 \emph{Id}, \emph{ResponsibleName}, \emph{InterviewsCount}, \emph{Quantity}, \emph{UpdatedAtUtc}, \emph{CreatedAtUtc},

@@ -9,7 +9,7 @@ suso_getINT_info(
   apiUser = suso_get_api_key("susoUser"),
   apiPass = suso_get_api_key("susoPass"),
   int_id = NULL,
-  workspace = NULL,
+  workspace = suso_get_api_key("workspace"),
   token = NULL,
   log = FALSE,
   startDate = NULL,

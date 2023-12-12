@@ -10,7 +10,7 @@ suso_archUSR(
   apiPass = suso_get_api_key("susoPass"),
   user_id = NULL,
   archive = F,
-  workspace = NULL,
+  workspace = suso_get_api_key("workspace"),
   token = NULL
 )
 }

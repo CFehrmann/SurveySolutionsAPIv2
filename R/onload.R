@@ -8,7 +8,8 @@
       suso = list(
         susoServer = NA_character_,
         susoUser = NA_character_,
-        susoPass = NA_character_
+        susoPass = NA_character_,
+        workspace = NA_character_
       )
     )
     attr(options, "class") <- "suso_api"

@@ -25,7 +25,7 @@
 suso_getSV <- function(server = suso_get_api_key("susoServer"),
                        apiUser = suso_get_api_key("susoUser"),
                        apiPass = suso_get_api_key("susoPass"),
-                       workspace = NULL,
+                       workspace = suso_get_api_key("workspace"),
                        token = NULL) {
 
   # Default workspace
@@ -42,6 +42,8 @@ suso_getSV <- function(server = suso_get_api_key("susoServer"),
     url<-.baseurl_baseauth(server, workspace, apiUser, apiPass, "supervisors")
   }
 
+  # get argument for class --> workspace must be added to also capture default
+  args<-.getargsforclass(workspace = workspace)
   # generate and execute first request with limit 100 & offset 0
   url<-.addQuery(url, Limit=100, offset=1)
 
@@ -116,6 +118,9 @@ suso_getSV <- function(server = suso_get_api_key("susoServer"),
     # modify data types
     if(nrow(test_json>0)) {
       test_json[, CreationDate := lubridate::as_datetime(CreationDate)][]
+      x<-list()
+      x$Users<-test_json
+      test_json<-UserClass(x, args)
       return(test_json)
     } else {
       return(NULL)
@@ -125,6 +130,9 @@ suso_getSV <- function(server = suso_get_api_key("susoServer"),
     # modify data types
     if(nrow(test_json>0)) {
       test_json[, CreationDate := lubridate::as_datetime(CreationDate)][]
+      x<-list()
+      x$Users<-test_json
+      test_json<-UserClass(x, args)
       return(test_json)
     } else {
       return(NULL)
@@ -145,7 +153,7 @@ suso_getSV <- function(server = suso_get_api_key("susoServer"),
 #' @param server Survey Solutions server address
 #' @param apiUser Survey Solutions API user
 #' @param apiPass Survey Solutions API password
-#' @param sv_id supervisor id, if NULL all interviewers in the workspace are returned
+#' @param sv_id supervisor id, if NULL all interviewers in the workspace are returned, and a column with sv_id is added
 #' @param workspace If workspace name is provide requests are made regarding this specific workspace, if
 #' no workspace is provided defaults to primary workspace.
 #' @param token If Survey Solutions server token is provided \emph{usr} and \emph{pass} will be ignored
@@ -163,7 +171,7 @@ suso_getSV <- function(server = suso_get_api_key("susoServer"),
 suso_getINT <- function(server=suso_get_api_key("susoServer"),
                         apiUser = suso_get_api_key("susoUser"),
                         apiPass = suso_get_api_key("susoPass"),
-                        workspace = NULL,
+                        workspace = suso_get_api_key("workspace"),
                         token = NULL,
                         sv_id = NULL) {
   ## default workspace
@@ -179,6 +187,9 @@ suso_getINT <- function(server=suso_get_api_key("susoServer"),
   } else {
     url<-.baseurl_baseauth(server, workspace, apiUser, apiPass, "supervisors")
   }
+
+  # get argument for class --> workspace must be added to also capture default
+  args<-.getargsforclass(workspace = workspace)
 
   # internal function to get interviewers for a supervisor
   .svget<-function(sv_id) {
@@ -235,14 +246,6 @@ suso_getINT <- function(server=suso_get_api_key("susoServer"),
       # failures, but length of tmpfiles must be subset!
       if(length(requests) != length(responses)) {
         stop("Length of requests and responses is not the same")
-        # # i. get the feailed requests
-        # requests_fail<-requests[which(is.null(responses))]
-        # # ii. get the corresponding tmpfiles
-        # tmpfiles_fail<-tmpfiles[which(is.null(responses))]
-        # # iii. get the successful requests
-        # responses<-responses |>
-        #   resps_successes()
-        # # iv. get the corresponding tmpfiles
       }
 
       # transform response from json tempfile takes 2.51 seconds
@@ -259,6 +262,8 @@ suso_getINT <- function(server=suso_get_api_key("susoServer"),
       test_json<-data.table::rbindlist(list(full_data1, full_data2))
       # modify data types
       if(nrow(test_json>0)) {
+        # add sv id for anonymous call
+        test_json[, sv_id := sv_id][]
         test_json[, CreationDate := lubridate::as_datetime(CreationDate)][]
         return(test_json)
       } else {
@@ -268,6 +273,8 @@ suso_getINT <- function(server=suso_get_api_key("susoServer"),
       test_json<-full_data1
       # modify data types
       if(nrow(test_json>0)) {
+        # add sv id for anonymous call
+        test_json[, sv_id := sv_id][]
         test_json[, CreationDate := lubridate::as_datetime(CreationDate)][]
         return(test_json)
       } else {
@@ -294,6 +301,9 @@ suso_getINT <- function(server=suso_get_api_key("susoServer"),
 
   }
 
+  x<-list()
+  x$Users<-test_json
+  test_json<-UserClass(x, args)
   return(test_json)
 
 }
@@ -329,7 +339,7 @@ suso_getINT <- function(server=suso_get_api_key("susoServer"),
 #'
 #' @export
 suso_getINT_info<-function(server=suso_get_api_key("susoServer"), apiUser = suso_get_api_key("susoUser"), apiPass = suso_get_api_key("susoPass"),
-                           int_id = NULL, workspace = NULL, token = NULL, log = FALSE, startDate = NULL, endDate = NULL) {
+                           int_id = NULL, workspace = suso_get_api_key("workspace"), token = NULL, log = FALSE, startDate = NULL, endDate = NULL) {
   ## default workspace
   workspace<-.ws_default(ws = workspace)
 
@@ -440,7 +450,7 @@ suso_getINT_info<-function(server=suso_get_api_key("susoServer"), apiUser = suso
 #' @export
 #'
 suso_getUSR<-function(server=suso_get_api_key("susoServer"), apiUser = suso_get_api_key("susoUser"), apiPass = suso_get_api_key("susoPass"),
-                      user_id = NULL, user_name = NULL, user_email = NULL, workspace = NULL, token = NULL) {
+                      user_id = NULL, user_name = NULL, user_email = NULL, workspace = suso_get_api_key("workspace"), token = NULL) {
   ## default workspace
   workspace<-.ws_default(ws = workspace)
 
@@ -533,7 +543,7 @@ suso_getUSR<-function(server=suso_get_api_key("susoServer"), apiUser = suso_get_
 #' @export
 #'
 suso_archUSR<-function(server=suso_get_api_key("susoServer"), apiUser = suso_get_api_key("susoUser"), apiPass = suso_get_api_key("susoPass"),
-                       user_id = NULL, archive = F, workspace = NULL, token = NULL) {
+                       user_id = NULL, archive = F, workspace = suso_get_api_key("workspace"), token = NULL) {
   ## default workspace
   workspace<-.ws_default(ws = workspace)
 
@@ -565,7 +575,7 @@ suso_archUSR<-function(server=suso_get_api_key("susoServer"), apiUser = suso_get
     url<-url |>
       httr2::req_method("PATCH")
 
-    # perfor request with tryCatch
+    # perform request with tryCatch
     tryCatch({
       resp<-req_perform(url)
 
