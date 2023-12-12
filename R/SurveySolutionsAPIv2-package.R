@@ -21,6 +21,7 @@
 #' @importFrom stats setNames
 #' @importFrom lubridate as_datetime
 #' @importFrom stringr str_count str_detect str_extract str_replace_all str_split str_sub
+#' @importFrom tidyjson enter_object gather_array spread_all jstring jnumber jlogical bind_rows spread_values
 ## usethis namespace: end
 NULL
 

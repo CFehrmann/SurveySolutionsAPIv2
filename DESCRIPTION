@@ -22,7 +22,8 @@ Imports:
     readr,
     rlang,
     stats,
-    stringr
+    stringr,
+    tidyjson
 Encoding: UTF-8
 Language: en
 Roxygen: list(markdown = TRUE)

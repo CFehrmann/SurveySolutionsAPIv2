@@ -274,75 +274,253 @@
 #   prog<-prog+1
 # }
 #
-# ### FOR QUESTIONNAIRE STRUCTURE #########################
-# .suso_transform_fullValid <- function(input = NULL) {
-#   valfinal <-bind_rows(
-#     ######################################################
-#     ## VALIDATIONS (Start with L0)
-#     ######################################################
-#     input %>% enter_object("Children") %>% gather_array("L0") %>%
-#       enter_object("Children") %>% gather_array("L1") %>%
-#       enter_object("ValidationConditions") %>% gather_array("val1") %>%
-#       spread_all(),
-#     ## third
-#     input %>% enter_object("Children") %>% gather_array("L0") %>%
-#       enter_object("Children") %>% gather_array("L1") %>%
-#       enter_object("Children") %>% gather_array("L2") %>%
-#       enter_object("ValidationConditions") %>% gather_array("val1") %>%
-#       spread_all(),
-#     ## fourth
-#     input %>% enter_object("Children") %>% gather_array("L0") %>%
-#       enter_object("Children") %>% gather_array("L1") %>%
-#       enter_object("Children") %>% gather_array("L2") %>%
-#       enter_object("Children") %>% gather_array("L3") %>%
-#       enter_object("ValidationConditions") %>% gather_array("val1") %>%
-#       spread_all(),
-#     ## fifth
-#     input %>% enter_object("Children") %>% gather_array("L0") %>%
-#       enter_object("Children") %>% gather_array("L1") %>%
-#       enter_object("Children") %>% gather_array("L2") %>%
-#       enter_object("Children") %>% gather_array("L3") %>%
-#       enter_object("Children") %>% gather_array("L4") %>%
-#       enter_object("ValidationConditions") %>% gather_array("val1") %>%
-#       spread_all(),
-#     ## sixth
-#     input %>% enter_object("Children") %>% gather_array("L0") %>%
-#       enter_object("Children") %>% gather_array("L1") %>%
-#       enter_object("Children") %>% gather_array("L2") %>%
-#       enter_object("Children") %>% gather_array("L3") %>%
-#       enter_object("Children") %>% gather_array("L4") %>%
-#       enter_object("Children") %>% gather_array("L5") %>%
-#       enter_object("ValidationConditions") %>% gather_array("val1") %>%
-#       spread_all(),
-#     ## seventh
-#     input %>% enter_object("Children") %>% gather_array("L0") %>%
-#       enter_object("Children") %>% gather_array("L1") %>%
-#       enter_object("Children") %>% gather_array("L2") %>%
-#       enter_object("Children") %>% gather_array("L3") %>%
-#       enter_object("Children") %>% gather_array("L4") %>%
-#       enter_object("Children") %>% gather_array("L5") %>%
-#       enter_object("Children") %>% gather_array("L6") %>%
-#       enter_object("ValidationConditions") %>% gather_array("val1") %>%
-#       spread_all(),
-#     ## eight
-#     input %>% enter_object("Children") %>% gather_array("L0") %>%
-#       enter_object("Children") %>% gather_array("L1") %>%
-#       enter_object("Children") %>% gather_array("L2") %>%
-#       enter_object("Children") %>% gather_array("L3") %>%
-#       enter_object("Children") %>% gather_array("L4") %>%
-#       enter_object("Children") %>% gather_array("L5") %>%
-#       enter_object("Children") %>% gather_array("L6") %>%
-#       enter_object("Children") %>% gather_array("L7") %>%
-#       enter_object("ValidationConditions") %>% gather_array("val1") %>%
-#       spread_all()
-#     ###########################################################
-#   ) %>% dplyr::select_if(col_selector)
-#
-#
-#   valfinal<-data.table(valfinal)
-#   if(nrow(valfinal)==0) {
-#     return(NULL)
-#   } else {
-#     return(valfinal)
-#   }
-# }
+
+
+#' Helper functions to transform list of questionnair structure to single data.table with all variables
+#'
+#' Uses tidyjson package
+#'
+#' \code{suso_transform_fullMeta} transforms the list containing the structure (\emph{operation.type = structure})
+#' is transformed into a single data.table
+#' with all variable names, types etc.. This also works with json strings manually exported from the server.
+#'
+#'
+#' @param input returned by \code{suso_getQuestDetails} structure operation
+#'
+#' @keywords internal
+#'
+#' @return data.table with all variables in the questionnaire
+#'
+
+.suso_transform_fullValid_q <- function(input = NULL) {
+  ##########################################
+  ## v2.1 with validations
+  ## IDs:
+  ##    L0 = Section, L1=position inside section,
+  ##    L2 = Roster/Subsection Nr, (when missing no roster)
+  ##    L3 = position inside Roster/Subsection,
+  ##    L4 = Roster/Subsection (when missing no roster)
+  qfinal <-bind_rows(
+    ######################################################
+    ## first
+    input |> spread_values(
+      Id = jstring("Id"),
+      LastEntryDate = jstring("LastEntryDate")
+    ) |> enter_object("Children") |> gather_array("L0") |>
+      spread_values(
+        type = jstring("$type"),
+        PublicKey = jstring("PublicKey"),
+        Title = jstring("Title")
+      ),
+    ## second
+    input |> enter_object("Children") |> gather_array("L0") |>
+      enter_object("Children") |> gather_array("L1") |>
+      spread_values(
+        type = jstring("$type"),
+        PublicKey = jstring("PublicKey"),
+        Title = jstring("Title"),
+        VariableName = jstring("VariableName"),
+        QuestionScope = jnumber("QuestionScope"),
+        QuestionText = jstring("QuestionText"),
+        Featured = jlogical("Featured")
+
+      ),
+    ## third
+    input |> enter_object("Children") |> gather_array("L0") |>
+      enter_object("Children") |> gather_array("L1") |>
+      enter_object("Children") |> gather_array("L2") |>
+      spread_values(
+        type = jstring("$type"),
+        PublicKey = jstring("PublicKey"),
+        Title = jstring("Title"),
+        VariableName = jstring("VariableName"),
+        QuestionScope = jnumber("QuestionScope"),
+        QuestionText = jstring("QuestionText"),
+        Featured = jlogical("Featured")
+      ),
+    ## fourth
+    input |> enter_object("Children") |> gather_array("L0") |>
+      enter_object("Children") |> gather_array("L1") |>
+      enter_object("Children") |> gather_array("L2") |>
+      enter_object("Children") |> gather_array("L3") |>
+      spread_values(
+        type = jstring("$type"),
+        PublicKey = jstring("PublicKey"),
+        Title = jstring("Title"),
+        VariableName = jstring("VariableName"),
+        QuestionScope = jnumber("QuestionScope"),
+        QuestionText = jstring("QuestionText"),
+        Featured = jlogical("Featured")
+      ),
+    ## fifth
+    input |> enter_object("Children") |> gather_array("L0") |>
+      enter_object("Children") |> gather_array("L1") |>
+      enter_object("Children") |> gather_array("L2") |>
+      enter_object("Children") |> gather_array("L3") |>
+      enter_object("Children") |> gather_array("L4") |>
+      spread_values(
+        type = jstring("$type"),
+        PublicKey = jstring("PublicKey"),
+        Title = jstring("Title"),
+        VariableName = jstring("VariableName"),
+        QuestionScope = jnumber("QuestionScope"),
+        QuestionText = jstring("QuestionText"),
+        Featured = jlogical("Featured")
+      ),
+    ## sixth
+    input |> enter_object("Children") |> gather_array("L0") |>
+      enter_object("Children") |> gather_array("L1") |>
+      enter_object("Children") |> gather_array("L2") |>
+      enter_object("Children") |> gather_array("L3") |>
+      enter_object("Children") |> gather_array("L4") |>
+      enter_object("Children") |> gather_array("L5") |>
+      spread_values(
+        type = jstring("$type"),
+        PublicKey = jstring("PublicKey"),
+        Title = jstring("Title"),
+        VariableName = jstring("VariableName"),
+        QuestionScope = jnumber("QuestionScope"),
+        QuestionText = jstring("QuestionText"),
+        Featured = jlogical("Featured")
+      ),
+    ## seventh
+    input |> enter_object("Children") |> gather_array("L0") |>
+      enter_object("Children") |> gather_array("L1") |>
+      enter_object("Children") |> gather_array("L2") |>
+      enter_object("Children") |> gather_array("L3") |>
+      enter_object("Children") |> gather_array("L4") |>
+      enter_object("Children") |> gather_array("L5") |>
+      enter_object("Children") |> gather_array("L6") |>
+      spread_values(
+        type = jstring("$type"),
+        PublicKey = jstring("PublicKey"),
+        Title = jstring("Title"),
+        VariableName = jstring("VariableName"),
+        QuestionScope = jnumber("QuestionScope"),
+        QuestionText = jstring("QuestionText"),
+        Featured = jlogical("Featured")
+      ),
+    ## eight
+    input |> enter_object("Children") |> gather_array("L0") |>
+      enter_object("Children") |> gather_array("L1") |>
+      enter_object("Children") |> gather_array("L2") |>
+      enter_object("Children") |> gather_array("L3") |>
+      enter_object("Children") |> gather_array("L4") |>
+      enter_object("Children") |> gather_array("L5") |>
+      enter_object("Children") |> gather_array("L6") |>
+      enter_object("Children") |> gather_array("L7") |>
+      spread_values(
+        type = jstring("$type"),
+        PublicKey = jstring("PublicKey"),
+        Title = jstring("Title"),
+        VariableName = jstring("VariableName"),
+        QuestionScope = jnumber("QuestionScope"),
+        QuestionText = jstring("QuestionText"),
+        Featured = jlogical("Featured")
+      )
+    ###########################################################
+  ) |> dplyr::select_if(.col_selector)
+  qfinal<-data.table(qfinal)
+  ###########################
+  ## dynamic use of sprintf
+  ##  - do.call and eval
+  allSections<-names(qfinal)[grepl("^L[0-7]$", names(qfinal))]
+  sprExpr<-paste(rep("%02d", length(allSections)), collapse = "")
+  allSections<-paste0(".(", paste(allSections, collapse = ","), ")")
+  qfinal[,intID:=do.call(sprintf, c(list(sprExpr), qfinal[,eval(parse(text = allSections))]))]
+  qfinal<-qfinal[,document.id:=NULL][]
+  ## Get Validations
+  valfinal_1<-.suso_transform_fullValid_val(input = input)
+  if(!is.null(valfinal_1)){
+    ###########################
+    ## dynamic use of sprintf
+    ##  - do.call and eval
+    ##  - to harmonize ID, ID var is created here!!!
+    allSections<-names(valfinal_1)[grepl("^L[0-7]$", names(valfinal_1))]
+    sprExpr<-paste(rep("%02d", length(allSections)), collapse = "")
+    allSections<-paste0(".(", paste(allSections, collapse = ","), ")")
+    ## ID for validations
+    valfinal_1[,intID:=do.call(sprintf, c(list(sprExpr), valfinal_1[,eval(parse(text = allSections))]))]
+    ## ID for questionnaire
+    qfinal[,intID:=do.call(sprintf, c(list(sprExpr), qfinal[,eval(parse(text = allSections))]))]
+    qVar<-qfinal[,.(intID, VariableName)]
+    valfinal_1<-valfinal_1[,.(intID, Expression, Message, Severity)][]
+    setkeyv(valfinal_1, "intID"); setkeyv(qVar, "intID")
+    valfinal_1<-valfinal_1[qVar, nomatch=0]
+  }
+  q_final<-list(q=qfinal, val=valfinal_1)
+  return(q_final)
+}
+
+
+.suso_transform_fullValid_val <- function(input = NULL) {
+  valfinal <-bind_rows(
+    ######################################################
+    ## VALIDATIONS (Start with L0)
+    ######################################################
+    input |> enter_object("Children") |> gather_array("L0") |>
+      enter_object("Children") |> gather_array("L1") |>
+      enter_object("ValidationConditions") |> gather_array("val1") |>
+      spread_all(),
+    ## third
+    input |> enter_object("Children") |> gather_array("L0") |>
+      enter_object("Children") |> gather_array("L1") |>
+      enter_object("Children") |> gather_array("L2") |>
+      enter_object("ValidationConditions") |> gather_array("val1") |>
+      spread_all(),
+    ## fourth
+    input |> enter_object("Children") |> gather_array("L0") |>
+      enter_object("Children") |> gather_array("L1") |>
+      enter_object("Children") |> gather_array("L2") |>
+      enter_object("Children") |> gather_array("L3") |>
+      enter_object("ValidationConditions") |> gather_array("val1") |>
+      spread_all(),
+    ## fifth
+    input |> enter_object("Children") |> gather_array("L0") |>
+      enter_object("Children") |> gather_array("L1") |>
+      enter_object("Children") |> gather_array("L2") |>
+      enter_object("Children") |> gather_array("L3") |>
+      enter_object("Children") |> gather_array("L4") |>
+      enter_object("ValidationConditions") |> gather_array("val1") |>
+      spread_all(),
+    ## sixth
+    input |> enter_object("Children") |> gather_array("L0") |>
+      enter_object("Children") |> gather_array("L1") |>
+      enter_object("Children") |> gather_array("L2") |>
+      enter_object("Children") |> gather_array("L3") |>
+      enter_object("Children") |> gather_array("L4") |>
+      enter_object("Children") |> gather_array("L5") |>
+      enter_object("ValidationConditions") |> gather_array("val1") |>
+      spread_all(),
+    ## seventh
+    input |> enter_object("Children") |> gather_array("L0") |>
+      enter_object("Children") |> gather_array("L1") |>
+      enter_object("Children") |> gather_array("L2") |>
+      enter_object("Children") |> gather_array("L3") |>
+      enter_object("Children") |> gather_array("L4") |>
+      enter_object("Children") |> gather_array("L5") |>
+      enter_object("Children") |> gather_array("L6") |>
+      enter_object("ValidationConditions") |> gather_array("val1") |>
+      spread_all(),
+    ## eight
+    input |> enter_object("Children") |> gather_array("L0") |>
+      enter_object("Children") |> gather_array("L1") |>
+      enter_object("Children") |> gather_array("L2") |>
+      enter_object("Children") |> gather_array("L3") |>
+      enter_object("Children") |> gather_array("L4") |>
+      enter_object("Children") |> gather_array("L5") |>
+      enter_object("Children") |> gather_array("L6") |>
+      enter_object("Children") |> gather_array("L7") |>
+      enter_object("ValidationConditions") |> gather_array("val1") |>
+      spread_all()
+    ###########################################################
+  ) |> dplyr::select_if(.col_selector)
+
+
+  valfinal<-data.table(valfinal)
+  if(nrow(valfinal)==0) {
+    return(NULL)
+  } else {
+    return(valfinal)
+  }
+}
