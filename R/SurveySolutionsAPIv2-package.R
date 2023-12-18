@@ -19,9 +19,11 @@
 #' @importFrom httr authenticate build_url GET parse_url
 #' @importFrom jsonlite fromJSON unbox
 #' @importFrom stats setNames
-#' @importFrom lubridate as_datetime
+#' @importFrom lubridate as_datetime ymd ymd_hms now today
 #' @importFrom stringr str_count str_detect str_extract str_replace_all str_split str_sub
 #' @importFrom tidyjson enter_object gather_array spread_all jstring jnumber jlogical bind_rows spread_values
+#' @importFrom zip unzip
+#' @importFrom utils setTxtProgressBar txtProgressBar
 ## usethis namespace: end
 NULL
 
@@ -29,7 +31,11 @@ NULL
 ## quiets concerns of R CMD check re: the .'s that appear in pipelines
 if(getRversion() >= "3.3.0")  {
   utils::globalVariables(c(
-    ".", "i", "Quantity", "ResponsibleName",
+    ".", "i", "Quantity", "ResponsibleName", "type",
+    "LinkType", "L0", "L1", "L2", "L3", "L4", "Title", "PublicKey",
+    "AnswerValue", "..JSON", "Rsize", "Rtype", "RsizeKey", "Rvar",
+    "RvarMerge", "parentid1", "parentid2", "parentgroup", "pargroupcount",
+    "HasExportFile", "JobId",
     "resp_time",
     "action",
     "time",

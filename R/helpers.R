@@ -151,6 +151,56 @@
   }
 }
 
+# check date with lubridate -->ymd
+.checkDate<- function(date_string) {
+  # parse the date using ymd
+  parsed_date <- ymd(date_string, quiet = TRUE)
+
+  # Check if the parsed date is NA (invalid) or if the format is not as expected
+  if (is.na(parsed_date) || format(parsed_date, "%Y-%m-%d") != date_string) {
+    return(FALSE)
+  } else {
+    return(TRUE)
+  }
+}
+
+# check date range
+.checkDateRange <- function(from_date, to_date) {
+  # Parse the dates
+  parsed_from_date <- ymd(from_date, quiet = TRUE)
+  parsed_to_date <- ymd(to_date, quiet = TRUE)
+
+  # Check if either date is invalid
+  if (is.na(parsed_from_date) || format(parsed_from_date, "%Y-%m-%d") != from_date ||
+      is.na(parsed_to_date) || format(parsed_to_date, "%Y-%m-%d") != to_date) {
+    stop("Invalid date format. Please check your input.")
+  }
+
+  # Check if from_date is not before to_date
+  if(parsed_from_date >= parsed_to_date) {
+    stop("from_date must be before to_date")
+  }
+}
+
+# check date time range
+.checkDateTimeRange <- function(from_datetime, to_datetime) {
+  # Parse the datetimes
+  parsed_from_datetime <- ymd_hms(from_datetime, quiet = TRUE)
+  parsed_to_datetime <- ymd_hms(to_datetime, quiet = TRUE)
+
+  # Check if either datetime is invalid
+  if (is.na(parsed_from_datetime) || format(parsed_from_datetime, "%Y-%m-%d %H:%M:%S") != from_datetime ||
+      is.na(parsed_to_datetime) || format(parsed_to_datetime, "%Y-%m-%d %H:%M:%S") != to_datetime) {
+    stop("Invalid date time format. Please check your input.")
+  }
+
+  # Check if from_datetime is not before to_datetime
+  if(parsed_from_datetime >= parsed_to_datetime) {
+    stop("from_date must be before to_date")
+  }
+}
+
+
 # get args for class
 .getargsforclass<-function(workspace = NULL) {
   # except server, apiUser, apiPass, token
@@ -194,6 +244,161 @@
          stop("An unknown error occurred", call. = FALSE)
   )
 }
+
+# list export tab files for processing
+.list_export_tab_files <- function(directory) {
+  # List all files in the directory
+  all_files <- list.files(directory, pattern = "\\.tab$", full.names = TRUE)
+
+  # List of files to exclude
+  exclude_files <- c("assignment__actions.tab",
+                     "interview__actions.tab",
+                     "interview__comments.tab",
+                     "interview__diagnostics.tab",
+                     "interview__errors.tab")
+
+  # Filter out the excluded files
+  valid_files <- all_files[!basename(all_files) %in% exclude_files]
+
+  return(valid_files)
+}
+
+# get questionnaire name from export__readme.txt
+.get_first_tab_filename <- function(file_path) {
+  # Read lines
+  lines <- readLines(file_path)
+
+  # regex for .tab
+  tab_files <- grep("\\.tab$", lines, value = TRUE)
+
+  # Check if any .tab file is found
+  if (length(tab_files) > 0) {
+    # Extract the first .tab filename without the extension
+    first_tab_file <- sub("\\.tab$", "", tab_files[1])
+    return(first_tab_file)
+  } else {
+    return(NULL)
+  }
+}
+
+# get all questions from questionnaire
+.questionnaire_allquestions <- function(dt) {
+  # Check if 'type' column exists
+  if (!("type" %in% names(dt))) {
+    stop("The 'type' column does not exist in the data table.")
+  }
+
+  # Identify rows where 'type' contains 'Question'
+  rows_with_question <- dt[grepl("Question", type), ]
+
+  return(rows_with_question)
+}
+
+# get all questions from questionnaire
+.questionnaire_gpsquestion <- function(dt) {
+  # Check if 'type' column exists
+  if (!("type" %in% names(dt))) {
+    stop("The 'type' column does not exist in the data table.")
+  }
+
+  # Identify rows where 'type' contains 'Gps'
+  rows_with_question <- dt[grepl("Gps", type), ]
+
+  return(rows_with_question)
+}
+
+.questionnaire_answeroptions <- function(input_list) {
+  # Initialize an empty data frame
+  answers_df <- data.frame(AnswerValue = character(),
+                           AnswerText = character(),
+                           stringsAsFactors = FALSE)
+
+  # Iterate through the outer list
+  for (item in input_list) {
+    # Check if 'Answers' is in the list
+    if ("Answers" %in% names(item)) {
+      # Extract the 'Answers' sublist
+      answers <- item$Answers
+
+      # Iterate through the 'Answers' sublist and add to the data frame
+      for (answer in answers) {
+        answers_df <- rbind(answers_df, data.frame(AnswerValue = answer$AnswerValue,
+                                                   AnswerText = answer$AnswerText,
+                                                   stringsAsFactors = FALSE))
+      }
+    }
+  }
+
+  return(answers_df)
+}
+
+# convert multi/single select to factor
+.export_convert_to_factor <- function(dt, labels_dt) {
+  dt<-copy(dt)
+  # make values numeric if not
+  if(!is.numeric(labels_dt$AnswerValue)) {
+    labels_dt[, AnswerValue := as.numeric(AnswerValue)]
+  }
+  on.exit(
+    rm(dt),
+    gc()
+  )
+  # Unique base variable names
+  base_vars <- unique(sub("__.*", "", names(dt)))
+  # Use only base vars where factor is available
+  base_vars <- base_vars[base_vars %in% labels_dt$VariableName]
+  # Return dt if not base vars
+  if (length(base_vars) == 0) {
+    return(dt)
+  }
+
+  # Iterate over each base variable name
+  for (base_var in base_vars) {
+    # Find all columns related to this base variable
+    related_cols <- grep(paste0("^", base_var, "__"), names(dt), value = TRUE)
+    dt[, c(base_var) := numeric(.N)]
+    # Consolidate into a single variable
+    for (col in related_cols) {
+      fval<-as.integer(sub(paste0("^", base_var, "__"), "", col))
+      dt[[base_var]]<-data.table::fifelse(dt[[col]] == 1, fval, dt[[base_var]])
+    }
+
+    # Drop the original long-form columns -->suppress the warning
+    suppressWarnings(
+      dt[, (related_cols) := NULL]
+    )
+
+    # Check if the base variable name is in the VariableName column of labels_dt
+    if (base_var %in% labels_dt$VariableName) {
+      # Extract labels_dt
+      label_rows <- labels_dt[VariableName == base_var]
+
+      # Create factor
+      dt$tmpvar<-factor(dt[[base_var]], levels = label_rows$AnswerValue, labels = label_rows$AnswerText)
+      # Set NULL base_var
+      dt[, c(base_var) := NULL][]
+      # Rename tmpvar to base_var
+      data.table::setnames(dt, "tmpvar", base_var)
+    }
+  }
+
+  return(dt)
+}
+
+# remove full NA columns in suso data
+.export_remove_na_columns <- function(dt) {
+
+  # integers to remove
+  intcols<-which(sapply(dt, function(x) is.integer(x) & all(x == -999999999L)))
+  if(length(intcols)>0) dt[, (intcols) := NULL]
+  # characters to remove
+  charcols<-which(sapply(dt, function(x) !lubridate::is.POSIXt(x)  && is.character(x) && all(x == "##N/A##")))
+  if(length(charcols)>0) dt[, (charcols) := NULL]
+
+  return(dt)
+}
+
+
 
 # PARADATA ONLY ADD LATER
 # Response Time

@@ -7,3 +7,5 @@ code from the old SurveySolutionAPI package.
 * suso_PwCheck now prints a message and the url to the console when in interactive mode
 * suso_getINT_info now covers both interviewer details and retrieval of log files (log = T)
 * workspace has been added to suso_set_key
+* translation can be applied to export data for categorical variables
+* export allows to add weights file, so the data is analysis ready
