@@ -227,8 +227,9 @@
   # error messages
   msg404<-switch(type,
                  "ass" = c("x" = "Questionnaire/Assignment/Assignee not found"),
-                 "usr" = c("x" = "User not found")
-                 )
+                 "usr" = c("x" = "User not found"),
+                 "exp" = c("x" = "Export process was not found")
+  )
   msg406<-switch(type,
                  "ass" = c("x" = "Assignee cannot be assigned to assignment"),
                  "usr" = c("x" = "User is not an interviewer or supervisor")
@@ -236,7 +237,8 @@
 
   msg400<-switch(type,
                  "ass" = c("x" = "Bad parameters provided or identifying data incorrect. See response details for more info"),
-                 "usr" = c("x" = "User not found")
+                 "usr" = c("x" = "User not found"),
+                 "exp" = c("x" = "Request is malformed/Export file was not generated yet")
   )
 
   msg401<-c("x"="Unauthorized/User not authorized.")
@@ -248,50 +250,53 @@
                  "usr" = c("x" = "User cannot be unarchived")
                  )
 
-  switch(error_type,
-         "httr2_http_404" = {
+  withr::with_options(
+    list(rlang_backtrace_on_error = "none"),
+    switch(error_type,
+           "httr2_http_404" = {
+             cli::cli_abort(
+               message = msg404,
+               call = NULL,
+             )
+           },
+           "httr2_http_406" = {
+             cli::cli_abort(
+               message = msg406,
+               call = NULL,
+             )
+           },
+           "httr2_http_400" = {
+             cli::cli_abort(
+               message = msg400,
+               call = NULL,
+             )
+           },
+           "httr2_http_401" = {
+             cli::cli_abort(
+               message = msg401,
+               call = NULL,
+             )
+           },
+           "httr2_http_403" = {
+             cli::cli_abort(
+               message = msg403,
+               call = NULL,
+             )
+           },
+           "httr2_http_409" = {
+             cli::cli_abort(
+               message = msg409,
+               call = NULL,
+             )
+           },
+           # Default case if the error type is not handled above
            cli::cli_abort(
-            message = msg404,
-            call = NULL,
-            )
-         },
-         "httr2_http_406" = {
-           cli::cli_abort(
-             message = msg406,
+             message = "The following other error occured:",
              call = NULL,
+             parent = error_condition,
+             .internal = T
            )
-         },
-         "httr2_http_400" = {
-           cli::cli_abort(
-             message = msg400,
-             call = NULL,
-           )
-         },
-         "httr2_http_401" = {
-           cli::cli_abort(
-             message = msg401,
-             call = NULL,
-           )
-         },
-         "httr2_http_403" = {
-           cli::cli_abort(
-             message = msg403,
-             call = NULL,
-           )
-         },
-         "httr2_http_409" = {
-           cli::cli_abort(
-             message = msg409,
-             call = NULL,
-           )
-         },
-         # Default case if the error type is not handled above
-         cli::cli_abort(
-           message = "The following other error occured:",
-           call = NULL,
-           parent = error_condition,
-           .internal = T
-         )
+    )
   )
 }
 

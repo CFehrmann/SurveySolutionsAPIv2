@@ -19,7 +19,7 @@ suso_export(
   workStatus = c("All", "SupervisorAssigned", "InterviewerAssigned",
     "RejectedBySupervisor", "Completed", "ApprovedBySupervisor",
     "RejectedByHeadquarters", "ApprovedByHeadquarters"),
-  addTranslation = FALSE,
+  addTranslation = NULL,
   reloadTimeDiff = 1,
   inShinyApp = F,
   verbose = FALSE,
@@ -56,7 +56,7 @@ RejectedBySupervisor,ReadyForInterview,
 SentToCapi,Restarted,Completed,ApprovedBySupervisor,
 RejectedByHeadquarters,ApprovedByHeadquarters,Deleted}), if NULL all is exported}
 
-\item{addTranslation}{if TRUE, the translation will be applied to categorical variables}
+\item{addTranslation}{if not NULL, the translation name as specified in the designer, which will then be applied value labels}
 
 \item{reloadTimeDiff}{time difference in hours between last generated file and now}
 

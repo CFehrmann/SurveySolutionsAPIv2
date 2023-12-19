@@ -21,7 +21,7 @@
 #' @param from_time if provided, only interviews started at this time will be included
 #' @param to_date if provided, only interviews started until this date will be included
 #' @param to_time if provided, only interviews started until this time will be included
-#' @param addTranslation if TRUE, the translation will be applied to categorical variables
+#' @param addTranslation if not NULL, the translation name as specified in the designer, which will then be applied value labels
 #' @param process_mapquestions should map questions be processed to spatial (sf) objects
 #' @param combineFiles if TRUE, the export will be combined into single data.table, see details for the processing steps
 #'
@@ -84,7 +84,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
                                    "ApprovedBySupervisor",
                                    "RejectedByHeadquarters",
                                    "ApprovedByHeadquarters"),
-                      addTranslation = FALSE,
+                      addTranslation = NULL,
                       reloadTimeDiff=1,
                       inShinyApp=F,
                       verbose = FALSE,
@@ -179,7 +179,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
       exlist<-data.table(character(0))
     }
     },
-    error = .http_error_handler
+    error = function(e) .http_error_handler(e, "exp")
   )
 
 
@@ -271,7 +271,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
       InterviewStatus = workStatus, #required
       From = from_datetime, # can be null
       To = to_datetime, # can be null
-      TranslationId = ifelse(addTranslation, "Default", NA),
+      TranslationId = addTranslation, #if not null then id
       IncludeMeta = TRUE #required
     )
 
@@ -300,7 +300,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
         }
       }
       },
-      error = .http_error_handler
+      error = function(e) .http_error_handler(e, "exp")
     )
 
     # check file status, and if creation completed, download
@@ -333,7 +333,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
           }
         }
         },
-        error = .http_error_handler
+        error = function(e) .http_error_handler(e, "exp")
       )
       # update progress bar
       setTxtProgressBar(pb, counter)
@@ -385,7 +385,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
       { resp<-url |>
         httr2::req_perform(path = tmp)
       },
-      error = .http_error_handler
+      error = function(e) .http_error_handler(e, "exp")
     )
 
     # unzip file with unzip package

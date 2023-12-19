@@ -11,17 +11,20 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 
 <div align="justify">
 
-This is the updated version of the [Survey Solutions R API
+This is a new edition of the [Survey Solutions R API
 package](https://docs.mysurvey.solutions/headquarters/api/api-r-package/),
 based on the newly released [httr2](https://httr2.r-lib.org/index.html)
-package. Most of its features and syntax are the same as in the existing
+package. Most of the syntax are the same as in the existing httr based
 [SurveySolutionsAPI](https://github.com/michael-cw/SurveySolutionsAPI)
 package, and therefore it should be easy to integrate it in your
-existing workflow, based on the previous package. However as there are
-also some new features, as well as some cosmetic changes, we decided to
-release this package as a completely new one, such that users who do not
-want to switch to the new package or make use of the new features, can
-still work with the old package as usual.
+existing workflow, if you used the previous edition.
+
+Nevertheless, there are several other updates like more meaningful error
+messages and other cosmetic changes and there are also quite a bunch of
+new features. Therefore i decided to release this package as a
+completely new one, such that users who do not want to switch to the new
+package or make use of the new features, can still work with the old
+package as usual.
 
 Nevertheless a transition to the new package is recommended. New
 features in this package are:
@@ -32,6 +35,8 @@ features in this package are:
   into sf objects
 - For potentially long running jobs, like assignment creation, httr2’s
   parallel request feature is used
+- available value labels are applied to categorical variables, and even
+  translation can be added.
 - and many more.
 
 It allows you to export data/paradata collected through CAWI, CATI or
