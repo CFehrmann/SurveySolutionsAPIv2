@@ -35,7 +35,7 @@ if(getRversion() >= "3.3.0")  {
     "LinkType", "L0", "L1", "L2", "L3", "L4", "Title", "PublicKey",
     "AnswerValue", "..JSON", "Rsize", "Rtype", "RsizeKey", "Rvar",
     "RvarMerge", "parentid1", "parentid2", "parentgroup", "pargroupcount",
-    "HasExportFile", "JobId",
+    "HasExportFile", "JobId", "StartDate",
     "resp_time",
     "action",
     "time",

@@ -182,15 +182,64 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
     error = .http_error_handler
   )
 
+
+  # CHECK for existing files
   if(nrow(exlist)>0) {
+    # subset existing exports & check time diff parameter with last creation date
     # 1. Check qid
     qid<-stringr::str_remove_all(qid, "-")
-    exlist<-exlist[QuestionnaireId==qid]
-    exlist<-exlist[HasExportFile==T]
+    exlist_sub<-exlist[QuestionnaireId==qid]
+    exlist_sub<-exlist_sub[HasExportFile==T]
+
+    # 2. Check other paramters -->TD
+
+    # 3. Check reload time diff (= difference between last file in
+    # exlist start time)
+    if(!is.null(reloadTimeDiff)) {
+      .checkNum(reloadTimeDiff)
+
+      # latest export start time
+      time_limit<-exlist_sub[1, StartDate]
+      time_limit<-lubridate::as_datetime(time_limit)
+      # current time (!! in UTC)
+      current_time<-lubridate::now(tzone = lubridate::tz(time_limit))
+      # time difference between now and last start
+      timeDiff<-difftime(current_time, time_limit, units = "hours")
+      # If reloadtime is smaller, download existing, otherwise new
+      if(!is.null(timeDiff) && length(timeDiff)>0 && timeDiff<=reloadTimeDiff) {
+        if(interactive()) {
+          cli::cli_alert_success(
+            "Existing file within desired reload time difference
+          of {as.integer(reloadTimeDiff)} hour(s)."
+          )
+        }
+        exlist_sub<-exlist_sub[1]
+
+      } else {
+        if(interactive()){
+          cli::cli_alert_info(
+            "Existing file older than desired reload time difference
+          of {as.integer(reloadTimeDiff)} hour(s). Creating new export"
+          )
+        }
+        exlist_sub<-data.table(character(0))
+      }
 
 
-    # Get available file
-    jobid<-exlist[1,JobId]
+    }
+  } else {
+    exlist_sub<-data.table(character(0))
+  }
+
+  if(nrow(exlist_sub)>0) {
+    # Get latest available file id (data sorted by date)
+    jobid<-exlist_sub[1,JobId]
+
+    if(interactive()){
+      cli::cli_alert_success(
+        "\nDownloading existing file with JobID {jobid}.\n"
+      )
+    }
 
     url<-url |>
       req_method("GET") |>
@@ -202,10 +251,14 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
         tcp_keepalive = 1L
       )
 
-  }
-  # if exlist is empty, create new export file nrow(exlist) == 0
-  # otherwise compare parameters and if file exists download
-  if(FALSE){
+  } else {
+    # if exlist_sub is empty, start new export file
+
+    if(interactive()){
+      cli::cli_alert_info(
+        "\nCreating new export file. This may take a while.\n"
+      )
+    }
 
     # add method post
     url<-url |>
@@ -303,7 +356,9 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
       )
 
   }
-    # print all inputs for check
+
+    # PROCESSING OF DOWNLOAD
+    # DEBUG: print all inputs for check
     if(verbose){
       cat("\n\n")
       cat("Server: ", server, "\n")
@@ -323,26 +378,12 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
     }
 
 
-    # tmeporary zip file
+    # temp zip file
     tmp<-tempfile(fileext = ".zip")
     # download file
     tryCatch(
       { resp<-url |>
         httr2::req_perform(path = tmp)
-
-      # get the response data
-      # if(resp_has_body(resp)){
-      #   # get body by content type
-      #   if(resp_content_type(resp) == "application/json") {
-      #     test_json<-resp_body_json(resp, simplifyVector = T)
-      #     exlist1<-data.table::as.data.table((test_json))
-      #     # name cancel and file link
-      #     if(nrow(exlist1)==2) {
-      #       exlist1[,LinkType:=c("cancel","download")][]
-      #     }
-      #     # return(exlist1)
-      #   }
-      # }
       },
       error = .http_error_handler
     )
