@@ -68,7 +68,7 @@ suso_getSV <- function(server = suso_get_api_key("susoServer"),
 
     # show total number of supervisors
     if(interactive()){
-      message(paste0("Total number of supervisors: ", tot, "\n\n"))
+      cli::cli_alert_info("Total number of supervisors: {tot}.")
     }
 
     # get the remaining items & create a list of requests
@@ -102,8 +102,6 @@ suso_getSV <- function(server = suso_get_api_key("susoServer"),
       data.table::rbindlist(fill = TRUE)
     # remove tempfile
     unlink(tmpfiles)
-
-    print(nrow(full_data2))
 
     # With User class for later use
     #test_json$Users<-data.table::rbindlist(list(full_data1, full_data2))
@@ -215,7 +213,7 @@ suso_getINT <- function(server=suso_get_api_key("susoServer"),
 
       # show total number of supervisors
       if(interactive()){
-        message(paste0("Total number of supervisors: ", tot, "\n\n"))
+        cli::cli_alert_info("Total number of supervisors: {tot}.")
       }
 
       # get the remaining items & create a list of requests
@@ -246,16 +244,15 @@ suso_getINT <- function(server=suso_get_api_key("susoServer"),
 
       # transform response from json tempfile takes 2.51 seconds
       full_data2<-lapply(tmpfiles, .transformresponses_jsonlite, "Users") |>
-        data.table::rbindlist()
+        data.table::rbindlist(fill = T)
       # remove tempfile
       unlink(tmpfiles)
 
-      print(nrow(full_data2))
 
       # With User class for later use
       #test_json$Users<-data.table::rbindlist(list(full_data1, full_data2))
       #test_json<-UserClass(test_json)
-      test_json<-data.table::rbindlist(list(full_data1, full_data2))
+      test_json<-data.table::rbindlist(list(full_data1, full_data2), fill = T)
       # modify data types
       if(nrow(test_json>0)) {
         # add sv id for anonymous call
@@ -293,7 +290,7 @@ suso_getINT <- function(server=suso_get_api_key("susoServer"),
     allsv<-suso_getSV(server, apiUser, apiPass, workspace = workspace)
     # ii. get interviewers for each sv_id with lapply
     test_json<-lapply(allsv$UserId, .svget) |>
-      data.table::rbindlist()
+      data.table::rbindlist(fill = T)
 
   }
 
