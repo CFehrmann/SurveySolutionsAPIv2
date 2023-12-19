@@ -9,3 +9,4 @@ code from the old SurveySolutionAPI package.
 * workspace has been added to suso_set_key
 * translation can be applied to export data for categorical variables
 * export allows to add weights file, so the data is analysis ready
+* more informative error messages

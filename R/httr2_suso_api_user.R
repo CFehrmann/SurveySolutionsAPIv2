@@ -49,7 +49,7 @@ suso_getSV <- function(server = suso_get_api_key("susoServer"),
 
   tryCatch(
   {resp<-req_perform(url)},
-  error = .http_error_handler
+  error = function(e) .http_error_handler(e, "usr")
   )
   # get the response data
   if(resp_has_body(resp)){
@@ -184,7 +184,8 @@ suso_getINT <- function(server=suso_get_api_key("susoServer"),
   args<-.getargsforclass(workspace = workspace)
 
   # internal function to get interviewers for a supervisor
-  .svget<-function(sv_id) {
+  .svget<-function(i, allsv) {
+    sv_id<-allsv[i]
     url<-url |>
       req_url_path_append(sv_id) |>
       req_url_path_append("interviewers")
@@ -194,7 +195,7 @@ suso_getINT <- function(server=suso_get_api_key("susoServer"),
 
     tryCatch(
       {resp<-req_perform(url)},
-      error = .http_error_handler
+      error = function(e) .http_error_handler(e, "usr")
     )
     # get the response data
     if(resp_has_body(resp)){
@@ -281,17 +282,21 @@ suso_getINT <- function(server=suso_get_api_key("susoServer"),
     # check if sv_id is valid
     .checkUUIDFormat(sv_id)
     # get interviewers for this supervisor
-    test_json<-.svget(sv_id)
+    test_json<-.svget(seq_along(sv_id), sv_id)
 
   } else {
-
     # if no sv_id is provided, then get all interviewers in the workspace
     # i. get all sv ids with suso_getSV
     allsv<-suso_getSV(server, apiUser, apiPass, workspace = workspace)
     # ii. get interviewers for each sv_id with lapply
-    test_json<-lapply(allsv$UserId, .svget) |>
-      data.table::rbindlist(fill = T)
-
+    if(interactive()){
+      pgtext<-sprintf("Loading all interviewers in workspace %s.", workspace)
+      test_json<-lapply(cli::cli_progress_along(allsv$UserId, pgtext, length(allsv$UserId)), .svget, allsv$UserId) |>
+        data.table::rbindlist(fill = T)
+    } else {
+      test_json<-lapply(seq_along(allsv$UserId), .svget, allsv$UserId) |>
+        data.table::rbindlist(fill = T)
+    }
   }
 
   x<-list()
@@ -357,7 +362,10 @@ suso_getINT_info<-function(server=suso_get_api_key("susoServer"), apiUser = suso
   # get interviewer details
   if(!log) {
 
-    resp<-req_perform(url)
+    tryCatch(
+      {resp<-req_perform(url)},
+      error = function(e) .http_error_handler(e, "usr")
+    )
 
     # get the response data
     if(resp_has_body(resp)){
@@ -389,7 +397,10 @@ suso_getINT_info<-function(server=suso_get_api_key("susoServer"), apiUser = suso
     # add query parameters
     url<-.addQuery(url, start=startDate, end=endDate)
 
-    resp<-req_perform(url)
+    tryCatch(
+      {resp<-req_perform(url)},
+      error = function(e) .http_error_handler(e, "usr")
+    )
 
     # get the response data
     if(resp_has_body(resp)){
