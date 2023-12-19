@@ -127,7 +127,11 @@ suso_get_api_key <- function(api = c("susoServer", "susoUser", "susoPass", "work
 suso_get_default_key <- function(api = c("susoServer", "susoUser", "susoPass", "workspace")) {
   api<-match.arg(api)
   key <- getOption("SurveySolutionsAPI")[['suso']][[api]]
-  if(is.na(key)) stop("No API credentials available Use either suso_set_key() to set a key, or provide it as a function argument directly", call. = F)
+  if(is.na(key)) withr::with_options(
+    list(rlang_backtrace_on_error = "none"),
+    cli::cli_abort(
+    c("x" ="No API credentials available Use either suso_set_key() to set a key, or provide it as a function argument directly")
+    ))
   return(key)
 }
 
@@ -150,6 +154,10 @@ suso_PwCheck<-function(server=suso_get_api_key("susoServer"),
                        apiPass=suso_get_api_key("susoPass"),
                        workspace = suso_get_api_key("workspace"),
                        token = NULL) {
+  # check internet connection
+  if(!(curl::has_internet())) {
+    cli::cli_alert_danger("No internect connection available! Please check the connection before proceeding.")
+  }
   ## workspace default
   workspace<-.ws_default(ws = workspace)
   # check (.helpers.R)
@@ -172,11 +180,11 @@ suso_PwCheck<-function(server=suso_get_api_key("susoServer"),
   # if interactive, print message & query
   if(interactive()){
     if(test_detail==200){
-      cat("Credentials are correct & and the following successful request was performed:\n\n")
+      cli::cli_alert_success("Credentials are correct & and the following successful request was performed:\n\n")
       url |> httr2::req_dry_run()
 
     } else {
-      cat("Credentials are correct & and the following failed request was performed:\n\n")
+      cli::cli_alert_danger("Credentials are incorrect & and the following failed request was performed:\n\n")
       url |> httr2::req_dry_run()
     }
   }
