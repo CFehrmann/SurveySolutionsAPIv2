@@ -181,7 +181,54 @@ suso_getQuestDetails <- function(server = suso_get_api_key("susoServer"),
     return(test_json)
 
   } else if(operation.type == "structure") {
+    if (is.null(questID) | is.null(version)){
+      withr::with_options(
+        list(rlang_backtrace_on_error = "none"),
+        cli::cli_abort(c("x" = "questID and/or version missing."), call = NULL)
+      )
+    }
 
+    # Build the URL, first for token, then for base auth
+    if(!is.null(token)){
+      url<-.baseurl_token(server, workspace, token, "questionnaires", version = "v1")
+    } else {
+      url<-.baseurl_baseauth(server, workspace, apiUser, apiPass, "questionnaires", version = "v1")
+    }
+
+    url<-req_url_path_append(url, questID, version, "document")
+
+    # get argument for class
+    args<-.getargsforclass(workspace = workspace)
+
+    # check if export file with same parameters is is available
+    aJsonFile<-tempfile(fileext = ".json")
+    tryCatch(
+      { resp<-url |>
+        httr2::req_perform(
+          path = aJsonFile
+        )
+
+      # get the response data
+      if(resp_has_body(resp)){
+        # get body by content type
+        if(resp_content_type(resp) == "application/json") {
+          test_json <- tidyjson::read_json(aJsonFile)
+          test_json <- .suso_transform_fullValid_q(test_json)
+
+          # Variable Format
+          if(nrow(test_json$q)>0) {
+            test_json$q[,LastEntryDate:=lubridate::as_datetime(LastEntryDate)][]
+          }
+        }
+      } else {
+        # return empty if no body
+        test_json<-list(q = NULL, v = NULL)
+      }
+      },
+      error = function(e) .http_error_handler(e, "ass")
+    )
+
+    return(test_json)
 
   } else if(operation.type == "interviews") {
     # use graphql

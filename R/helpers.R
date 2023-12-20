@@ -260,7 +260,7 @@
 
   msg409<-switch(type,
                  "usr" = c("x" = "User cannot be unarchived")
-                 )
+  )
 
   withr::with_options(
     list(rlang_backtrace_on_error = "none"),
