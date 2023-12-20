@@ -12,7 +12,21 @@ suso_getQuestDetails(
   token = NULL,
   questID = NULL,
   version = NULL,
-  operation.type = c("list", "statuses", "structure", "interviews")
+  operation.type = c("list", "statuses", "structure", "interviews"),
+  AssId = NULL,
+  InterviewKey = NULL,
+  errorsCount = NULL,
+  errosCountFilter = c("lower", "higher", "equal"),
+  interviewMode = c("CAPI", "CAWI"),
+  notAnsweredCount = NULL,
+  notAnsweredCountFilter = c("lower", "higher", "equal"),
+  QuestionnaireVariable = NULL,
+  ResponsibleName = NULL,
+  responsibleRole = c("INTERVIEWER", "SUPERVISOR"),
+  workStatus = c("All", "SupervisorAssigned", "InterviewerAssigned",
+    "RejectedBySupervisor", "Completed", "ApprovedBySupervisor",
+    "RejectedByHeadquarters", "ApprovedByHeadquarters"),
+  supervisorName = NULL
 )
 }
 \arguments{
@@ -34,6 +48,34 @@ suso_getQuestDetails(
 \emph{statuses} a vector of all questionnaire statuses. If \emph{structure} is specified, it returns a list
 containing all questions, rosters etc. of the specific questionnaire, as well as all validations.
 If \emph{interviews} is specified, all interviews for a specific questionnaire. See details bellow.}
+
+\item{AssId}{Assignment ID (only required if operations.type is\emph{interviews})}
+
+\item{InterviewKey}{Interview key (only required if operations.type is\emph{interviews})}
+
+\item{errorsCount}{desired number of errors (only required if operations.type is\emph{interviews})}
+
+\item{errosCountFilter}{relational type for error counts, either smaller equal, equal or greater equal than
+the number specified in \code{errorsCount}, if not supplied defaults to lower equal than  \emph{interviews})
+(only required if operations.type is\emph{interviews})}
+
+\item{interviewMode}{Interview mode (CAWI or CAPI) (only required if operations.type is\emph{interviews})}
+
+\item{notAnsweredCount}{number of unanswered questions (only required if operations.type is\emph{interviews})}
+
+\item{notAnsweredCountFilter}{relational type for unanswered question counts, either smaller equal, equal or greater equal than
+the number specified in \code{notAnsweredCount}, if not supplied defaults to lower equal than  \emph{interviews})
+(only required if operations.type is\emph{interviews})}
+
+\item{QuestionnaireVariable}{the variable for the questionnaire (only required if operations.type is\emph{interviews})}
+
+\item{ResponsibleName}{Name of the person responsible (only required if operations.type is\emph{interviews})}
+
+\item{responsibleRole}{Role of the person responsible (only required if operations.type is\emph{interviews})}
+
+\item{workStatus}{of the interview (only required if operations.type is\emph{interviews})}
+
+\item{supervisorName}{Name of the supervisor of the responsible user (only required if operations.type is\emph{interviews})}
 }
 \description{
 \code{suso_getQuestDetails} implements all Questionnaire related API commands. It allows for different operation types,

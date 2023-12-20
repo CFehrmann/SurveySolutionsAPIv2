@@ -16,7 +16,7 @@ print.suso_api <- function(x, ...) {
 
   for (i in 1:length(x)) {
 
-    cat("Survey Solutions API credentials\n")
+    cli::cli_alert_info("Survey Solutions API credentials\n")
 
     for (j in 1:length(x[[i]])){
       cat(" - ", names(x[[i]])[j], ": ")
@@ -130,7 +130,7 @@ suso_get_default_key <- function(api = c("susoServer", "susoUser", "susoPass", "
   if(is.na(key)) withr::with_options(
     list(rlang_backtrace_on_error = "none"),
     cli::cli_abort(
-    c("x" ="No API credentials available Use either suso_set_key() to set a key, or provide it as a function argument directly")
+    c("x" ="No API credentials available! Use either suso_set_key() to set a key, or provide it as a function argument directly")
     ))
   return(key)
 }
@@ -156,7 +156,10 @@ suso_PwCheck<-function(server=suso_get_api_key("susoServer"),
                        token = NULL) {
   # check internet connection
   if(!(curl::has_internet())) {
-    cli::cli_alert_danger("No internect connection available! Please check the connection before proceeding.")
+    withr::with_options(
+      list(rlang_backtrace_on_error = "none"),
+      cli::cli_abort(c("x"="No internect connection available! Please check the connection before proceeding."))
+    )
   }
   ## workspace default
   workspace<-.ws_default(ws = workspace)

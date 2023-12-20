@@ -15,6 +15,22 @@
 #' \emph{statuses} a vector of all questionnaire statuses. If \emph{structure} is specified, it returns a list
 #' containing all questions, rosters etc. of the specific questionnaire, as well as all validations.
 #' If \emph{interviews} is specified, all interviews for a specific questionnaire. See details bellow.
+#' @param AssId Assignment ID (only required if operations.type is\emph{interviews})
+#' @param InterviewKey Interview key (only required if operations.type is\emph{interviews})
+#' @param errorsCount desired number of errors (only required if operations.type is\emph{interviews})
+#' @param errosCountFilter relational type for error counts, either smaller equal, equal or greater equal than
+#' the number specified in \code{errorsCount}, if not supplied defaults to lower equal than  \emph{interviews})
+#' (only required if operations.type is\emph{interviews})
+#' @param interviewMode Interview mode (CAWI or CAPI) (only required if operations.type is\emph{interviews})
+#' @param notAnsweredCount number of unanswered questions (only required if operations.type is\emph{interviews})
+#' @param notAnsweredCountFilter relational type for unanswered question counts, either smaller equal, equal or greater equal than
+#' the number specified in \code{notAnsweredCount}, if not supplied defaults to lower equal than  \emph{interviews})
+#' (only required if operations.type is\emph{interviews})
+#' @param QuestionnaireVariable the variable for the questionnaire (only required if operations.type is\emph{interviews})
+#' @param ResponsibleName Name of the person responsible (only required if operations.type is\emph{interviews})
+#' @param responsibleRole Role of the person responsible (only required if operations.type is\emph{interviews})
+#' @param workStatus of the interview (only required if operations.type is\emph{interviews})
+#' @param supervisorName Name of the supervisor of the responsible user (only required if operations.type is\emph{interviews})
 #'
 #'
 #' @details
@@ -42,7 +58,21 @@ suso_getQuestDetails <- function(server = suso_get_api_key("susoServer"),
                                  workspace = NULL,
                                  token = NULL,
                                  questID = NULL, version = NULL,
-                                 operation.type = c("list", "statuses", "structure", "interviews")) {
+                                 operation.type = c("list", "statuses", "structure", "interviews"),
+                                 AssId = NULL,
+                                 InterviewKey = NULL,
+                                 errorsCount = NULL, errosCountFilter = c("lower", "higher", "equal"),
+                                 interviewMode = c("CAPI", "CAWI"),
+                                 notAnsweredCount = NULL, notAnsweredCountFilter = c("lower", "higher", "equal"),
+                                 QuestionnaireVariable = NULL,
+                                 ResponsibleName = NULL,
+                                 responsibleRole = c("INTERVIEWER", "SUPERVISOR"),
+                                 workStatus=c("All", "SupervisorAssigned", "InterviewerAssigned",
+                                              "RejectedBySupervisor", "Completed",
+                                              "ApprovedBySupervisor",
+                                              "RejectedByHeadquarters",
+                                              "ApprovedByHeadquarters"),
+                                 supervisorName = NULL) {
 
   take <- 100
   # workspace default
@@ -66,7 +96,6 @@ suso_getQuestDetails <- function(server = suso_get_api_key("susoServer"),
 
   # define endpoint
   endpoint <- paste0(server, "graphql")
-  print(endpoint)
 
   if (operation.type == "list") {
     #uses susographql package
@@ -119,8 +148,8 @@ suso_getQuestDetails <- function(server = suso_get_api_key("susoServer"),
     } else {
       # Modify names to match REST API
       data.table::setnames(quest1,
-      old = c("questionnaireId", "variable", "version", "id", "title"),
-      new = c("QuestionnaireId", "Variable", "Version", "QuestionnaireIdentity", "Title")
+                           old = c("questionnaireId", "variable", "version", "id", "title"),
+                           new = c("QuestionnaireId", "Variable", "Version", "QuestionnaireIdentity", "Title")
       )
 
       # Set date time to utc with lubridate
@@ -130,14 +159,155 @@ suso_getQuestDetails <- function(server = suso_get_api_key("susoServer"),
       # return
       return(quest1)
     }
+  } else if (operation.type == "statuses") {
+    # only for consistency reason, api is deprecated
+
+    test_json<-jsonlite::fromJSON('[
+                                      "Restored",
+                                      "Created",
+                                      "SupervisorAssigned",
+                                      "InterviewerAssigned",
+                                      "RejectedBySupervisor",
+                                      "ReadyForInterview",
+                                      "SentToCapi",
+                                      "Restarted",
+                                      "Completed",
+                                      "ApprovedBySupervisor",
+                                      "RejectedByHeadquarters",
+                                      "ApprovedByHeadquarters",
+                                      "Deleted"
+                                    ]'
+    )
+    return(test_json)
+
+  } else if(operation.type == "structure") {
+
+
+  } else if(operation.type == "interviews") {
+    # use graphql
+    # prepare inputs
+    # errors count
+    if(!is.null(errorsCount)){
+      .checkNum(errorsCount)
+      op<-rlang::arg_match(errosCountFilter)
+      errorsCount<-switch(op,
+                 lower = susographql::lte(errorsCount),
+                 equal = susographql::eq(errorsCount),
+                 upper = susographql::gte(errorsCount)
+                 )
+    }
+
+    # not answered count
+    if(!is.null(notAnsweredCount)){
+      .checkNum(notAnsweredCount)
+      op<-rlang::arg_match(notAnsweredCountFilter)
+      notAnsweredCount<-switch(op,
+                          lower = susographql::lte(notAnsweredCount),
+                          equal = susographql::eq(notAnsweredCount),
+                          upper = susographql::gte(notAnsweredCount)
+                          )
+    }
+
+    # workstatus
+    if(!is.null(workStatus)) {
+      workStatus<-rlang::arg_match(workStatus)
+      workStatus<-toupper(workStatus)
+      # NULL if all
+      if(workStatus=="ALL") workStatus<-NULL
+    }
+
+    # int key
+    if(!is.null(InterviewKey)) {
+      .checkIntKeyformat(InterviewKey)
+
+    }
+
+    # interview mode
+    if(!is.null(interviewMode)) {
+      interviewMode<-rlang::arg_match(interviewMode)
+    }
+
+    # assid
+    if(!is.null(AssId)) .checkNum(AssId)
+
+
+
+    # first request
+    quest1<-susographql::suso_gql_interviews(
+      endpoint = endpoint,
+      workspace = workspace,
+      user = apiUser,
+      password = apiPass,
+      questionnaireId = questID,
+      questionnaireVersion = susographql::eq(version),
+      errorsCount = errorsCount,
+      notAnsweredCount = notAnsweredCount,
+      status = workStatus,
+      clientKey = InterviewKey,
+      supervisorName = supervisorName,
+      responsibleName = ResponsibleName,
+      interviewMode = interviewMode,
+      assignmentId = AssId,
+      take = take,
+      skip = 0
+    )
+
+    # check if there are more questionnaires than 100
+    tot<-quest1$interviews$totalCount
+
+    # get first 100
+    quest1<-data.table::data.table(quest1$interviews$nodes)
+
+    if(tot>take){
+      # if yes, then get the rest in a loop
+      rest<-tot-take
+      steps<-ceiling(rest/take)
+      quest2<-list()
+      for(i in 1:steps){
+        quest2[[i]]<-susographql::suso_gql_interviews(
+          endpoint = endpoint,
+          workspace = workspace,
+          user = apiUser,
+          password = apiPass,
+          questionnaireId = questID,
+          questionnaireVersion = susographql::eq(version),
+          errorsCount = errorsCount,
+          notAnsweredCount = notAnsweredCount,
+          status = workStatus,
+          clientKey = InterviewKey,
+          supervisorName = supervisorName,
+          responsibleName = ResponsibleName,
+          interviewMode = interviewMode,
+          assignmentId = AssId,
+          take = take,
+          skip = i*take
+        )$interviews$nodes
+      }
+
+      # bind all together
+      quest2<-data.table::rbindlist(quest2, fill = T)
+      quest1<-data.table::rbindlist(list(quest1,quest2))
+
+    }
+
+    # if empty return
+    if(nrow(quest1)==0) {
+      return(data.table::data.table(NULL))
+    } else {
+      # Modify names to match REST API
+      data.table::setnames(quest1,
+                           old = c("questionnaireId", "questionnaireVariable", "questionnaireVersion", "assignmentId", "responsibleId",
+                                   "responsibleName", "status", "id", "identifyingData", "errorsCount", "updateDateUtc",
+                                   "receivedByInterviewerAtUtc", "clientKey"),
+                           new = c("QuestionnaireId", "QuestionnaireVariable", "QuestionnaireVersion", "AssignmentId", "ResponsibleId",
+                                   "ResponsibleName", "Status", "InterviewId", "FeaturedQuestions", "ErrorsCount", "LastEntryDate",
+                                   "ReceivedByDeviceAtUtc", "InterviewKey"), skip_absent = T
+      )
+      quest1[,LastEntryDate:=lubridate::as_datetime(LastEntryDate)]
+      quest1[,ReceivedByDeviceAtUtc:=lubridate::as_datetime(ReceivedByDeviceAtUtc)][]
+    }
+    return(quest1)
   }
-
-
-
-
-
-
-
 
   ##############################################
 }

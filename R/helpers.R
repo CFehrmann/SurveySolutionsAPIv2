@@ -139,6 +139,18 @@
   }
 }
 
+# check suso key format
+.checkIntKeyformat <- function(id) {
+  # Regular expression for interview key format: 86-85-49-18
+  key_pattern <- "^[0-9]{2}-[0-9]{2}-[0-9]{2}-[0-9]{2}$"
+
+  if(grepl(key_pattern, id)) {
+    invisible(TRUE)
+  } else {
+    stop("Invalid INterview Key format. Please check your input.")
+  }
+}
+
 # check basic email format
 .checkEmailFormat <- function(email) {
   # Basic email pattern: local-part@domain
