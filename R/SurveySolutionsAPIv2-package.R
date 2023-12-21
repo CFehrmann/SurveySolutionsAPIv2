@@ -36,6 +36,7 @@ if(getRversion() >= "3.3.0")  {
     "AnswerValue", "..JSON", "Rsize", "Rtype", "RsizeKey", "Rvar",
     "RvarMerge", "parentid1", "parentid2", "parentgroup", "pargroupcount",
     "HasExportFile", "JobId", "StartDate", "ReceivedByDeviceAtUtc",
+    "QuestionText",
     "resp_time",
     "action",
     "time",

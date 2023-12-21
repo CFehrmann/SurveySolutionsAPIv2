@@ -2,8 +2,10 @@
 
 S3method(getinfo,UserClass)
 S3method(getinfo,assignmentClass)
+S3method(getinfo,exportClass)
 export(UserClass)
 export(assignmentClass)
+export(exportClass)
 export(getinfo)
 export(suso_PwCheck)
 export(suso_archUSR)

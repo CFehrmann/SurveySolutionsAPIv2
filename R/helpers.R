@@ -374,10 +374,12 @@
   return(rows_with_question)
 }
 
-.questionnaire_answeroptions <- function(input_list) {
+# categorical answer options
+.questionnaire_answeroptions <- function(input_list, full_list) {
   # Initialize an empty data frame
   answers_df <- data.frame(AnswerValue = character(),
                            AnswerText = character(),
+                           isLinked = logical(),
                            stringsAsFactors = FALSE)
 
   # Iterate through the outer list
@@ -385,12 +387,36 @@
     # Check if 'Answers' is in the list
     if ("Answers" %in% names(item)) {
       # Extract the 'Answers' sublist
-      answers <- item$Answers
 
+      if ("LinkedToQuestionId" %in% names(item)) {
+        # if linked get max answers and creat response codes
+        linkid<-item$LinkedToQuestionId
+        tl<-full_list[PublicKey==linkid, .(..JSON)]
+        tl<-tl$..JSON[[1]]
+        # get the max count
+        if ("MaxAnswerCount" %in% names(tl)) {
+          maxCount<-tl$MaxAnswerCount
+          varName<-tl$VariableName
+          # generate levels and labels
+          item$Answers<-mapply(
+            function(x,y) list(AnswerValue = x, AnswerText = y),
+            c(1:maxCount),
+            sprintf("%s__%d", varName, 0:(maxCount-1)),
+            SIMPLIFY = F, USE.NAMES = F
+          )
+          islink<-TRUE
+        }
+
+      } else {
+        islink<-FALSE
+      }
+
+      answers <- item$Answers
       # Iterate through the 'Answers' sublist and add to the data frame
       for (answer in answers) {
         answers_df <- rbind(answers_df, data.frame(AnswerValue = answer$AnswerValue,
                                                    AnswerText = answer$AnswerText,
+                                                   isLinked = islink,
                                                    stringsAsFactors = FALSE))
       }
     }
@@ -399,17 +425,28 @@
   return(answers_df)
 }
 
+# remove HTML text
+.questionnaire_remove_html_tags <- function(dt, column) {
+  # Regular expression for HTML tags
+  regex <- "<[^>]+>"
+
+  # Applying gsub to remove HTML tags
+  dt[, (column) := gsub(regex, "", get(column))]
+
+  return(dt)
+}
+
 # convert multi/single select to factor
 .export_convert_to_factor <- function(dt, labels_dt) {
-  dt<-copy(dt)
+  #dt<-copy(dt)
   # make values numeric if not
   if(!is.numeric(labels_dt$AnswerValue)) {
     labels_dt[, AnswerValue := as.numeric(AnswerValue)]
   }
-  on.exit(
-    rm(dt),
-    gc()
-  )
+  # on.exit(
+  #   rm(dt),
+  #   gc()
+  # )
   # Unique base variable names
   base_vars <- unique(sub("__.*", "", names(dt)))
   # Use only base vars where factor is available
@@ -421,31 +458,50 @@
 
   # Iterate over each base variable name
   for (base_var in base_vars) {
-    # Find all columns related to this base variable
-    related_cols <- grep(paste0("^", base_var, "__"), names(dt), value = TRUE)
-    dt[, c(base_var) := numeric(.N)]
-    # Consolidate into a single variable
-    for (col in related_cols) {
-      fval<-as.integer(sub(paste0("^", base_var, "__"), "", col))
-      dt[[base_var]]<-data.table::fifelse(dt[[col]] == 1, fval, dt[[base_var]])
-    }
-
-    # Drop the original long-form columns -->suppress the warning
-    suppressWarnings(
-      dt[, (related_cols) := NULL]
-    )
-
-    # Check if the base variable name is in the VariableName column of labels_dt
-    if (base_var %in% labels_dt$VariableName) {
-      # Extract labels_dt
+    # first check for single column (ie single select)
+    if(base_var %in% names(dt)) {
+      # Create factor
       label_rows <- labels_dt[VariableName == base_var]
 
-      # Create factor
-      dt$tmpvar<-factor(dt[[base_var]], levels = label_rows$AnswerValue, labels = label_rows$AnswerText)
-      # Set NULL base_var
-      dt[, c(base_var) := NULL][]
-      # Rename tmpvar to base_var
-      data.table::setnames(dt, "tmpvar", base_var)
+      lev<-c(label_rows$AnswerValue)
+      lab<-c(label_rows$AnswerText)
+
+      dt[[base_var]]<-factor(dt[[base_var]],
+                             levels = lev,
+                             labels = lab)
+
+
+    } else {
+
+      # Find all columns related to this base variable
+      related_cols <- grep(paste0("^", base_var, "__"), names(dt), value = TRUE)
+      #dt[, c(base_var) := numeric(.N)]
+      dt[[base_var]]<-numeric(nrow(dt))
+      # Consolidate into a single variable
+      for (col in related_cols) {
+        fval<-as.integer(sub(paste0("^", base_var, "__"), "", col))
+        dt[[base_var]]<-data.table::fifelse(dt[[col]] == 1, fval, dt[[base_var]])
+      }
+
+      # Drop the original long-form columns -->suppress the warning
+      suppressWarnings(
+        dt[, (related_cols) := NULL]
+      )
+
+      # Check if the base variable name is in the VariableName column of labels_dt
+      if (base_var %in% labels_dt$VariableName) {
+        # Extract labels_dt
+        label_rows <- labels_dt[VariableName == base_var]
+
+        lev<-c(label_rows$AnswerValue)
+        lab<-c(label_rows$AnswerText)
+
+        # Create factor
+        dt[[base_var]]<-factor(dt[[base_var]],
+                               levels = lev,
+                               labels = lab)
+
+      }
     }
   }
 

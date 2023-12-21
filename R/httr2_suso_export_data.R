@@ -431,7 +431,6 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
     Lall<-c("L0", "L1", "L2", "L3")
     Lindata<-names(allquestions)[names(allquestions) %in% Lall]
 
-    #roscols<-c("Title", "PublicKey", "VariableName", "..JSON", "L0", "L1", "L2", "L3", "L4")
     roscols<-c("Title", "PublicKey", "VariableName", "..JSON", Lindata)
 
     # L1
@@ -502,9 +501,11 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
     # get all questions
     # L0 = Section, L1=section index, L2=roster L1 index, L3=roster L2 index, L4=roster L3 index
     # create string for eval expression: .(L0, L1, L2, L3, L4, Title, PublicKey, VariableName, type, ..JSON)
-    questcols<-sprintf(".(%s)", paste0(c(Lindata, "Title", "PublicKey", "VariableName", "type", "..JSON"), collapse = ","))
+    questcols<-sprintf(".(%s)", paste0(c(Lindata, "Title", "QuestionText", "PublicKey", "VariableName", "type", "..JSON"), collapse = ","))
     quest<-.questionnaire_allquestions(allquestions)[,eval(parse(text = questcols))]
-    # split by roster level
+
+    # Remove HTML tags in QuestionText
+    quest<-.questionnaire_remove_html_tags(quest, "QuestionText")
 
 
 
@@ -519,13 +520,17 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
     # loop over questions and get response options
     qseloptions<-list()
     for(i in 1:nrow(qsel)){
-      qseloptions[[qsel$VariableName[i]]]<-.questionnaire_answeroptions(qsel$..JSON[i])
+      qseloptions[[qsel$VariableName[i]]]<-.questionnaire_answeroptions(qsel$..JSON[i], quest)
     }
     # combine list with VariableName, AnswerValue, AnswerText
     qseloptions<-data.table::rbindlist(qseloptions, idcol = "VariableName")
 
     # add information from qsel
     qseloptions<-qseloptions[qsel, on = .(VariableName)]
+
+    # exclude linked questions
+    # qseloptions<-qseloptions[isLinked==F]
+
 
     # separate by roster level
     qseloptionsL1<-qseloptions[eval(parse(text = L1conditionNA))]
@@ -575,6 +580,8 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
       if(name==questName){
         # convert factor vars
         if(exists("qseloptionsL1") && nrow(qseloptionsL1)>0) tmp_file<-.export_convert_to_factor(tmp_file, qseloptions)
+        # only extend class if not combined
+        if(!combineFiles) tmp_file<-exportClass(tmp_file, quest[,.(VariableName, QuestionText)])
         file_collector.main[[name]] <- tmp_file
         #if(is.null(tmp_file)) {print(paste("ERROR in dta file:", file_zip));next()}
       }
@@ -583,6 +590,8 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
       if(exists("roster_titlesL1") && name%in%roster_titlesL1$VariableName){
         # convert factor vars
         if(exists("qseloptionsL2") && nrow(qseloptionsL2)>0) tmp_file<-.export_convert_to_factor(tmp_file, qseloptions)
+        # only extend class if not combined
+        if(!combineFiles) tmp_file<-exportClass(tmp_file, quest[,.(VariableName, QuestionText)])
         file_collector.rost.L1[[name]] <- tmp_file
       }
 
@@ -590,6 +599,8 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
       if(exists("roster_titlesL2") && name%in%roster_titlesL2$VariableName){
         # convert factor vars
         if(exists("qseloptionsL3") && nrow(qseloptionsL3)>0) tmp_file<-.export_convert_to_factor(tmp_file, qseloptions)
+        # only extend class if not combined
+        if(!combineFiles) tmp_file<-exportClass(tmp_file, quest[,.(VariableName, QuestionText)])
         file_collector.rost.L2[[name]] <- tmp_file
       }
 
@@ -597,6 +608,8 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
       if(exists("roster_titlesL3") && name%in%roster_titlesL3$VariableName){
         # convert factor vars
         if(exists("qseloptionsL4") && nrow(qseloptionsL4)>0) tmp_file<-.export_convert_to_factor(tmp_file, qseloptions)
+        # only extend class if not combined
+        if(!combineFiles) tmp_file<-exportClass(tmp_file, quest[,.(VariableName, QuestionText)])
         file_collector.rost.L3[[name]] <- tmp_file
       }
     }
@@ -655,7 +668,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
           # create argume with sprintf eval(rlang::parse_expr(rosterall_cond))
           dcarg<-sprintf("interview__key + interview__id + %s + %s ~ %s", rid1, rid2, rmerge)
           # dcast
-          file_collector$R3[[rn]]<-data.table::dcast(file_collector$R3[[rn]], eval(rlang::parse_expr(dcarg)), value.var = valvar)
+          file_collector$R3[[rn]]<-data.table::dcast(file_collector$R3[[rn]], eval(rlang::parse_expr(dcarg)), value.var = valvar, sep = "__")
         }
 
       }
@@ -681,7 +694,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
           # create argume with sprintf eval(rlang::parse_expr(rosterall_cond))
           dcarg<-sprintf("interview__key + interview__id + %s ~ %s", rid1, rmerge)
           # dcast
-          file_collector$R2[[rn]]<-data.table::dcast(file_collector$R2[[rn]], eval(rlang::parse_expr(dcarg)), value.var = valvar)
+          file_collector$R2[[rn]]<-data.table::dcast(file_collector$R2[[rn]], eval(rlang::parse_expr(dcarg)), value.var = valvar, sep = "__")
         }
 
       }
@@ -708,7 +721,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
           # create argume with sprintf eval(rlang::parse_expr(rosterall_cond))
           dcarg<-sprintf("interview__key + interview__id ~ %s", rmerge)
           # dcast
-          file_collector$R1[[rn]]<-data.table::dcast(file_collector$R1[[rn]], eval(rlang::parse_expr(dcarg)), value.var = valvar)
+          file_collector$R1[[rn]]<-data.table::dcast(file_collector$R1[[rn]], eval(rlang::parse_expr(dcarg)), value.var = valvar, sep = "__")
         }
       } else {
         stop("Nothing to process", call. = F)
@@ -800,7 +813,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
           )
         }
 
-        return(mainout)
+        return(exportClass(mainout, quest[,.(VariableName, QuestionText)]))
       } else if(exists("roster_titlesL2") && nrow(roster_titlesL2)>0) {
         l3<-names(file_collector$R2)
 
@@ -850,7 +863,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
           )
         }
 
-        return(mainout)
+        return(exportClass(mainout, quest[,.(VariableName, QuestionText)]))
       } else if(exists("roster_titlesL1") && nrow(roster_titlesL1)>0) {
         l2<-names(file_collector$R1)
 
@@ -868,7 +881,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
           )
         }
 
-        return(mainout)
+        return(exportClass(mainout, quest[,.(VariableName, QuestionText)]))
       } else {
         stop("Nothing to process", call. = F)
 
