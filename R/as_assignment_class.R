@@ -82,3 +82,17 @@ getinfo.assignmentClass <- function(obj, arg) {
     attr(obj, arg)
   }
 }
+
+
+#' Function to check if an object is of class assignmentClass
+#'
+#' @param x object to be checked
+#'
+#' @return TRUE if object is of class assignmentClass
+#'
+#' @export
+#'
+
+is.assignmentClass <- function(x) {
+  inherits(x, "assignmentClass")
+}

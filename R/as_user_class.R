@@ -74,3 +74,17 @@ getinfo.UserClass <- function(obj, arg) {
     attr(obj, arg)
   }
 }
+
+
+#' Function to check if an object is of class UserClass
+#'
+#' @param x object to be checked
+#'
+#' @return TRUE if object is of class UserClass
+#'
+#' @export
+
+
+is.UserClass <- function(x) {
+  inherits(x, "UserClass")
+}
