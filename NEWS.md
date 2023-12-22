@@ -3,7 +3,7 @@
 * added new classes: UserClass exportClass and methods, like boxplot_summary.exportClass, summaryTable.exportClass
 * to have consistency across all function arguments, all functions now have server, apiUser, apiPass, as their arguments. This may break some code from the old SurveySolutionAPI package, but affects only a few functions (see vignette for syntax changes) .
 * extended suso_getINT, such that if no sv_id is provided, it will return all interviewers in the workspace.
-* suso_PwCheck now prints a message and the url to the console when in interactive mode
+* suso_PwCheck now prints a message and the URL to the console when in interactive mode
 * suso_getINT_info now covers both interviewer details and retrieval of log files (log = T)
 * workspace has been added to suso_set_key
 * translation can be applied to export data for categorical variables
