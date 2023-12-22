@@ -6,6 +6,11 @@
 # @param status valid status, i.e. 200, 300
 
 
+###############################################################################
+## SEPARATE HELPER FUNCTIONS IN INDIVIDUAL UTILS FILE, I.E EXPORT, QUEST ETC.
+###############################################################################
+
+
 .check_response <- function(response, status = 200){
   if (inherits(response, "httr2_response")) {
     if (resp_status(response)!=status) {
@@ -112,6 +117,14 @@
 # check input types
 .checkNum<-function(x) {
   if (!is.numeric(x)) stop("Input must be numeric")
+}
+
+# exclude survey solutions system variables from vector of variable names
+.excludeSysVars<-function(x) {
+  x<-x[!(x %in% c("sssys_irnd", "interview__status", "assignment__id", "has__errors"))]
+  # exclude system variables ending in __id
+  x<-x[!grepl("__id$", x)]
+  return(x)
 }
 
 ## workspace default check

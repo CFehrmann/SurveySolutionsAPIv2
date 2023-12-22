@@ -11,6 +11,12 @@
 #'
 #' @export
 
+
+######################################################################################
+# !!!!! TO DO: ALL METHODS BELLOW REQUIRE IMPROVEMENTS IN TERMS OF STYLE AND CHECKS!!!
+# FOR STYLES: DEFINE THEME FOR ALL PLOTS
+######################################################################################
+
 exportClass<-function(x, varLabels, ...) {
 
   if(!is.null(x) && is.data.table(x)) {
@@ -155,9 +161,6 @@ is.exportClass<-function(x) {
   inherits(x, "exportClass")
 }
 
-######################################################################################
-# ALL METHODS BELLOW REQUIRE IMPROVEMENTS IN TERMS OF STYLE AND CHECKS!!!
-######################################################################################
 
 #' S3 method to create a summary table of numeric variables for an exportClass object
 #'
@@ -204,6 +207,9 @@ summaryTable.exportClass <- function(x, useDT = TRUE, ...) {
 
   # Get the numeric columns
   numeric_cols <- names(x)[sapply(x, is.numeric)]
+  # exclude survey solutions system columns
+  numeric_cols <- .excludeSysVars(numeric_cols)
+
   # If no nummeric columns are found return NULL and cli warning
   if (length(numeric_cols) == 0) {
     cli::cli_alert_warning("No numeric columns found in the data.")
@@ -302,6 +308,9 @@ boxplot_summary.exportClass <- function(x, useGGplot2 = FALSE,...) {
 
   # Get the numeric columns
   numeric_cols <- names(x)[sapply(x, is.numeric)]
+  # exclude survey solutions system columns
+  numeric_cols <- .excludeSysVars(numeric_cols)
+
   # If no nummeric columns are found return NULL and cli warning
   if (length(numeric_cols) == 0) {
     cli::cli_alert_warning("No numeric columns found in the data.")
@@ -330,7 +339,7 @@ boxplot_summary.exportClass <- function(x, useGGplot2 = FALSE,...) {
     p <- ggplot2::ggplot(df, ggplot2::aes(x = variable, y = value)) +
       ggplot2::geom_boxplot() +
       ggplot2::labs(title = "Box Plot for Numeric Variables", x = "Variable", y = "Value") +
-      ggplot2::theme_minimal()
+      ggplot2::theme_dark()
     return(p)
   } else {
     # Initialize an empty list to store box plots
