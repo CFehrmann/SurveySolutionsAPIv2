@@ -8,7 +8,7 @@ suso_getQuestDetails(
   server = suso_get_api_key("susoServer"),
   apiUser = suso_get_api_key("susoUser"),
   apiPass = suso_get_api_key("susoPass"),
-  workspace = NULL,
+  workspace = suso_get_api_key("workspace"),
   token = NULL,
   questID = NULL,
   version = NULL,

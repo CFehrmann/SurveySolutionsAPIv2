@@ -121,8 +121,9 @@ suso_get_assignments<-function(server = suso_get_api_key("susoServer"),
     if(!is.null(questID)){
       # check for valid version
       if(is.null(version)){
-        stop("Please provide a version number for the questionnaire")
+        cli::cli_abort(c("x" = "You have provided a Questionnaire ID, please also provide a version number."))
       } else {
+        .checkUUIDFormat(questID)
         .checkNum(x = version)
         QID<-paste0(questID, "$", version)
         url<-.addQuery(url, QuestionnaireId = QID)
@@ -140,7 +141,11 @@ suso_get_assignments<-function(server = suso_get_api_key("susoServer"),
 
     # generate and execute first request with limit 100 & offset 0
     url<-.addQuery(url, Limit=100, offset=0)
-    resp<-req_perform(url)
+
+    tryCatch(
+      {resp<-req_perform(url)},
+      error = function(e) .http_error_handler(e, "ass")
+    )
 
     # get the response data
     if(resp_has_body(resp)){
@@ -158,25 +163,39 @@ suso_get_assignments<-function(server = suso_get_api_key("susoServer"),
     # if yes, then generate a list of urls with offset
     if(tot>100){
       # request generator, move to helpers?
-      .genrequests_w_offset<- function(i) {
-        url<-url |>
-          req_url_query(
-            Limit = 100,
-            offset = 100*i
-          )
-        return(url)
-      }
+      # .genrequests_w_offset<- function(i) {
+      #   url<-url |>
+      #     req_url_query(
+      #       Limit = 100,
+      #       offset = 100*i
+      #     )
+      #   return(url)
+      # }
       # get the remaining items & create a list of requests
       rest<-tot-100
       loop.counter<-ceiling(rest/100)
       df<-1:loop.counter
-      requests <- lapply(df, .genrequests_w_offset)
+      # if(interactive()){
+      #   pgtext<-sprintf("Creating requests for assignments in workspace %s.", workspace)
+      #   requests<-lapply(cli::cli_progress_along(df, pgtext), .genrequests_w_offset, url, lim = 100, off = 100, multi = T)
+      # } else {
+      #   requests <- lapply(seq_along(df), .genrequests_w_offset, url, lim = 100, off = 100, multi = T)
+      # }
+
+      # ATTENTION: PROGRESSBAR SEEMS NOT TO WORK IN THIS CONTEXT!!! CHECK!!!
+      requests<-.gen_lapply_with_progress(
+        1:length(df),
+        .genrequests_w_offset,
+        "requests", "assignments", workspace,
+        url, lim = 100, off = 100, multi = T
+      )
+
 
       # generate list of tempfiles used in path to write response (seems to be faster than using resp_body_json)
       tmpfiles <- tempfile(sprintf("suso_%d", df), tmpdir = tempdir(), fileext = ".json")
       # check if length of requests and tmpfiles is the same
       if(!(length(requests)==length(tmpfiles))) {
-        stop("Length of requests and tmpfiles is not the same")
+        cli::cli_abort("Length of requests and tmpfiles is not the same")
       }
 
       # execute requests in parallel !! move new pool settings to options
@@ -189,20 +208,18 @@ suso_get_assignments<-function(server = suso_get_api_key("susoServer"),
       # !! what to do with failures? Mayb while loop--> WITH return there are
       # failures, but length of tmpfiles must be subset!
       if(length(requests) != length(responses)) {
-        stop("Length of requests and responses is not the same")
-        # # i. get the feailed requests
-        # requests_fail<-requests[which(is.null(responses))]
-        # # ii. get the corresponding tmpfiles
-        # tmpfiles_fail<-tmpfiles[which(is.null(responses))]
-        # # iii. get the successful requests
-        # responses<-responses |>
-        #   resps_successes()
-        # # iv. get the corresponding tmpfiles
+        cli::cli_abort("Length of requests and responses is not the same")
       }
 
       # transform response from json tempfile takes 2.51 seconds
-      full_data2<-lapply(tmpfiles, .transformresponses_jsonlite, "Assignments") |>
-        data.table::rbindlist()
+      full_data2<-.gen_lapply_with_progress(
+        1:length(tmpfiles),
+        .transformresponses_jsonlite_iter,
+        "responses", "assignments", workspace,
+        tmpfiles, "Assignments"
+      )
+      full_data2<-data.table::rbindlist(full_data2, fill = T)
+
       # remove tempfile
       unlink(tmpfiles)
 

@@ -10,7 +10,8 @@ suso_getINT(
   apiPass = suso_get_api_key("susoPass"),
   workspace = suso_get_api_key("workspace"),
   token = NULL,
-  sv_id = NULL
+  sv_id = NULL,
+  bigTeam = FALSE
 )
 }
 \arguments{
@@ -26,6 +27,9 @@ no workspace is provided defaults to primary workspace.}
 \item{token}{If Survey Solutions server token is provided \emph{usr} and \emph{pass} will be ignored}
 
 \item{sv_id}{supervisor id, if NULL all interviewers in the workspace are returned, and a column with sv_id is added}
+
+\item{bigTeam}{(only if sv_id=NULL) if TRUE, requests will be performed sequential, and individual teams can be bigger than 100 if FALSE
+requests will be performed in parallel, but do not allow for teams larger 100 interviewers.}
 }
 \description{
 Get list of all interviewers by supervisor id, or a list of all interviewers in the workspace.

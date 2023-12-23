@@ -68,7 +68,7 @@
   return(url)
 }
 
-# request generator, move to helpers?
+# request generator with offset query
 .genrequests_w_offset<- function(i, url,lim = 100, off = 100, multi = TRUE) {
   if(multi) {
     url<-url |>
@@ -86,6 +86,31 @@
   return(url)
 }
 
+# request generator with path
+.genrequests_w_path<-function(i, url, addToPath, ...) {
+  sv_id<-addToPath[i]
+  url<-url |>
+    req_url_path_append(sv_id) |>
+    req_url_path_append(...)
+  # generate and execute first request with limit 100 & offset 0
+  url<-.addQuery(url, Limit=100, offset=1)
+  return(url)
+}
+
+# generate lapply wit cli_progress_along/seq_along, function and arguments
+.gen_lapply_with_progress<-function(vec, fun, stage, type ,workspace, ...) {
+  # force(vec)
+  # force(fun)
+  if(interactive()){
+    pgtext<-sprintf("Creating %s for all %s in workspace %s.", stage, type, workspace)
+    cli::cli_alert_info("\n {pgtext} \n")
+    requests<-lapply(cli::cli_progress_along(vec, pgtext), fun, ...)
+  } else {
+    requests<-lapply(seq_along(vec), fun, ...)
+  }
+  return(requests)
+}
+
 # transform multiple responses to data.table with path and jsonlite
 .transformresponses_jsonlite<-function(path, data) {
   # i. Convert to json
@@ -97,16 +122,28 @@
   return(resp)
 }
 
-# transform multiple responses to data.table without path and httr2::resp_body_json
-.transformresponses<-function(resp, data) {
+# transform multiple responses to data.table with path and jsonlite
+.transformresponses_jsonlite_iter<-function(i, pathVector, data) {
   # i. Convert to json
-  respfull <-resp %>%
-    resp_body_json(simplifyVector = T, flatten = TRUE)
+  path<-pathVector[i]
+  respfull <-jsonlite::fromJSON(path,simplifyVector = T, flatten = TRUE)
 
   # ii. Get identifying data
   # transform to wide format
   resp<-data.frame(respfull[[data]])
   return(resp)
+}
+
+# transform multiple responses to data.table without path and httr2::resp_body_json
+.transformresponses<-function(i ,resp, data) {
+  # i. Convert to json
+  respfull <-resp[[i]] |>
+    resp_body_json(simplifyVector = T, flatten = TRUE)
+
+  # ii. Get identifying data
+  # transform to wide format
+  resptmp<-data.frame(respfull[[data]])
+  return(resptmp)
 }
 
 # drop empty columns (string/numeric) in dplyr pipline

@@ -43,14 +43,14 @@ suso_createASS <- function(df = NULL,
   workspace <- .ws_default(ws = workspace)
 
   # E. Base URL and path
-  # base_url <- server
+  base_url <- server
   # path <- file.path(workspace, "api", "v1", "assignments")
 
   # Build the URL, first for token, then for base auth
   if(!is.null(token)){
-    base_url<-.baseurl_token(server, workspace, token, "assignments")
+    base_url<-.baseurl_token(base_url, workspace, token, "assignments")
   } else {
-    base_url<-.baseurl_baseauth(server, workspace, apiUser, apiPass, "assignments")
+    base_url<-.baseurl_baseauth(base_url, workspace, apiUser, apiPass, "assignments")
   }
 
   # F. Questionnaire ID
@@ -64,7 +64,7 @@ suso_createASS <- function(df = NULL,
 
   # H. Request
   # H.1. Function to generate requests
-  genrequests<- function(i) {
+  genrequests<- function(i, base_url, respname, quant, quid, df) {
     js_ch <- list(
       Responsible = unbox(respname[i]),
       Quantity = unbox(quant[i]),
@@ -74,15 +74,21 @@ suso_createASS <- function(df = NULL,
                                    Answer = c(unlist(df[i,], use.names = FALSE)))
     )
 
-    req <- request(base_url)  |>
-      #req_url_path(path) %>%
-      #req_auth_basic(apiUser, apiPass)  |>
+    req <- base_url  |>
       req_body_json(js_ch)  |>
       req_method("POST")
+
     return(req)
   }
   # H.2. Execute request generation
-  requests <- lapply(1:nrow(df), genrequests)
+  # requests <- lapply(1:nrow(df), genrequests)
+
+  requests<-.gen_lapply_with_progress(
+    1:nrow(df),
+    genrequests,
+    "requests", "assignment creation", workspace,
+    base_url, respname, quant, quid, df
+  )
 
   # H.3. Perform requests in parallel
   responses <- httr2::req_perform_parallel(
@@ -91,6 +97,7 @@ suso_createASS <- function(df = NULL,
     on_error = "continue"
   )
 
+  # if(FALSE) return(responses)
   # I. Response
   # I.1. Get faild responses
   failed<-responses %>% httr2::resps_failures()
@@ -102,8 +109,9 @@ suso_createASS <- function(df = NULL,
   }
   # I.3. Create dataframe from successful responses
   # I.3.1. Function to transform response to dataframe
-  transformresponse<-function(resp) {
+  transformresponse<-function(i, allresp) {
     # i. Convert to json
+    resp<-allresp[[i]]
     respfull <-resp %>%
       resp_body_json(simplifyVector = T, flatten = TRUE)
 
@@ -120,7 +128,13 @@ suso_createASS <- function(df = NULL,
     }
     return(resp)
   }
-  status_list <- lapply(responses, transformresponse)
+  # transform w lapply
+  status_list<-.gen_lapply_with_progress(
+    responses,
+    transformresponse,
+    "responses", "assignments created", workspace,
+    responses
+  )
   # I.3.2. Convert to data.table and bind
   status_list<-data.table::rbindlist(status_list, fill = TRUE)
 

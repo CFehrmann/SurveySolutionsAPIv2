@@ -149,6 +149,8 @@ suso_getSV <- function(server = suso_get_api_key("susoServer"),
 #' @param workspace If workspace name is provide requests are made regarding this specific workspace, if
 #' no workspace is provided defaults to primary workspace.
 #' @param token If Survey Solutions server token is provided \emph{usr} and \emph{pass} will be ignored
+#' @param bigTeam (only if sv_id=NULL) if TRUE, requests will be performed sequential, and individual teams can be bigger than 100 if FALSE
+#' requests will be performed in parallel, but do not allow for teams larger 100 interviewers.
 #'
 #'
 #' @examples
@@ -165,7 +167,8 @@ suso_getINT <- function(server=suso_get_api_key("susoServer"),
                         apiPass = suso_get_api_key("susoPass"),
                         workspace = suso_get_api_key("workspace"),
                         token = NULL,
-                        sv_id = NULL) {
+                        sv_id = NULL,
+                        bigTeam = FALSE) {
   ## default workspace
   workspace<-.ws_default(ws = workspace)
 
@@ -288,14 +291,60 @@ suso_getINT <- function(server=suso_get_api_key("susoServer"),
     # if no sv_id is provided, then get all interviewers in the workspace
     # i. get all sv ids with suso_getSV
     allsv<-suso_getSV(server, apiUser, apiPass, workspace = workspace)
-    # ii. get interviewers for each sv_id with lapply
-    if(interactive()){
-      pgtext<-sprintf("Loading all interviewers in workspace %s.", workspace)
-      test_json<-lapply(cli::cli_progress_along(allsv$UserId, pgtext, length(allsv$UserId)), .svget, allsv$UserId) |>
-        data.table::rbindlist(fill = T)
+    # i.1 if no team large 100 use par perform bigTeam = FALSE
+    if(bigTeam){
+      # ii. get interviewers for each sv_id with lapply
+      # systime seq 206.02   20.45 2564.33
+      if(interactive()){
+        pgtext<-sprintf("Loading all interviewers in workspace %s.", workspace)
+        test_json<-lapply(cli::cli_progress_along(allsv$UserId, pgtext, length(allsv$UserId)), .svget, allsv$UserId) |>
+          data.table::rbindlist(fill = T)
+      } else {
+        test_json<-lapply(seq_along(allsv$UserId), .svget, allsv$UserId) |>
+          data.table::rbindlist(fill = T)
+      }
     } else {
-      test_json<-lapply(seq_along(allsv$UserId), .svget, allsv$UserId) |>
-        data.table::rbindlist(fill = T)
+      # ii.1 generate requests by sv_id
+      requests<-.gen_lapply_with_progress(
+        allsv$UserId,
+        .genrequests_w_path,
+        "requests", "interviewers", workspace,
+        url, allsv$UserId, "interviewers"
+      )
+
+      # ii.2 perfor parallel requests
+      # execute requests in parallel !! move new pool settings to options
+      responses <- httr2::req_perform_parallel(
+        requests,
+        pool = curl::new_pool(host_con = 80, total_con = 80),
+        on_error = "continue"
+      )
+      # I. Response
+      # I.1. Get faild responses
+      failed <- responses |> httr2::resps_failures()
+      # I.2. Get successful responses
+      success <-responses |> httr2::resps_successes()
+      # I.2.1. Check if there are any successful responses and stop if not
+      rol<-"Requests"
+      if(interactive() && length(failed)>0){
+        cli::cli_div(theme = list(span.emph = list(color = "red")))
+        cli::cli_alert_danger("
+      {.emph Some requests failed!}
+      Out of {length(requests)} {rol}, {length(failed)} failed.\n\n")
+        cli::cli_end()
+      } else if(length(success)==0) {
+        cli::cli_abort(c("x" = "No successful requests!"))
+      }
+
+      # ii.3. get responses
+      test_json<-.gen_lapply_with_progress(
+        success,
+        .transformresponses,
+        "responses", "interviewers", workspace,
+        success, "Users"
+      )
+      test_json<-data.table::rbindlist(test_json, fill = T)
+
     }
   }
 
