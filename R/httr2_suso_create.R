@@ -43,8 +43,15 @@ suso_createASS <- function(df = NULL,
   workspace <- .ws_default(ws = workspace)
 
   # E. Base URL and path
-  base_url <- server
-  path <- file.path(workspace, "api", "v1", "assignments")
+  # base_url <- server
+  # path <- file.path(workspace, "api", "v1", "assignments")
+
+  # Build the URL, first for token, then for base auth
+  if(!is.null(token)){
+    base_url<-.baseurl_token(server, workspace, token, "assignments")
+  } else {
+    base_url<-.baseurl_baseauth(server, workspace, apiUser, apiPass, "assignments")
+  }
 
   # F. Questionnaire ID
   quid <- paste0(QUID, "$", version)
@@ -67,10 +74,10 @@ suso_createASS <- function(df = NULL,
                                    Answer = c(unlist(df[i,], use.names = FALSE)))
     )
 
-    req <- request(base_url) %>%
-      req_url_path(path) %>%
-      req_auth_basic(apiUser, apiPass) %>%
-      req_body_json(js_ch) %>%
+    req <- request(base_url)  |>
+      #req_url_path(path) %>%
+      #req_auth_basic(apiUser, apiPass)  |>
+      req_body_json(js_ch)  |>
       req_method("POST")
     return(req)
   }
@@ -91,7 +98,7 @@ suso_createASS <- function(df = NULL,
   responses<-responses %>% resps_successes()
   # I.2.1. Check if there are any successful responses and stop if not
   if(length(responses)==0){
-    stop("No successful responses")
+    cli::cli_abort(c("x" = "No successful responses"), call = NULL)
   }
   # I.3. Create dataframe from successful responses
   # I.3.1. Function to transform response to dataframe

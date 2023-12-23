@@ -325,6 +325,11 @@
   )
 }
 
+# error body
+.http_error_body <- function(resp) {
+  httr2::resp_body_json(resp)$error  #, simplifyVector = T, flatten = TRUE)
+}
+
 # list export tab files for processing
 .list_export_tab_files <- function(directory) {
   # List all files in the directory

@@ -11,11 +11,9 @@
 #' @importFrom data.table .NGRP
 #' @importFrom data.table .SD
 #' @importFrom data.table :=
+#' @import httr2
 #' @importFrom dplyr bind_rows select_if union
 #' @importFrom graphics boxplot
-#' @importFrom httr2 req_auth_basic req_auth_bearer_token req_body_json req_headers req_method req_perform req_perform_parallel req_error req_perform_iterative
-#' req_url_path req_url_path_append req_url_query request resp_body_json resp_content_type resp_has_body resp_status resps_failures
-#' resps_successes
 #' @importFrom httr authenticate build_url GET parse_url
 #' @importFrom jsonlite fromJSON unbox
 #' @importFrom stats setNames sd
@@ -36,7 +34,8 @@ if(getRversion() >= "3.3.0")  {
     "AnswerValue", "..JSON", "Rsize", "Rtype", "RsizeKey", "Rvar",
     "RvarMerge", "parentid1", "parentid2", "parentgroup", "pargroupcount",
     "HasExportFile", "JobId", "StartDate", "ReceivedByDeviceAtUtc",
-    "variable", "value",
+    "variable", "value", "Role", "UserName", "FullName", "Password",
+    "Supervisor", "PhoneNumber",
     "QuestionText",
     "resp_time",
     "action",
