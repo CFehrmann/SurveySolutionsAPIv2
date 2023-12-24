@@ -184,10 +184,11 @@ suso_get_assignments<-function(server = suso_get_api_key("susoServer"),
 
       # ATTENTION: PROGRESSBAR SEEMS NOT TO WORK IN THIS CONTEXT!!! CHECK!!!
       requests<-.gen_lapply_with_progress(
-        1:length(df),
+        1:loop.counter,
         .genrequests_w_offset,
         "requests", "assignments", workspace,
-        url, lim = 100, off = 100, multi = T
+        url, lim = 100, off = 100, multi = T,
+        call = rlang::caller_env()
       )
 
 
@@ -213,10 +214,11 @@ suso_get_assignments<-function(server = suso_get_api_key("susoServer"),
 
       # transform response from json tempfile takes 2.51 seconds
       full_data2<-.gen_lapply_with_progress(
-        1:length(tmpfiles),
+        1:loop.counter,
         .transformresponses_jsonlite_iter,
         "responses", "assignments", workspace,
-        tmpfiles, "Assignments"
+        tmpfiles, "Assignments",
+        call = rlang::caller_env()
       )
       full_data2<-data.table::rbindlist(full_data2, fill = T)
 
