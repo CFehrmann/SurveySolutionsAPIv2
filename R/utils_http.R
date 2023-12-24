@@ -137,17 +137,17 @@
   error_type <- class(error_condition)[1]
   # error messages
   msg404<-switch(type,
-                 "ass" = c("x" = "Questionnaire/Assignment/Assignee not found"),
-                 "usr" = c("x" = "User not found"),
-                 "exp" = c("x" = "Export process was not found")
+                 "ass" = c("x" = "Questionnaire/Assignment/Assignee not found."),
+                 "usr" = c("x" = "User not found in current workspace."),
+                 "exp" = c("x" = "Export process was not found.")
   )
   msg406<-switch(type,
-                 "ass" = c("x" = "Assignee cannot be assigned to assignment"),
-                 "usr" = c("x" = "User is not an interviewer or supervisor")
+                 "ass" = c("x" = "Assignee cannot be assigned to assignment."),
+                 "usr" = c("x" = "User is not an interviewer or supervisor.")
   )
 
   msg400<-switch(type,
-                 "ass" = c("x" = "Bad parameters provided or identifying data incorrect. See response details for more info"),
+                 "ass" = c("x" = "Bad parameters provided or identifying data incorrect. See response details for more info."),
                  "usr" = c("x" = "User not found"),
                  "exp" = c("x" = "Request is malformed/Export file was not generated yet")
   )

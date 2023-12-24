@@ -348,10 +348,21 @@ suso_getINT <- function(server=suso_get_api_key("susoServer"),
     }
   }
 
-  x<-list()
-  x$Users<-test_json
-  test_json<-UserClass(x, args)
-  return(test_json)
+  if(is.null(test_json)) {
+    # no users in ws
+    cli::cli_alert_danger("No user(s) in workspace {workspace} found!")
+    # return 0 row data.table
+    x<-list()
+    x$Users<-data.table::data.table(character(0))
+    test_json<-UserClass(x, args)
+    return(test_json)
+
+  } else {
+    x<-list()
+    x$Users<-test_json
+    test_json<-UserClass(x, args)
+    return(test_json)
+  }
 
 }
 
@@ -555,9 +566,8 @@ suso_getUSR<-function(server=suso_get_api_key("susoServer"), apiUser = suso_get_
         return(test_json)
       }
     }
-  }, error = function(e) {
-    stop("User not found")
-  })
+  }, error = function(e) .http_error_handler(e, "usr")
+  )
 }
 
 
@@ -618,7 +628,7 @@ suso_archUSR<-function(server=suso_get_api_key("susoServer"), apiUser = suso_get
       req_url_path_append(user_id)
 
     # check archive is logical
-    if(!is.logical(archive)) stop("Please provide logical value for archive")
+    if(!is.logical(archive)) cli::cli_abort(c("x" = "Please provide TRUE/FALSE value for archive."))
 
     arch<-ifelse(archive, "archive", "unarchive")
     url<-url |>
@@ -637,18 +647,11 @@ suso_archUSR<-function(server=suso_get_api_key("susoServer"), apiUser = suso_get
       return(test_json)
 
     },
-    httr2_http_404 = function(e) {
-      stop("User not found")
-    },
-    httr2_http_400 = function(e) {
-      stop("User id cannot be parsed")
-    },
-    httr2_http_401 = function(e) {
-      stop("Unauthorized")
-    })
+    error = function(e) .http_error_handler(e, "usr")
+    )
 
   } else {
-    stop("Please provide user_id")
+    cli::cli_abort(c("x" = "Please provide a valid user_id."))
   }
 
 

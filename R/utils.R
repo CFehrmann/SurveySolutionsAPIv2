@@ -7,6 +7,14 @@
 #' @noRd
 #'
 
+# .cli_alert_interactive<-function(msg, type = "info"){
+#   if(interactive()) {
+#     if(type=="info") cli::cli_alert_info(msg)
+#     if(type=="warning") cli::cli_alert_warning(msg)
+#     if(type=="error") cli::cli_alert_error(msg)
+#   }
+# }
+
 .check_basics<- function(token, server, apiUser, apiPass) {
   if(is.null(token)){
     if(is.null(server) | is.null(apiUser) | is.null(apiPass)){
@@ -39,6 +47,7 @@
     # workspace<-match.arg(workspace, margs)
     ws<-ws
   } else {
+    if(interactive()) cli::cli_alert_info("No workspace provided. Using primary workspace.")
     ws<-"primary"
   }
   return(ws)
@@ -49,10 +58,10 @@
   # Regular expression for UUID format: 8-4-4-4-12
   uuid_pattern <- "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
 
-  if(grepl(uuid_pattern, id)) {
+  if(!is.null(id) && grepl(uuid_pattern, id)) {
     invisible(TRUE)
   } else {
-    stop("Invalid UUID format. Please check your input.")
+    cli::cli_abort(c("x" = "Invalid UUID format, or not provided. Please check your input."))
   }
 }
 

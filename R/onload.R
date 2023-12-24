@@ -15,4 +15,12 @@
     attr(options, "class") <- "suso_api"
     options(SurveySolutionsAPI = options)
   }
+
+  if(is.null(getOption("suso.maxpar.req"))) {
+    options(suso.maxpar.req = 100)
+  }
+  if(is.null(getOption("suso.maxpar.con"))) {
+    # if max requests not NULL, then set con to same
+    options(suso.maxpar.con = min(100, getOption("suso.maxpar.req")))
+  }
 }

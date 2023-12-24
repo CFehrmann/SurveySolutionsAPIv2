@@ -12,6 +12,7 @@
 #' @importFrom data.table .SD
 #' @importFrom data.table :=
 #' @import httr2
+#' @rawNamespace import(rlang, except = c(`:=`, unbox))
 #' @importFrom dplyr bind_rows select_if union
 #' @importFrom graphics boxplot
 #' @importFrom httr authenticate build_url GET parse_url

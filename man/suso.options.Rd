@@ -11,9 +11,9 @@ Below are the options and environment variables, that are used by the \pkg{Surve
 Bellow is a list of options, with their default values.
 
 \itemize{
-\item \option{max.par.requests} specifies the maximum number of parallel requests, default is 100
-\item \option{max.par.connections} specifies the maximum number of parallel connections,
-and must always be equal or greater than max.par.requests, default is 100.
+\item \option{suso.maxpar.req} specifies the maximum number of parallel requests, default is 100
+\item \option{suso.maxpar.con} specifies the maximum number of parallel connections,
+and must always be equal or greater than suso.maxpar.req, default is 100.
 }
 }
 
