@@ -16,6 +16,7 @@
     options(SurveySolutionsAPI = options)
   }
 
+  # parallel requests
   if(is.null(getOption("suso.maxpar.req"))) {
     options(suso.maxpar.req = 100)
   }
@@ -23,4 +24,7 @@
     # if max requests not NULL, then set con to same
     options(suso.maxpar.con = min(100, getOption("suso.maxpar.req")))
   }
+
+  #mili seconds
+  options(digits.secs = 3)
 }

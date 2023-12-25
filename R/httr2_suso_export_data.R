@@ -92,6 +92,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
                       process_mapquestions = FALSE,
                       combineFiles = TRUE) {
 
+  extype<-"Tabular"
   # workspace default
   workspace<-.ws_default(ws = workspace)
 
@@ -185,6 +186,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
 
   # CHECK for existing files
   if(nrow(exlist)>0) {
+    exlist<-exlist[ExportType==extype]
     # subset existing exports & check time diff parameter with last creation date
     # 1. Check qid
     qid<-stringr::str_remove_all(qid, "-")
@@ -195,7 +197,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
 
     # 3. Check reload time diff (= difference between last file in
     # exlist start time)
-    if(!is.null(reloadTimeDiff)) {
+    if(nrow(exlist_sub)>0 && !is.null(reloadTimeDiff)) {
       .checkNum(reloadTimeDiff)
 
       # latest export start time
@@ -266,7 +268,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
 
     # creat body list
     js_body<-list(
-      ExportType = "Tabular", #required
+      ExportType = extype, #required
       QuestionnaireId = qid, #required
       InterviewStatus = workStatus, #required
       From = from_datetime, # can be null
