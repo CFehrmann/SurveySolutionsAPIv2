@@ -628,7 +628,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
         if(!combineFiles) tmp_file<-exportClass(tmp_file, quest[,.(VariableName, QuestionText)])
         file_collector.main[[name]] <- tmp_file
         # sf processing
-        if(process_mapquestions && nrow(qgpsL1)>0) {
+        if(!combineFiles && process_mapquestions && nrow(qgpsL1)>0) {
           # print(qgpsL1); print((tmp_file))
         }
         #if(is.null(tmp_file)) {print(paste("ERROR in dta file:", file_zip));next()}
@@ -642,7 +642,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
         # only extend class if not combined
         if(!combineFiles) tmp_file<-exportClass(tmp_file, quest[,.(VariableName, QuestionText)])
         file_collector.rost.L1[[name]] <- tmp_file
-        if(process_mapquestions && nrow(qgpsL2)>0) {
+        if(!combineFiles && process_mapquestions && nrow(qgpsL2)>0) {
           # get roster var RvarMerge
           r1var<-roster_titlesL1[VariableName == name, RvarMerge]
           for(v in 1:nrow(qgpsL2)) {
@@ -690,7 +690,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
         # only extend class if not combined
         if(!combineFiles) tmp_file<-exportClass(tmp_file, quest[,.(VariableName, QuestionText)])
         file_collector.rost.L2[[name]] <- tmp_file
-        if(process_mapquestions && nrow(qgpsL3)>0) {
+        if(!combineFiles && process_mapquestions && nrow(qgpsL3)>0) {
           # get roster var RvarMerge
           r1var<-roster_titlesL2[VariableName == name, RvarMerge]
           r2var<-roster_titlesL2[VariableName == name, parentid1]
@@ -732,7 +732,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
         # only extend class if not combined
         if(!combineFiles) tmp_file<-exportClass(tmp_file, quest[,.(VariableName, QuestionText)])
         file_collector.rost.L3[[name]] <- tmp_file
-        if(process_mapquestions && nrow(qgpsL4)>0) {
+        if(!combineFiles && process_mapquestions && nrow(qgpsL4)>0) {
 
         }
       }
