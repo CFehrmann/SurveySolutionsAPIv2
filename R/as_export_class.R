@@ -8,6 +8,8 @@
 #' @param ... additional attributes to be added to the ExportClass
 #' @param varLabels data.table of variable labels as returned by
 #' \code{suso_getQuestDetails(operation.type = "structure")}
+#' @param type one of main or para, if main returns exportClass object for the main data,
+#' if para, returns an exportClass object for the paradata.
 #'
 #' @export
 
@@ -17,7 +19,7 @@
 # FOR STYLES: DEFINE THEME FOR ALL PLOTS
 ######################################################################################
 
-exportClass<-function(x, varLabels, ...) {
+exportClass<-function(x, varLabels, ..., type = "main") {
 
   if(!is.null(x) && is.data.table(x)) {
     # check inputs

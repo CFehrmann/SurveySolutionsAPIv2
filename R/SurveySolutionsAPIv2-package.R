@@ -19,7 +19,7 @@
 #' @importFrom jsonlite fromJSON unbox
 #' @importFrom stats setNames sd
 #' @importFrom lubridate as_datetime ymd ymd_hms now today
-#' @importFrom stringr str_count str_detect str_extract str_replace_all str_split str_sub
+#' @importFrom stringr str_count str_detect str_extract str_replace_all str_split str_sub str_remove
 #' @importFrom tidyjson enter_object gather_array spread_all jstring jnumber jlogical bind_rows spread_values
 #' @importFrom zip unzip
 #' @importFrom utils setTxtProgressBar txtProgressBar
@@ -36,7 +36,7 @@ if(getRversion() >= "3.3.0")  {
     "RvarMerge", "parentid1", "parentid2", "parentgroup", "pargroupcount",
     "HasExportFile", "JobId", "StartDate", "ReceivedByDeviceAtUtc",
     "variable", "value", "Role", "UserName", "FullName", "Password",
-    "Supervisor", "PhoneNumber",
+    "Supervisor", "PhoneNumber", "Featured", "type1",
     "QuestionText",
     "resp_time",
     "action",
@@ -77,7 +77,7 @@ if(getRversion() >= "3.3.0")  {
     "response",
     "responsible",
     "role",
-    "dateTime","tz","wDAY","mDAY","MONTH", "WEEK",
+    "dateTime", "dateTimeUTC","tz","wDAY","mDAY","MONTH", "WEEK",
     "UpdatedAtUtc", "InterviewDuration", "intID",
     "VariableName", "Expression", "Message", "Severity",
     "QuestionnaireId", "StartDate", "CompleteDate", "pid",

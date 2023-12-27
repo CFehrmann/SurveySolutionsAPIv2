@@ -4,7 +4,7 @@
 \alias{exportClass}
 \title{Export Classes & Methods}
 \usage{
-exportClass(x, varLabels, ...)
+exportClass(x, varLabels, ..., type = "main")
 }
 \arguments{
 \item{x}{list returned by api call}
@@ -13,6 +13,9 @@ exportClass(x, varLabels, ...)
 \code{suso_getQuestDetails(operation.type = "structure")}}
 
 \item{...}{additional attributes to be added to the ExportClass}
+
+\item{type}{one of main or para, if main returns exportClass object for the main data,
+if para, returns an exportClass object for the paradata.}
 }
 \description{
 Export class extends the data.table class to include relevant methods

@@ -37,4 +37,5 @@ Remotes:
     michael-cw/susographql
 Suggests: 
     DT,
-    ggplot2
+    ggplot2,
+    sf

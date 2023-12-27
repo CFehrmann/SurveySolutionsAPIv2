@@ -27,4 +27,9 @@
 
   #mili seconds
   options(digits.secs = 3)
+
+  # paradata breaks (in seconds--> used for durationNOBREAK)
+  options(suso.para.break = 120)
+  # tz defaults to system tz
+  options(suso.para.tz = Sys.timezone())
 }

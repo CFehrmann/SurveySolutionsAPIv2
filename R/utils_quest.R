@@ -259,9 +259,32 @@
   }
 
   # Identify rows where 'type' contains 'Gps'
-  rows_with_question <- dt[grepl("Gps", type), ]
+  rows_with_question <- dt[grepl("Gps", type) | grepl("AreaQuestion", type), ]
+  # create type1 with gps/map area/map point
+  rows_with_question[,type1:=character(.N)]
+  # gps
+  rows_with_question[grepl("Gps", type), type1:="GPS"]
+  # map area (!!ADD MULTIPOINT & LINE)
+  for(i in 1:nrow(rows_with_question)) {
+    if(grepl("AreaQuestion", rows_with_question[i, type])) {
+      if(rows_with_question$..JSON[[i]]$Properties$GeometryType == 0) {
+        rows_with_question[i, type1:="POLY"]
+      } else if(rows_with_question$..JSON[[i]]$Properties$GeometryType == 1) {
+        rows_with_question[i, type1:="LINE"]
+      } else if(rows_with_question$..JSON[[i]]$Properties$GeometryType == 2) {
+        rows_with_question[i, type1:="POINT"]
+      } else if(rows_with_question$..JSON[[i]]$Properties$GeometryType == 3) {
+        rows_with_question[i, type1:="POINT"]
+      }
+    }
+  }
+  # rows_with_question[grepl("AreaQuestion", type) && ..JSON[[]]$Properties$GeometryType == 0, type1:="POLY"]
+  # rows_with_question[grepl("AreaQuestion", type) && ..JSON[[]]$Properties$GeometryType == 3, type1:="POINT"]
 
-  return(rows_with_question)
+  # mark type of area with quest$q$..JSON[[22]]$Properties$GeometryType
+  # 0 for polygon, 3 for single point
+
+  return(rows_with_question[])
 }
 
 # categorical answer options

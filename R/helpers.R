@@ -35,8 +35,10 @@
   DTfile<-copy(DTfile)
   setorderv(DTfile, c("interview__id","date", "time", "counter"))
   #DTfile<-DTfile[,.SD[.N>20], by=.(interview__id)]
-  DTfile[,resp_time:=as.numeric(0)][ ,resp_time:=fifelse((data.table::shift(date, type = "lag")==date & action!="Paused"),
-                                                         as.numeric(time-data.table::shift(time, type = "lag")), 0), by=.(interview__id)][]
+  # DTfile[,resp_time:=as.numeric(0.000)][ ,resp_time:=fifelse((data.table::shift(date, type = "lag")==date & action!="Paused"),
+  #                                                        as.numeric(time-data.table::shift(time, type = "lag")), 0.000), by=.(interview__id)][]
+  DTfile[,resp_time:=as.numeric(0.000)][ ,resp_time:=fifelse((data.table::shift(date, type = "lag")==date & action!="Paused"),
+                                                             as.numeric(dateTime-data.table::shift(dateTime, type = "lag")), 0.000), by=.(interview__id)][]
   DTfile[, breaks:=fifelse(resp_time>120&!is.na(resp_time),1L,0L), by=.(interview__id)]
   return(DTfile)
 }
@@ -99,7 +101,12 @@
   }
 
   ##  4. DATE is adjusted for timezone!
-  file[,dateTime:=as_datetime(time)-lubridate::hms(tz)][,c("tz"):=NULL]
+  ##      !!!! IMPORTANT: TIME STAMPS ARE IN UTC, TAKE TZ FOR LOCAL
+  ##      !!!! TZ is negative therefor +
+  file[,dateTimeUTC:=lubridate::as_datetime(time, tz = "UTC")]
+  ## Date time uses system local tz, needs to be changed in options
+  file[,dateTime:=lubridate::as_datetime(time, tz = getOption("suso.para.tz")) + lubridate::hms(tz)][,c("tz"):=NULL]
+  # file[,timeChr:=paste(time, str_remove(tz, ":00$"))]
   file[,time:=as.ITime(dateTime)]
   file[,date:=as.IDate(dateTime)]
   file[,wDAY:=wday(date)]
@@ -111,3 +118,105 @@
   # prog<-prog+1
 }
 #
+
+
+
+.export_convert_to_sfpoly <- function(coord_strings, int__id, ..., caller) {
+  process_coords <- function(coord_str) {
+    # Split the string into lat-long pairs
+    pairs <- strsplit(coord_str, ";")[[1]]
+    # Split each pair into lat and long and convert to numeric
+    coords <- matrix(as.numeric(unlist(strsplit(pairs, ","))), ncol = 2, byrow = TRUE)
+    # Close the polygon if not closed
+    if (!identical(coords[1, ], coords[nrow(coords), ])) {
+      coords <- rbind(coords, coords[1, ])
+    }
+    # Return the coordinates
+    return(coords)
+  }
+
+  polygons <- lapply(seq_along(coord_strings), function(i) {
+    str<-coord_strings[i]
+    id<-int__id[i]
+    rosids<-list(...)
+    names(rosids)<-sapply(names(rosids),
+                          function(p) eval(as.symbol(p), envir = caller))
+
+    if (str == "##N/A##") {
+      return(NULL)
+    } else {
+      coords <- process_coords(str)
+      # Create an sf polygon
+      polygon <- sf::st_sfc(sf::st_polygon(list(coords)), crs = 4326)
+      polygon <- sf::st_as_sf(polygon)
+      polygon$interview__id<-id
+      # check if .. is empty
+      if(length(rosids)>0) {
+        # namevec<-c("RvarMerge", "parentid1", "parentid2")
+        for(k in names(rosids)) {
+          rid<-rosids[[k]][i]
+          polygon[[k]]<-rid
+        }
+      }
+      return(polygon)
+    }
+  })
+
+  # Remove NULL elements
+  polygons <- polygons[!sapply(polygons, is.null)]
+
+  # Create an sf object
+  sf_polygons <- do.call(rbind, polygons)
+
+
+  # Calculate area for each polygon
+  sf_polygons$area <- sf::st_area(sf_polygons)
+
+  return(sf_polygons)
+}
+
+
+.export_convert_to_sfpoint <- function(coord_strings, int__id, ..., caller) {
+  process_coords <- function(coord_str) {
+    # Split the string into lat-long pairs
+    pairs <- strsplit(coord_str, ";")[[1]]
+    # Split each pair into lat and long and convert to numeric
+    coords <- matrix(as.numeric(unlist(strsplit(pairs, ","))), ncol = 2, byrow = TRUE)
+    # Return the coordinates
+    return(coords)
+  }
+
+  points_list <- lapply(seq_along(coord_strings), function(i) {
+    str<-coord_strings[i]
+    id<-int__id[i]
+    rosids<-list(...)
+    names(rosids)<-sapply(names(rosids),
+                          function(p) eval(as.symbol(p), envir = caller))
+    if (str == "##N/A##") {
+      return(NULL)
+    } else {
+      coords <- process_coords(str)
+      # Create sf points
+      point <- sf::st_sfc(sf::st_multipoint(coords), crs = 4326)
+      point <- sf::st_as_sf(point)
+      point$interview__id<-id
+      # check if .. is empty
+      if(length(rosids)>0) {
+        # namevec<-c("RvarMerge", "parentid1", "parentid2")
+        for(k in names(rosids)) {
+          rid<-rosids[[k]][i]
+          point[[k]]<-rid
+        }
+      }
+      return(point)
+    }
+  })
+
+  # Remove NULL elements
+  points_list <- points_list[!sapply(points_list, is.null)]
+
+  # Flatten the list of points
+  sf_points <- do.call(rbind, points_list)
+
+  return(sf_points)
+}

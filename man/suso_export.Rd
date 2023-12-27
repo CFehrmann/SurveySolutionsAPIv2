@@ -56,7 +56,8 @@ RejectedBySupervisor,ReadyForInterview,
 SentToCapi,Restarted,Completed,ApprovedBySupervisor,
 RejectedByHeadquarters,ApprovedByHeadquarters,Deleted}), if NULL all is exported}
 
-\item{addTranslation}{if not NULL, the translation name as specified in the designer, which will then be applied value labels}
+\item{addTranslation}{if not NULL, the translation name as specified in the designer, which will then be applied value labels
+\emph{(not implemented yet!)}}
 
 \item{reloadTimeDiff}{time difference in hours between last generated file and now}
 
@@ -66,7 +67,7 @@ RejectedByHeadquarters,ApprovedByHeadquarters,Deleted}), if NULL all is exported
 
 \item{weight_file}{file path to file with survey weights. if provided, the weights will be added to the export}
 
-\item{process_mapquestions}{should map questions be processed to spatial (sf) objects}
+\item{process_mapquestions}{should map questions be processed to spatial (sf) objects \emph{(experimental!)}}
 
 \item{combineFiles}{if TRUE, the export will be combined into single data.table, see details for the processing steps}
 }

@@ -408,6 +408,11 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
   #fromDate<-as.character(min(paradata_files$date, na.rm = T), "%d %B, %Y")
   #toDate<-as.character(max(paradata_files$date, na.rm = T), "%d %B, %Y")
 
+  paradata_files<-paradata_files[,VariableName:=var]
+  paradata_files <- merge(paradata_files, allquestions[,.(VariableName, type, QuestionText, Featured)], all.x = T, by = "VariableName")
+  paradata_files[,VariableName:=NULL]
+
+
   ##################################################################
   ##  2.2. GET ALL ACTION COUNTS
   actionDistr<-paradata_files[,.(count=.N), by=.(action)]
@@ -464,7 +469,7 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
   para1_answer[,m_resp_time_varTRIM:=(mean(resp_time, na.rm = T, trim = 0.05)), by = .(var)]
   para1_answer[,m_resp_time_var:=(mean(resp_time, na.rm = T)), by = .(var)]
   para1_answer[breaks==0,m_diff_dev:=resp_time-m_resp_time_varTRIM]
-  para1_answer[,start:=min(time, na.rm = T), by=.(interview__id)]
+  para1_answer[,start:=as_datetime(min(dateTime, na.rm = T), tz = getOption("suso.para.tz")), by=.(interview__id)]
   para1_answer[,startHour:=min(hour(time), na.rm = T), by=.(interview__id)]
   para1_answer[,role:=droplevels(role)][,responsible:=droplevels(responsible)]
   para1_answer[,var:=as.factor(var)]
@@ -606,7 +611,27 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
       return(para_data)
     } else if(onlyActiveEvents && !asList) {
       cli::cli_alert_info("Processing singel dataframe object.")
-      return(data.table(NULL))
+      para_data<-data.table::rbindlist(para_data[c("AnswerSet", "AnswerRemoved", "Restarted")], fill = T)
+      # adjust names to match suso
+      setnames(para_data,
+               old = c("var", "key"),
+               new = c("VariableName", "interview__key")
+               )
+      # remove redundant columns & !!!TD:  MOVE DURATION ETC TO ATTRIBUTES ADD SECTION TITLE
+      para_data[,c("var_resp", "rid"):=NULL][]
+      # para_data<-para_data[allquestions[,.(VariableName, type, QuestionText, Featured)], on="VariableName"]
+      # para_data <- merge(para_data, allquestions[,.(VariableName, type, QuestionText, Featured)], all.x = T)
+
+      # set key for index
+      setkeyv(para_data, c("interview__id", "counter"))
+
+      # add to export class
+      # bbb[VariableName!= "<NA>",.(av_response_time=mean(resp_time)), by=.(VariableName)]
+      # bbb[VariableName!= "<NA>",.(int_duration=sum(resp_time, na.rm = T)/60), by=.(interview__id)]
+      # bbb[type!= "<NA>",.(av_resp_time=sum(resp_time, na.rm = T)/60), by=.(type)]
+
+
+      return(para_data)
 
     }
   }

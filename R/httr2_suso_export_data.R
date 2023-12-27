@@ -22,7 +22,8 @@
 #' @param to_date if provided, only interviews started until this date will be included
 #' @param to_time if provided, only interviews started until this time will be included
 #' @param addTranslation if not NULL, the translation name as specified in the designer, which will then be applied value labels
-#' @param process_mapquestions should map questions be processed to spatial (sf) objects
+#' \emph{(not implemented yet!)}
+#' @param process_mapquestions should map questions be processed to spatial (sf) objects \emph{(experimental!)}
 #' @param combineFiles if TRUE, the export will be combined into single data.table, see details for the processing steps
 #'
 #'
@@ -96,6 +97,13 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
   # workspace default
   workspace<-.ws_default(ws = workspace)
 
+  # check sf installed when process_mapquestions TRUE
+  if(process_mapquestions) {
+    rlang::check_installed(
+      "sf",
+      reason = "The sf package is required for processing the map questions."
+    )
+  }
   # check (.helpers.R)
   .check_basics(token, server, apiUser, apiPass)
 
@@ -512,7 +520,16 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
 
 
     # get gps questions
-    qgps<-.questionnaire_gpsquestion(quest)
+    qgps<-.questionnaire_gpsquestion(allquestions)
+    # if no gps show warning and continue
+    if(process_mapquestions) {
+      if(nrow(qgps)==0) {
+        cli::cli_alert_warning("No GPS questions found in questionnaire. Map questions will not be processed.")
+        # set process_mapquestion to F
+        process_mapquestions<-FALSE
+        }
+    }
+
 
     # get list questions
     qlist<-quest[type %in% c("TextListQuestion")]
@@ -520,27 +537,47 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
     # get response options for MultyOptionsQuestion, SingleQuestion
     qsel<-quest[type %in% c("MultyOptionsQuestion", "SingleQuestion")]
     # loop over questions and get response options
-    qseloptions<-list()
-    for(i in 1:nrow(qsel)){
-      qseloptions[[qsel$VariableName[i]]]<-.questionnaire_answeroptions(qsel$..JSON[i], quest)
+    if(nrow(qsel)>0) {
+      qseloptions<-list()
+
+      for(i in 1:nrow(qsel)){
+        qseloptions[[qsel$VariableName[i]]]<-.questionnaire_answeroptions(qsel$..JSON[i], quest)
+      }
+
+      # combine list with VariableName, AnswerValue, AnswerText
+      qseloptions<-data.table::rbindlist(qseloptions, idcol = "VariableName")
+
+      # add information from qsel
+      qseloptions<-qseloptions[qsel, on = .(VariableName)]
+
+      # exclude linked questions
+      # qseloptions<-qseloptions[isLinked==F]
+
+
+      # separate by roster level
+      qseloptionsL1<-qseloptions[eval(parse(text = L1conditionNA))]
+      if(exists("roster_titlesL1") && nrow(roster_titlesL1)>0) qseloptionsL2<-qseloptions[eval(parse(text = L2conditionNA))]
+      if(exists("roster_titlesL2") && nrow(roster_titlesL2)>0) qseloptionsL3<-qseloptions[eval(parse(text = L3conditionNA))]
+      if(exists("roster_titlesL3") && nrow(roster_titlesL3)>0) {
+        L4conditionNA<-paste0(L3conditionNA, " & !is.na(L3)")
+        qseloptionsL4<-qseloptions[eval(parse(text = L4conditionNA))]}
     }
-    # combine list with VariableName, AnswerValue, AnswerText
-    qseloptions<-data.table::rbindlist(qseloptions, idcol = "VariableName")
+    # split gps by roster
+    if(process_mapquestions) {
+      qgpsL1<-qgps[eval(parse(text = L1conditionNA))]
+      if(exists("roster_titlesL1") && nrow(roster_titlesL1)>0){
+        qgpsL2<-qgps[eval(parse(text = L2conditionNA))]
+      }
 
-    # add information from qsel
-    qseloptions<-qseloptions[qsel, on = .(VariableName)]
+      if(exists("roster_titlesL2") && nrow(roster_titlesL2)>0){
+        qgpsL3<-qgps[eval(parse(text = L3conditionNA))]
+      }
 
-    # exclude linked questions
-    # qseloptions<-qseloptions[isLinked==F]
-
-
-    # separate by roster level
-    qseloptionsL1<-qseloptions[eval(parse(text = L1conditionNA))]
-    if(exists("roster_titlesL1") && nrow(roster_titlesL1)>0) qseloptionsL2<-qseloptions[eval(parse(text = L2conditionNA))]
-    if(exists("roster_titlesL2") && nrow(roster_titlesL2)>0) qseloptionsL3<-qseloptions[eval(parse(text = L3conditionNA))]
-    if(exists("roster_titlesL3") && nrow(roster_titlesL3)>0) {
-      L4conditionNA<-paste0(L3conditionNA, " & !is.na(L3)")
-      qseloptionsL4<-qseloptions[eval(parse(text = L4conditionNA))]}
+      if(exists("roster_titlesL3") && nrow(roster_titlesL3)>0){
+        L4conditionNA<-paste0(L3conditionNA, " & !is.na(L4)")
+        qgpsL4<-qgps[eval(parse(text = L4conditionNA))]
+      }
+    }
 
 
 
@@ -578,41 +615,126 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
 
       # remove empty columns
       tmp_file<-.export_remove_na_columns(tmp_file)
+      NOdata<-nrow(tmp_file)==0
       # get L0 data
       if(name==questName){
+        if(NOdata) {
+          cli::cli_alert_danger("No data with work status: {workStatus}")
+          file_collector.main[[name]] <- tmp_file
+        }
         # convert factor vars
         if(exists("qseloptionsL1") && nrow(qseloptionsL1)>0) tmp_file<-.export_convert_to_factor(tmp_file, qseloptions)
         # only extend class if not combined
         if(!combineFiles) tmp_file<-exportClass(tmp_file, quest[,.(VariableName, QuestionText)])
         file_collector.main[[name]] <- tmp_file
+        # sf processing
+        if(process_mapquestions && nrow(qgpsL1)>0) {
+          # print(qgpsL1); print((tmp_file))
+        }
         #if(is.null(tmp_file)) {print(paste("ERROR in dta file:", file_zip));next()}
       }
 
       # get L1 data
       if(exists("roster_titlesL1") && name%in%roster_titlesL1$VariableName){
+        if(NOdata) next
         # convert factor vars
         if(exists("qseloptionsL2") && nrow(qseloptionsL2)>0) tmp_file<-.export_convert_to_factor(tmp_file, qseloptions)
         # only extend class if not combined
         if(!combineFiles) tmp_file<-exportClass(tmp_file, quest[,.(VariableName, QuestionText)])
         file_collector.rost.L1[[name]] <- tmp_file
+        if(process_mapquestions && nrow(qgpsL2)>0) {
+          # get roster var RvarMerge
+          r1var<-roster_titlesL1[VariableName == name, RvarMerge]
+          for(v in 1:nrow(qgpsL2)) {
+            varsf<-qgpsL2$VariableName[v]
+            typesf<-qgpsL2$type1[v]
+            if(!varsf %in% names(tmp_file)) next
+            if(typesf=="POLY") {
+              coords<-tmp_file[[varsf]]
+              interview__id<-tmp_file[["interview__id"]]
+              tmppoly<-.export_convert_to_sfpoly(coords,
+                                                 interview__id,
+                                                 r1var = tmp_file[[r1var]],
+                                                 caller = rlang::current_env())
+
+              file_collector.rost.L1[[paste0("sf_poly_", varsf)]]<-tmppoly
+            } else if(typesf=="POINT"){
+              coords<-tmp_file[[varsf]]
+              interview__id<-tmp_file[["interview__id"]]
+              tmppoly<-.export_convert_to_sfpoint(coords,
+                                                  interview__id,
+                                                  r1var = tmp_file[[r1var]],
+                                                  caller = rlang::current_env())
+
+              file_collector.rost.L2[[paste0("sf_point_", varsf)]]<-tmppoly
+            } else if(typesf=="LINE"){
+              print("TBD")
+              # coords<-tmp_file[[varsf]]
+              # interview__id<-tmp_file[["interview__id"]]
+              # tmppoly<-.export_convert_to_sfpoint(coords,
+              #                                     interview__id,
+              #                                     r1var = tmp_file[[r1var]],
+              #                                     caller = rlang::current_env())
+              #
+              # file_collector.rost.L2[[paste0("sf_point_", varsf)]]<-tmppoly
+            }
+          }
+        }
       }
 
       # get L2 data
       if(exists("roster_titlesL2") && name%in%roster_titlesL2$VariableName){
+        if(NOdata) next
         # convert factor vars
         if(exists("qseloptionsL3") && nrow(qseloptionsL3)>0) tmp_file<-.export_convert_to_factor(tmp_file, qseloptions)
         # only extend class if not combined
         if(!combineFiles) tmp_file<-exportClass(tmp_file, quest[,.(VariableName, QuestionText)])
         file_collector.rost.L2[[name]] <- tmp_file
+        if(process_mapquestions && nrow(qgpsL3)>0) {
+          # get roster var RvarMerge
+          r1var<-roster_titlesL2[VariableName == name, RvarMerge]
+          r2var<-roster_titlesL2[VariableName == name, parentid1]
+          for(v in 1:nrow(qgpsL3)) {
+            varsf<-qgpsL3$VariableName[v]
+            typesf<-qgpsL3$type1[v]
+            if(!varsf %in% names(tmp_file)) next
+            if(typesf=="POLY") {
+              coords<-tmp_file[[varsf]]
+              interview__id<-tmp_file[["interview__id"]]
+              tmppoly<-.export_convert_to_sfpoly(coords,
+                                                 interview__id,
+                                                 r2var = tmp_file[[r2var]],
+                                                 r1var = tmp_file[[r1var]],
+                                                 caller = rlang::current_env())
+
+              file_collector.rost.L1[[paste0("sf_poly_", varsf)]]<-tmppoly
+
+            } else if(typesf=="POINT"){
+              coords<-tmp_file[[varsf]]
+              interview__id<-tmp_file[["interview__id"]]
+              tmppoly<-.export_convert_to_sfpoint(coords,
+                                                  interview__id,
+                                                  r2var = tmp_file[[r2var]],
+                                                  r1var = tmp_file[[r1var]],
+                                                  caller = rlang::current_env())
+
+              file_collector.rost.L2[[paste0("sf_point_", varsf)]]<-tmppoly
+            }
+          }
+        }
       }
 
       # get L3 data
       if(exists("roster_titlesL3") && name%in%roster_titlesL3$VariableName){
+        if(NOdata) next
         # convert factor vars
         if(exists("qseloptionsL4") && nrow(qseloptionsL4)>0) tmp_file<-.export_convert_to_factor(tmp_file, qseloptions)
         # only extend class if not combined
         if(!combineFiles) tmp_file<-exportClass(tmp_file, quest[,.(VariableName, QuestionText)])
         file_collector.rost.L3[[name]] <- tmp_file
+        if(process_mapquestions && nrow(qgpsL4)>0) {
+
+        }
       }
     }
 
