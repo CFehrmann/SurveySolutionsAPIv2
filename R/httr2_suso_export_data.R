@@ -23,7 +23,9 @@
 #' @param to_time if provided, only interviews started until this time will be included
 #' @param addTranslation if not NULL, the translation name as specified in the designer, which will then be applied value labels
 #' \emph{(not implemented yet!)}
-#' @param process_mapquestions should map questions be processed to spatial (sf) objects \emph{(experimental!)}
+#' @param process_mapquestions (only when \code{combineFiles=FALSE}), should map questions be processed to spatial (sf) objects,
+#' if yes, gps and all types of mapquestions will be added to the list at their corresponding roster level, and with the prefix "sf_"
+#' \emph{(experimental!)}
 #' @param combineFiles if TRUE, the export will be combined into single data.table, see details for the processing steps
 #'
 #'
@@ -42,12 +44,10 @@
 #'              \item \emph{R3} All rosters in roster level 3
 #'           }
 #'   \item Number of lists depends on the level of roster nesting
+#'   \item If \code{process_mapquestions = TRUE} is provided, the different lists will also contain an sf object for each spatial
+#'   variable found at the corresponding main/roster level (multipolygons, multipoints, points and lines), for details see also the
+#'   \link[sf]{sf} package.
 #'   \item All variable names are transformed to lower case and categorical variables are consistently labeled
-#'   \item Consistent id variables are generated with
-#'          \itemize{
-#'          \item interview__id transformed to id
-#'          \item parent ids consistently number starting from id (questionnairid) to idX (maximum id3)
-#'          }
 #'   \item List elements are returned as data.tables
 #'   \item Allows for specification of reload time (i.e. generation of new download file)
 #'   \item PRESERVES categorical labels \emph{and} values.
@@ -126,6 +126,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
 
   # parse questID and version to id$version
   qid<-paste0(questID, "$", version)
+  qid<-stringr::str_remove_all(qid, "-")
 
   # check from_date if provided
   if(!is.null(from_date)){
@@ -173,8 +174,17 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
   args<-.getargsforclass(workspace = workspace)
 
   # check if export file with same parameters is is available
+  # full query:https://mcw-demo.mysurvey.solutions/primary/api/v2/export?exportType=Tabular&
+  # interviewStatus=RejectedBySupervisor&questionnaireIdentity=b10435cc1fe04888990128182d25e746%241&
+  # exportStatus=Completed&hasFile=true&limit=100&offset=1
+  url_w_query<-.addQuery(url, exportType="Tabular",
+                         interviewStatus=workStatus,
+                         questionnaireIdentity = qid,
+                         # exportStatus="Completed",
+                         hasFile=TRUE)
+
   tryCatch(
-    { resp<-url |>
+    { resp<-url_w_query |>
       httr2::req_perform()
 
     # get the response data
@@ -191,13 +201,11 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
     error = function(e) .http_error_handler(e, "exp")
   )
 
-
   # CHECK for existing files
   if(nrow(exlist)>0) {
     exlist<-exlist[ExportType==extype]
     # subset existing exports & check time diff parameter with last creation date
     # 1. Check qid
-    qid<-stringr::str_remove_all(qid, "-")
     exlist_sub<-exlist[QuestionnaireId==qid]
     exlist_sub<-exlist_sub[HasExportFile==T]
 
@@ -629,7 +637,51 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
         file_collector.main[[name]] <- tmp_file
         # sf processing
         if(!combineFiles && process_mapquestions && nrow(qgpsL1)>0) {
-          # print(qgpsL1); print((tmp_file))
+          for(v in 1:nrow(qgpsL1)) {
+            varsf<-qgpsL1$VariableName[v]
+            typesf<-qgpsL1$type1[v]
+            if(typesf=="GPS") {
+              # name check gps var
+              if(!(paste0(varsf, "__Longitude") %in% names(tmp_file))) next
+            } else {
+              # name check map questions
+              if(!varsf %in% names(tmp_file)) next
+            }
+            if(typesf=="POLY") {
+              coords<-tmp_file[[varsf]]
+              interview__id<-tmp_file[["interview__id"]]
+              tmppoly<-.export_convert_to_sfpoly(coords,
+                                                 interview__id,
+                                                 caller = rlang::current_env())
+
+              file_collector.main[[paste0("sf_poly_", varsf)]]<-tmppoly
+            } else if(typesf=="POINT"){
+              coords<-tmp_file[[varsf]]
+              interview__id<-tmp_file[["interview__id"]]
+              tmppoly<-.export_convert_to_sfpoint(coords,
+                                                  interview__id,
+                                                  caller = rlang::current_env())
+
+              file_collector.main[[paste0("sf_point_", varsf)]]<-tmppoly
+            } else if(typesf=="LINE"){
+              coords<-tmp_file[[varsf]]
+              interview__id<-tmp_file[["interview__id"]]
+              tmppoly<-.export_convert_to_sfline(coords,
+                                                  interview__id,
+                                                  caller = rlang::current_env())
+
+              file_collector.main[[paste0("sf_line_", varsf)]]<-tmppoly
+            } else if(typesf=="GPS"){
+              # parse coords to string long/lat gps_location__Latitude gps_location__Longitude
+              coords<-sprintf("%f, %f", tmp_file[[paste0(varsf, "__Longitude")]], tmp_file[[paste0(varsf, "__Latitude")]])
+              interview__id<-tmp_file[["interview__id"]]
+              tmppoly<-.export_convert_to_sfpoint(coords,
+                                                  interview__id,
+                                                  caller = rlang::current_env())
+
+              file_collector.main[[paste0("sf_gps_", varsf)]]<-tmppoly
+            }
+          }
         }
         #if(is.null(tmp_file)) {print(paste("ERROR in dta file:", file_zip));next()}
       }
@@ -648,7 +700,13 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
           for(v in 1:nrow(qgpsL2)) {
             varsf<-qgpsL2$VariableName[v]
             typesf<-qgpsL2$type1[v]
-            if(!varsf %in% names(tmp_file)) next
+            if(typesf=="GPS") {
+              # name check gps var
+              if(!(paste0(varsf, "__Longitude") %in% names(tmp_file))) next
+            } else {
+              # name check map questions
+              if(!varsf %in% names(tmp_file)) next
+            }
             if(typesf=="POLY") {
               coords<-tmp_file[[varsf]]
               interview__id<-tmp_file[["interview__id"]]
@@ -666,17 +724,26 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
                                                   r1var = tmp_file[[r1var]],
                                                   caller = rlang::current_env())
 
-              file_collector.rost.L2[[paste0("sf_point_", varsf)]]<-tmppoly
+              file_collector.rost.L1[[paste0("sf_point_", varsf)]]<-tmppoly
             } else if(typesf=="LINE"){
-              print("TBD")
-              # coords<-tmp_file[[varsf]]
-              # interview__id<-tmp_file[["interview__id"]]
-              # tmppoly<-.export_convert_to_sfpoint(coords,
-              #                                     interview__id,
-              #                                     r1var = tmp_file[[r1var]],
-              #                                     caller = rlang::current_env())
-              #
-              # file_collector.rost.L2[[paste0("sf_point_", varsf)]]<-tmppoly
+              coords<-tmp_file[[varsf]]
+              interview__id<-tmp_file[["interview__id"]]
+              tmppoly<-.export_convert_to_sfline(coords,
+                                                  interview__id,
+                                                  r1var = tmp_file[[r1var]],
+                                                  caller = rlang::current_env())
+
+              file_collector.rost.L1[[paste0("sf_line_", varsf)]]<-tmppoly
+            } else if(typesf=="GPS"){
+              # parse coords to string long/lat gps_location__Latitude gps_location__Longitude
+              coords<-sprintf("%f, %f", tmp_file[[paste0(varsf, "__Longitude")]], tmp_file[[paste0(varsf, "__Latitude")]])
+              interview__id<-tmp_file[["interview__id"]]
+              tmppoly<-.export_convert_to_sfpoint(coords,
+                                                  interview__id,
+                                                  r1var = tmp_file[[r1var]],
+                                                  caller = rlang::current_env())
+
+              file_collector.rost.L1[[paste0("sf_gps_", varsf)]]<-tmppoly
             }
           }
         }
@@ -697,7 +764,13 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
           for(v in 1:nrow(qgpsL3)) {
             varsf<-qgpsL3$VariableName[v]
             typesf<-qgpsL3$type1[v]
-            if(!varsf %in% names(tmp_file)) next
+            if(typesf=="GPS") {
+              # name check gps var
+              if(!(paste0(varsf, "__Longitude") %in% names(tmp_file))) next
+            } else {
+              # name check map questions
+              if(!varsf %in% names(tmp_file)) next
+            }
             if(typesf=="POLY") {
               coords<-tmp_file[[varsf]]
               interview__id<-tmp_file[["interview__id"]]
@@ -707,7 +780,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
                                                  r1var = tmp_file[[r1var]],
                                                  caller = rlang::current_env())
 
-              file_collector.rost.L1[[paste0("sf_poly_", varsf)]]<-tmppoly
+              file_collector.rost.L2[[paste0("sf_poly_", varsf)]]<-tmppoly
 
             } else if(typesf=="POINT"){
               coords<-tmp_file[[varsf]]
@@ -719,6 +792,27 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
                                                   caller = rlang::current_env())
 
               file_collector.rost.L2[[paste0("sf_point_", varsf)]]<-tmppoly
+            }  else if(typesf=="LINE"){
+              coords<-tmp_file[[varsf]]
+              interview__id<-tmp_file[["interview__id"]]
+              tmppoly<-.export_convert_to_sfline(coords,
+                                                  interview__id,
+                                                  r2var = tmp_file[[r2var]],
+                                                  r1var = tmp_file[[r1var]],
+                                                  caller = rlang::current_env())
+
+              file_collector.rost.L2[[paste0("sf_line_", varsf)]]<-tmppoly
+            } else if(typesf=="GPS"){
+              # parse coords to string long/lat gps_location__Latitude gps_location__Longitude
+              coords<-sprintf("%f, %f", tmp_file[[paste0(varsf, "__Longitude")]], tmp_file[[paste0(varsf, "__Latitude")]])
+              interview__id<-tmp_file[["interview__id"]]
+              tmppoly<-.export_convert_to_sfpoint(coords,
+                                                  interview__id,
+                                                  r2var = tmp_file[[r2var]],
+                                                  r1var = tmp_file[[r1var]],
+                                                  caller = rlang::current_env())
+
+              file_collector.rost.L2[[paste0("sf_gps_", varsf)]]<-tmppoly
             }
           }
         }

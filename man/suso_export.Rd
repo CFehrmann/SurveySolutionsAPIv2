@@ -67,7 +67,9 @@ RejectedByHeadquarters,ApprovedByHeadquarters,Deleted}), if NULL all is exported
 
 \item{weight_file}{file path to file with survey weights. if provided, the weights will be added to the export}
 
-\item{process_mapquestions}{should map questions be processed to spatial (sf) objects \emph{(experimental!)}}
+\item{process_mapquestions}{(only when \code{combineFiles=FALSE}), should map questions be processed to spatial (sf) objects,
+if yes, gps and all types of mapquestions will be added to the list at their corresponding roster level, and with the prefix "sf_"
+\emph{(experimental!)}}
 
 \item{combineFiles}{if TRUE, the export will be combined into single data.table, see details for the processing steps}
 }
@@ -88,12 +90,10 @@ If you export the data with \emph{combineFiles = FALSE} a list will be returned 
 \item \emph{R3} All rosters in roster level 3
 }
 \item Number of lists depends on the level of roster nesting
+\item If \code{process_mapquestions = TRUE} is provided, the different lists will also contain an sf object for each spatial
+variable found at the corresponding main/roster level (multipolygons, multipoints, points and lines), for details see also the
+\link[sf]{sf} package.
 \item All variable names are transformed to lower case and categorical variables are consistently labeled
-\item Consistent id variables are generated with
-\itemize{
-\item interview__id transformed to id
-\item parent ids consistently number starting from id (questionnairid) to idX (maximum id3)
-}
 \item List elements are returned as data.tables
 \item Allows for specification of reload time (i.e. generation of new download file)
 \item PRESERVES categorical labels \emph{and} values.

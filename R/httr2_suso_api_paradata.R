@@ -102,6 +102,7 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
 
   # parse questID and version to id$version
   qid<-paste0(questID, "$", version)
+  qid<-stringr::str_remove_all(qid, "-")
 
   # check from_date if provided
   if(!is.null(from_date)){
@@ -148,9 +149,16 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
   # get argument for class
   args<-.getargsforclass(workspace = workspace)
 
+  url_w_query<-.addQuery(url, exportType="Paradata",
+                         interviewStatus=workStatus,
+                         questionnaireIdentity = qid,
+                         exportStatus="Completed",
+                         hasFile=TRUE)
+
+
   # check if export file with same parameters is is available
   tryCatch(
-    { resp<-url |>
+    { resp<-url_w_query |>
       httr2::req_perform()
 
     # get the response data
@@ -172,8 +180,6 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
     exlist<-exlist[ExportType==extype]
     # subset existing exports & check time diff parameter with last creation date
     # 1. Check qid
-    qid<-stringr::str_remove_all(qid, "-")
-    print(qid)
     exlist_sub<-exlist[QuestionnaireId==qid]
     exlist_sub<-exlist_sub[HasExportFile==T]
 
@@ -394,8 +400,12 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
 
   # aaa$AnswerSet[var!= "<NA>",.(av_duration=mean(duration)), by=.(var)]
 
-  ## STOP when empty
-  if (is.null(paradata_files)) stop('\nNo Records yet!', call. = F)
+  ## ALERT when empty, BUT RETUNR EMPTY DATA.TABLE
+  if (is.null(paradata_files)) {
+    if(interactive()) cli::cli_alert_danger("No data with work status: {workStatus}")
+
+    return(data.table::data.table(NULL))
+  }
   if(inShinyApp) incProgress(amount = 0.25, message = "Transformation completed")
   ## TRANSFORMATIONS
   ## A add rid if it doesnt exist
