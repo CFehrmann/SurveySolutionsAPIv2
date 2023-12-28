@@ -391,6 +391,8 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
   allcontent<-suso_getQuestDetails(questID = questID, version = version, workspace = workspace, apiUser = apiUser, apiPass = apiPass,
                                    server = server, operation.type = "structure")
   allquestions<-allcontent$q
+  qgps<-.questionnaire_gpsquestion(allquestions)
+  qgps<-qgps[type1 == "GPS"]
 
   #aaa<-data.table::fread(file.path(tempdir(), 19474, "paradata.tab"), sep = "\t")
   fp<-file.path(tmpdir, "paradata.tab")
@@ -489,53 +491,66 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
   ##  2. GPS extract -->if no name, try identification through grepl
   varNames<-levels(para1_answer$var)
   if(is.na(gpsVarName)) {
-    gpsVarMain<-varNames[grepl("gps", varNames)]
+    if(nrow(qgps)>0) {
+      cli::cli_alert_info('The following GPS questions have been identified: {paste(qgps$VariableName, collapse = ", ")}\n')
+      cli::cli_alert_warning('Using {qgps$VariableName[1]} for coordinates, if you want to use a different one, please
+                             use gpsVarName argument.\n')
+    }
+    gpsVarMain<-qgps$VariableName[1]
   } else {
-    stopifnot(is.character(gpsVarName), gpsVarName %in% varNames)
-    gpsVarMain<-gpsVarName
+    #stopifnot(is.character(gpsVarName), gpsVarName %in% varNames)
+    if(!(gpsVarName %in% qgps$VariableName)) {
+      cli::cli_alert_danger('The GPS variable you have selected is not in the questionnaire. Proceeding without GPS.\n')
+      gpsVarMain<-character(0)
+    } else {
+      gpsVarMain<-gpsVarName[1]
+    }
   }
 
   ## create gps file when exists
   if (length(gpsVarMain)>0) {
     ## Select first gps variable
-    cat("\nExtracting GPS variable.\n")
+    cli::cli_alert_info("\nExtracting GPS variable for all data.\n")
     gpsVar<-gpsVarMain[1]
     gps_file<-para1_answer[var==gpsVar]
-    if(nrow(gps_file)==0) stop(cat("No GPS values found with: ", gpsVarName ))
-    if (!allResponses) {
-      gp<-gps_file[,tstrsplit(response, ",", fixed=T, fill = "<NA>", names = TRUE)][]
-      gps_file<-cbind(gps_file, gp)
-      setnames(gps_file, c("V1", "V2"), c("response1", "response2"))
-    }
-
-    gps_file<-gps_file[, .(interview__id, responsible, time, var_resp, var,
-                           date, durationNOBREAK, response1, response2)]
-    gps_file<-gps_file[,c("long"):=tstrsplit(response2, "[", fixed=T ,keep=c(1))][]
-    gps_file[,lat:=as.numeric(as.character(response1))]
-    gps_file[,long:=as.numeric(as.character(long))]
-    gpsSelect<-sum(!is.na(gps_file$lat))
-    ## If empty iterate over next/only if length>1/until length==k
-    k<-2
-    while(gpsSelect>=0 & gpsSelect<=nrow(gps_file) & length(gpsVarMain) >1 & length(gpsVarMain) != k) {
-      gpsVar<-gpsVarMain[k]
-      gps_file<-para1_answer[var==gpsVar]
+    if(nrow(gps_file)==0) {
+      cli::cli_alert_danger("No GPS data found with: {gpsVar}.")
+    } else {
       if (!allResponses) {
         gp<-gps_file[,tstrsplit(response, ",", fixed=T, fill = "<NA>", names = TRUE)][]
         gps_file<-cbind(gps_file, gp)
         setnames(gps_file, c("V1", "V2"), c("response1", "response2"))
       }
-      gps_file<-gps_file[, .(interview__id, responsible, time, var_resp,
+
+      gps_file<-gps_file[, .(interview__id, responsible, time, var_resp, var,
                              date, durationNOBREAK, response1, response2)]
       gps_file<-gps_file[,c("long"):=tstrsplit(response2, "[", fixed=T ,keep=c(1))][]
       gps_file[,lat:=as.numeric(as.character(response1))]
       gps_file[,long:=as.numeric(as.character(long))]
-      k<-k+1
       gpsSelect<-sum(!is.na(gps_file$lat))
+      ## If empty iterate over next/only if length>1/until length==k
+      k<-2
+      while(gpsSelect>=0 & gpsSelect<=nrow(gps_file) & length(gpsVarMain) >1 & length(gpsVarMain) != k) {
+        gpsVar<-gpsVarMain[k]
+        gps_file<-para1_answer[var==gpsVar]
+        if (!allResponses) {
+          gp<-gps_file[,tstrsplit(response, ",", fixed=T, fill = "<NA>", names = TRUE)][]
+          gps_file<-cbind(gps_file, gp)
+          setnames(gps_file, c("V1", "V2"), c("response1", "response2"))
+        }
+        gps_file<-gps_file[, .(interview__id, responsible, time, var_resp,
+                               date, durationNOBREAK, response1, response2)]
+        gps_file<-gps_file[,c("long"):=tstrsplit(response2, "[", fixed=T ,keep=c(1))][]
+        gps_file[,lat:=as.numeric(as.character(response1))]
+        gps_file[,long:=as.numeric(as.character(long))]
+        k<-k+1
+        gpsSelect<-sum(!is.na(gps_file$lat))
+      }
+      ##  For merge with EVENT data
+      gps_file_merge<-gps_file[,.(interview__id, lat, long)]
+      gps_file_merge<-gps_file_merge[,.SD[1], by=.(interview__id)]
+      setkeyv(gps_file_merge, "interview__id")
     }
-    ##  For merge with EVENT data
-    gps_file_merge<-gps_file[,.(interview__id, lat, long)]
-    gps_file_merge<-gps_file_merge[,.SD[1], by=.(interview__id)]
-    setkeyv(gps_file_merge, "interview__id")
   }
   ##  Subset with function, key and lapply
   ## loop over levels of action with LAPPLY
