@@ -55,9 +55,17 @@
 
 # check UUID format
 .checkUUIDFormat <- function(id) {
-  # Regular expression for UUID format: 8-4-4-4-12
-  uuid_pattern <- "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
-
+  # Regular expression for UUID format: 8-4-4-4-12, also allow for version without -
+  if(!is.null(id)) {
+    hasHyphon<-stringr::str_detect(id, pattern = "-")
+  } else {
+    hasHyphon<-FALSE
+  }
+  if(hasHyphon) {
+    uuid_pattern <- "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+  } else {
+    uuid_pattern <- "^[0-9a-fA-F]{8}[0-9a-fA-F]{4}[0-9a-fA-F]{4}[0-9a-fA-F]{4}[0-9a-fA-F]{12}$"
+  }
   if(!is.null(id) && grepl(uuid_pattern, id)) {
     invisible(TRUE)
   } else {

@@ -36,7 +36,7 @@ if(getRversion() >= "3.3.0")  {
     "RvarMerge", "parentid1", "parentid2", "parentgroup", "pargroupcount",
     "HasExportFile", "JobId", "StartDate", "ReceivedByDeviceAtUtc",
     "variable", "value", "Role", "UserName", "FullName", "Password",
-    "Supervisor", "PhoneNumber", "Featured", "type1",
+    "Supervisor", "PhoneNumber", "Featured", "type1", "isFixeRoster",
     "QuestionText",
     "resp_time",
     "action",

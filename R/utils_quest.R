@@ -260,6 +260,8 @@
 
   # Identify rows where 'type' contains 'Gps'
   rows_with_question <- dt[grepl("Gps", type) | grepl("AreaQuestion", type), ]
+  # if none returne nrow 0 dt
+  if(nrow(rows_with_question)==0) return(data.table(NULL))
   # create type1 with gps/map area/map point
   rows_with_question[,type1:=character(.N)]
   # gps

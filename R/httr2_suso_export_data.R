@@ -475,21 +475,24 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
 
     # get roster titles and source questions keys
     if(exists("roster_titlesL1") && nrow(roster_titlesL1)>0){
-      roster_titlesL1[,RsizeKey:=lapply(.SD, function(x) x[[1]]$RosterSizeQuestionId), .SDcols="..JSON", by = .(PublicKey)][,..JSON:=NULL]
-      roster_titlesL1[,Rtype:=allquestions[PublicKey==RsizeKey, type], by=RsizeKey]
-      roster_titlesL1[,Rvar:=allquestions[PublicKey==RsizeKey, VariableName], by=RsizeKey]
+      roster_titlesL1[,isFixeRoster:=lapply(.SD, function(x) length(x[[1]]$FixedRosterTitles))>0, .SDcols="..JSON", by = .(PublicKey)]
+      roster_titlesL1[isFixeRoster==F ,RsizeKey:=lapply(.SD, function(x) x[[1]]$RosterSizeQuestionId), .SDcols="..JSON", by = .(PublicKey)][,..JSON:=NULL]
+      roster_titlesL1[isFixeRoster==F,Rtype:=allquestions[PublicKey==RsizeKey, type], by=RsizeKey]
+      roster_titlesL1[isFixeRoster==F,Rvar:=allquestions[PublicKey==RsizeKey, VariableName], by=RsizeKey]
     }
 
     if(exists("roster_titlesL2") && nrow(roster_titlesL2)>0){
-      roster_titlesL2[,RsizeKey:=lapply(.SD, function(x) x[[1]]$RosterSizeQuestionId), .SDcols="..JSON", by = .(PublicKey)][,..JSON:=NULL]
-      roster_titlesL2[,Rtype:=allquestions[PublicKey==RsizeKey, type], by=RsizeKey]
-      roster_titlesL2[,Rvar:=allquestions[PublicKey==RsizeKey, VariableName], by=RsizeKey]
+      roster_titlesL2[,isFixeRoster:=lapply(.SD, function(x) length(x[[1]]$FixedRosterTitles))>0, .SDcols="..JSON", by = .(PublicKey)]
+      roster_titlesL2[isFixeRoster==F,RsizeKey:=lapply(.SD, function(x) x[[1]]$RosterSizeQuestionId), .SDcols="..JSON", by = .(PublicKey)][,..JSON:=NULL]
+      roster_titlesL2[isFixeRoster==F,Rtype:=allquestions[PublicKey==RsizeKey, type], by=RsizeKey]
+      roster_titlesL2[isFixeRoster==F,Rvar:=allquestions[PublicKey==RsizeKey, VariableName], by=RsizeKey]
     }
 
     if(exists("roster_titlesL3") && nrow(roster_titlesL3)>0){
-      roster_titlesL3[,RsizeKey:=lapply(.SD, function(x) x[[1]]$RosterSizeQuestionId), .SDcols="..JSON", by = .(PublicKey)][,..JSON:=NULL]
-      roster_titlesL3[,Rtype:=allquestions[PublicKey==RsizeKey, type], by=RsizeKey]
-      roster_titlesL3[,Rvar:=allquestions[PublicKey==RsizeKey, VariableName], by=RsizeKey]
+      roster_titlesL3[,isFixeRoster:=lapply(.SD, function(x) length(x[[1]]$FixedRosterTitles))>0, .SDcols="..JSON", by = .(PublicKey)]
+      roster_titlesL3[isFixeRoster==F,RsizeKey:=lapply(.SD, function(x) x[[1]]$RosterSizeQuestionId), .SDcols="..JSON", by = .(PublicKey)][,..JSON:=NULL]
+      roster_titlesL3[isFixeRoster==F,Rtype:=allquestions[PublicKey==RsizeKey, type], by=RsizeKey]
+      roster_titlesL3[isFixeRoster==F,Rvar:=allquestions[PublicKey==RsizeKey, VariableName], by=RsizeKey]
     }
     # bind for processing of merge variables
     nros<-length(Lindata)-1
