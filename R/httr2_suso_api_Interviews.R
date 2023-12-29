@@ -367,8 +367,204 @@ suso_get_stats_interview<-function(server= suso_get_api_key("susoServer"),
 
 
 
+#' Reject interviews either as supervisor or as headquarter.
+#'
+#' @description Allows you to reject interviews in supervisor or headquarters role
+#' as well as to provide a comment (i.e. reason) for the rejection.
+#'
+#'
+#' @details  For details please see:
+#' \url{https://docs.mysurvey.solutions/headquarters/interviews/survey-workflow/}
+#'
+#'
+#' @param server Survey Solutions server address
+#' @param apiUser Survey Solutions API user
+#' @param apiPass Survey Solutions API password
+#' @param workspace server workspace, if nothing provided, defaults to primary
+#' @param token If Survey Solutions server token is provided \emph{apiUser} and \emph{apiPass} will be ignored
+#' @param intID the \emph{InterviewId} of the interview.
+#' @param new_uid if provided the interview will be rejected to a different user than the current one.
+#' @param HQ if FALSE, reject as supervisor, if TRUE rejected as headquarters
+#' @param comment comment which should be sent with the questionnaire
+#'
+#' @examples
+#' \dontrun{
+#' # reject the interview as supervisor
+#' suso_patchRejectInterview(
+#'           workspace = "myworkspace",
+#'           intID = "dee7705f-d611-4b12-9b97-2b8e5b80c4ea"
+#'           )
+#' # reject the interview as headquarters
+#' suso_patchRejectInterview(
+#'           workspace = "myworkspace",
+#'           intID = "dee7705f-d611-4b12-9b97-2b8e5b80c4ea",
+#'           HQ = TRUE
+#'           )
+#' # reject the interview and provide a comment, so the interviewer knows about the problem
+#' suso_patchRejectInterview(
+#'           workspace = "myworkspace",
+#'           intID = "dee7705f-d611-4b12-9b97-2b8e5b80c4ea",
+#'           comment = "Too many errors, please check and re-submit!"
+#'           )
+#' # reject the interview to a different user
+#' suso_patchRejectInterview(
+#'           workspace = "myworkspace",
+#'           intID = "dee7705f-d611-4b12-9b97-2b8e5b80c4ea",
+#'           new_uid = "3b0c6e09-d606-4914-9e20-2abc048d5bea"
+#'           )
+#'
+#' }
+#'
+#' @export
+#'
+suso_patchRejectInterview <- function(server= suso_get_api_key("susoServer"),
+                                      apiUser=suso_get_api_key("susoUser"),
+                                      apiPass=suso_get_api_key("susoPass"),
+                                      workspace = suso_get_api_key("workspace"),
+                                      token = NULL,
+                                      intID = "",
+                                      new_uid = NULL,
+                                      HQ = FALSE,
+                                      comment = "Please check errors and re-submit!") {
+
+  ## select reject
+  reject<-ifelse(HQ, "hqreject", "reject")
+
+  ## default workspace
+  workspace<-.ws_default(ws = workspace)
+
+  # check (.helpers.R)
+  .check_basics(token, server, apiUser, apiPass)
+
+  # Base URL and path
+  # Build the URL, first for token, then for base auth
+  if(!is.null(token)){
+    url<-.baseurl_token(server, workspace, token, "interviews")
+  } else {
+    url<-.baseurl_baseauth(server, workspace, apiUser, apiPass, "interviews")
+  }
+
+  # check int_id is uuid
+  .checkUUIDFormat(intID[1])
+
+  if(!is.null(new_uid)) .checkUUIDFormat(new_uid[1])
 
 
+  # append int_id to url
+  url<-url |>
+    req_url_path_append(intID, reject) |>
+    req_url_query(
+      comment = comment,
+      responsibleId = new_uid
+    ) |>
+    req_method("PATCH")
+
+
+  tryCatch(
+    {resp<-req_perform(url)},
+    error = function(e) .http_error_handler(e, "ass")
+  )
+
+  test_json<-data.table::data.table(resp_status=200, intID=intID, new_uid=new_uid, description="success", HQ = HQ)
+
+  return(test_json)
+
+
+}
+
+
+
+#' Approve interviews either as supervisor or as headquarter.
+#'
+#' @description Allows you to approve interviews in supervisor or headquarters role
+#' as well as to provide a comment (i.e. reason) for the approval.
+#'
+#'
+#' @details  For details please see:
+#' \url{https://docs.mysurvey.solutions/headquarters/interviews/survey-workflow/}
+#'
+#'
+#' @param server Survey Solutions server address
+#' @param apiUser Survey Solutions API user
+#' @param apiPass Survey Solutions API password
+#' @param workspace server workspace, if nothing provided, defaults to primary
+#' @param token If Survey Solutions server token is provided \emph{apiUser} and \emph{apiPass} will be ignored
+#' @param intID the \emph{InterviewId} of the interview.
+#' @param HQ if FALSE, approve as supervisor, if TRUE rejected as headquarters
+#' @param comment comment which should be sent with the questionnaire
+#'
+#' @examples
+#' \dontrun{
+#' # approve the interview as supervisor
+#' suso_patchApproveInterview(
+#'           workspace = "myworkspace",
+#'           intID = "dee7705f-d611-4b12-9b97-2b8e5b80c4ea"
+#'           )
+#' # approve the interview as headquarters
+#' suso_patchApproveInterview(
+#'           workspace = "myworkspace",
+#'           intID = "dee7705f-d611-4b12-9b97-2b8e5b80c4ea",
+#'           HQ = TRUE
+#'           )
+#' # approve the interview and provide a comment
+#' suso_patchApproveInterview(
+#'           workspace = "myworkspace",
+#'           intID = "dee7705f-d611-4b12-9b97-2b8e5b80c4ea",
+#'           comment = "Well done!"
+#'           )
+#'
+#' }
+#'
+#' @export
+#'
+suso_patchApproveInterview <- function(server= suso_get_api_key("susoServer"),
+                                       apiUser=suso_get_api_key("susoUser"),
+                                       apiPass=suso_get_api_key("susoPass"),
+                                       workspace = suso_get_api_key("workspace"),
+                                       token = NULL,
+                                       intID = "",
+                                       HQ = FALSE,
+                                       comment = "Well done!") {
+  ## select reject
+  approve<-ifelse(HQ, "hqapprove", "approve")
+
+  ## default workspace
+  workspace<-.ws_default(ws = workspace)
+
+  # check (.helpers.R)
+  .check_basics(token, server, apiUser, apiPass)
+
+  # Base URL and path
+  # Build the URL, first for token, then for base auth
+  if(!is.null(token)){
+    url<-.baseurl_token(server, workspace, token, "interviews")
+  } else {
+    url<-.baseurl_baseauth(server, workspace, apiUser, apiPass, "interviews")
+  }
+
+  # check int_id is uuid
+  .checkUUIDFormat(intID[1])
+
+  # append int_id to url
+  url<-url |>
+    req_url_path_append(intID, approve) |>
+    req_url_query(
+      comment = comment
+    ) |>
+    req_method("PATCH")
+
+
+  tryCatch(
+    {resp<-req_perform(url)},
+    error = function(e) .http_error_handler(e, "ass")
+  )
+
+  test_json<-data.table::data.table(resp_status=200, intID=intID, description="success", HQ = HQ)
+
+  return(test_json)
+
+
+}
 
 
 
