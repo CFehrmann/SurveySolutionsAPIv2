@@ -227,7 +227,143 @@ suso_getAllHistoryInterview <- function(server= suso_get_api_key("susoServer"),
 }
 
 
+#' Get statistics for interview
+#'
+#' @description Fetch statistics for a specific interview, vectorized over interview id (int_id)
+#'
+#' @param server Survey Solutions server address
+#' @param apiUser Survey Solutions API user
+#' @param apiPass Survey Solutions API password
+#' @param workspace server workspace, if nothing provided, defaults to primary
+#' @param token If Survey Solutions server token is provided \emph{apiUser} and \emph{apiPass} will be ignored
+#' @param intID a single or multiple \emph{InterviewId}.
+#'
+#' @examples
+#' \dontrun{
+#' suso_get_stats_interview(
+#'           workspace = "myworkspace",
+#'           intID = "dee7705f-d611-4b12-9b97-2b8e5b80c4ea"
+#'           )
+#'
+#' }
+#'
+#' @export
 
+
+
+suso_get_stats_interview<-function(server= suso_get_api_key("susoServer"),
+                                   apiUser=suso_get_api_key("susoUser"),
+                                   apiPass=suso_get_api_key("susoPass"),
+                                   workspace = suso_get_api_key("workspace"),
+                                   token = NULL,
+                                   intID = "") {
+
+  ## default workspace
+  workspace<-.ws_default(ws = workspace)
+
+  # check (.helpers.R)
+  .check_basics(token, server, apiUser, apiPass)
+
+  # Base URL and path
+  # Build the URL, first for token, then for base auth
+  if(!is.null(token)){
+    url<-.baseurl_token(server, workspace, token, "interviews")
+  } else {
+    url<-.baseurl_baseauth(server, workspace, apiUser, apiPass, "interviews")
+  }
+
+  # check int_id is uuid
+  .checkUUIDFormat(intID[1])
+
+  # singel request
+  if(length(intID)==1){
+
+    # append int_id to url
+    url<-url |>
+      req_url_path_append(intID, "stats")
+
+    tryCatch(
+      {resp<-req_perform(url)},
+      error = function(e) .http_error_handler(e, "ass")
+    )
+
+    # get the response data
+    if(resp_has_body(resp)){
+      # get body by content type
+      if(resp_content_type(resp) == "application/json") {
+        test_json<-resp_body_json(resp, simplifyVector = TRUE)
+        # Export only records
+        tj<-as.data.table(t(unlist(test_json)))
+        names_col<-names(tj)[c(1:9,15:17)]
+        for (col in names_col) set(tj, j=col, value=as.numeric(tj[[col]]))
+        ## date conversion
+        tj[,UpdatedAtUtc:=as_datetime(UpdatedAtUtc)]
+        tj[,InterviewDuration:=as.POSIXct(InterviewDuration, format = "%H:%M:%OS")][]
+        return(tj)
+      }
+    } else {
+      return(data.table(NULL))
+    }
+  } else if(length(intID)>1) {
+
+    requests<-.gen_lapply_with_progress(
+      intID,
+      .genrequests_w_path,
+      "requests", "interviewers", workspace,
+      url, intID, "stats"
+    )
+
+
+    responses <- httr2::req_perform_parallel(
+      requests,
+      pool = curl::new_pool(host_con = 80, total_con = 80),
+      on_error = "continue"
+    )
+
+
+    # I. Response
+    # I.1. Get faild responses
+    failed <- responses |> httr2::resps_failures()
+    # I.2. Get successful responses
+    success <-responses |> httr2::resps_successes()
+    # I.2.1. Check if there are any successful responses and stop if not
+    rol<-"Requests"
+    if(interactive() && length(failed)>0){
+      cli::cli_div(theme = list(span.emph = list(color = "red")))
+      cli::cli_alert_danger("
+      {.emph Some requests failed!}
+      Out of {length(requests)} {rol}, {length(failed)} failed.\n\n")
+      cli::cli_end()
+    } else if(length(success)==0) {
+      cli::cli_abort(c("x" = "No successful requests!"))
+    }
+    # return(success)
+
+    .transformresponses_tj<-function(i ,resp) {
+      # i. Convert to json
+      test_json <-resp[[i]] |>
+        resp_body_json(simplifyVector = T, flatten = TRUE)
+
+      # Export only records
+      tj<-as.data.table(t(unlist(test_json)))
+      names_col<-names(tj)[c(1:9,15:17)]
+      for (col in names_col) set(tj, j=col, value=as.numeric(tj[[col]]))
+      ## date conversion
+      tj[,UpdatedAtUtc:=as_datetime(UpdatedAtUtc)]
+      tj[,InterviewDuration:=as.POSIXct(InterviewDuration, format = "%H:%M:%OS")][]
+      return(tj)
+    }
+    test_json<-.gen_lapply_with_progress(
+      success,
+      .transformresponses_tj,
+      "responses", "interviewers", workspace,
+      success
+    )
+    tj<-data.table::rbindlist(test_json, fill = T)
+    return(tj)
+  }
+
+}
 
 
 
