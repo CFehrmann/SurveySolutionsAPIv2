@@ -43,13 +43,13 @@ suso_export(
 
 \item{version}{Questionnaire version}
 
-\item{from_date}{if provided, only interviews started on this date will be included}
+\item{from_date}{if provided, only interviews started on this date or later will be included}
 
-\item{from_time}{if provided, only interviews started at this time will be included}
+\item{from_time}{if provided, only interviews started at this time or later will be included}
 
-\item{to_date}{if provided, only interviews started until this date will be included}
+\item{to_date}{if provided, only interviews started before or on this date will be included}
 
-\item{to_time}{if provided, only interviews started until this time will be included}
+\item{to_time}{if provided, only interviews started before or at this time will be included}
 
 \item{workStatus}{define which statuses the file should inlude (i.e. \emph{Restored,Created,SupervisorAssigned,InterviewerAssigned,
 RejectedBySupervisor,ReadyForInterview,
@@ -59,7 +59,8 @@ RejectedByHeadquarters,ApprovedByHeadquarters,Deleted}), if NULL all is exported
 \item{addTranslation}{if not NULL, the translation name as specified in the designer, which will then be applied value labels
 \emph{(not implemented yet!)}}
 
-\item{reloadTimeDiff}{time difference in hours between last generated file and now}
+\item{reloadTimeDiff}{time difference in hours between last generated file and now (will be ignored when \code{from_date} and
+\code{to_date} is not \code{NULL})}
 
 \item{inShinyApp}{if True, file interacts with shiny progress bar}
 

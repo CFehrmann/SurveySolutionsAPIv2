@@ -123,7 +123,7 @@
   }
 
   # Check if from_date is not before to_date
-  if(parsed_from_date >= parsed_to_date) {
+  if(parsed_from_date > parsed_to_date) {
     stop("from_date must be before to_date")
   }
 }

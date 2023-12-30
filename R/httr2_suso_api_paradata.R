@@ -19,11 +19,12 @@
 #' RejectedByHeadquarters,ApprovedByHeadquarters,Deleted}), if NULL all is exported
 #' @param questID \emph{QuestionnaireId} for which the paradata should be generated
 #' @param version questionnnaire version
-#' @param from_date if provided, only interviews started on this date will be included
-#' @param from_time if provided, only interviews started at this time will be included
-#' @param to_date if provided, only interviews started until this date will be included
-#' @param to_time if provided, only interviews started until this time will be included
-#' @param reloadTimeDiff time difference in hours between last generated file and now
+#' @param from_date if provided, only interviews started on this date or later will be included
+#' @param from_time if provided, only interviews started at this time or later will be included
+#' @param to_date if provided, only interviews started before or on this date will be included
+#' @param to_time if provided, only interviews started before or at this time will be included
+#' @param reloadTimeDiff time difference in hours between last generated file and now (will be ignored when \code{from_date} and
+#' \code{to_date} is not \code{NULL})
 #' @param inShinyApp if True, file interacts with shiny progress bar
 #' @param multiCore if not NULL, an integer number specifying the number of cores to use
 #' @param onlyActiveEvents if TRUE only active events are exported, decreases processing time and memory requirements
@@ -187,36 +188,48 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
 
     # 3. Check reload time diff (= difference between last file in
     # exlist start time)
-    if(nrow(exlist_sub)>0 && !is.null(reloadTimeDiff)) {
+    if(nrow(exlist_sub)>0) {
       .checkNum(reloadTimeDiff)
 
-      # latest export start time
-      time_limit<-exlist_sub[1, StartDate]
-      time_limit<-lubridate::as_datetime(time_limit)
-      # current time (!! in UTC)
-      current_time<-lubridate::now(tzone = lubridate::tz(time_limit))
-      # time difference between now and last start
-      timeDiff<-difftime(current_time, time_limit, units = "hours")
-      # If reloadtime is smaller, download existing, otherwise new
-      if(!is.null(timeDiff) && length(timeDiff)>0 && timeDiff<=reloadTimeDiff) {
+      # Check for from/to date/time
+      if(!is.null(from_datetime) && !is.null(to_datetime)) {
+        # create new when from/to is provided
         if(interactive()) {
           cli::cli_alert_success(
-            "Existing file within desired reload time difference
-          of {as.integer(reloadTimeDiff)} hour(s)."
-          )
-        }
-        exlist_sub<-exlist_sub[1]
-
-      } else {
-        if(interactive()){
-          cli::cli_alert_info(
-            "Existing file older than desired reload time difference
-          of {as.integer(reloadTimeDiff)} hour(s). Creating new export"
+            "From Date/time {from_datetime} and To Date/time {to_datetime} has been provided.
+          A new file with these parameters will be created."
           )
         }
         exlist_sub<-data.table(character(0))
-      }
+      } else if(!is.null(reloadTimeDiff)) {
+        time_limit<-exlist_sub[1, StartDate]
+        time_limit<-lubridate::as_datetime(time_limit)
+        # current time (!! in UTC)
+        current_time<-lubridate::now(tzone = lubridate::tz(time_limit))
+        # time difference between now and last start
+        timeDiff<-difftime(current_time, time_limit, units = "hours")
+        # If reloadtime is smaller, download existing, otherwise new
+        if(!is.null(timeDiff) && length(timeDiff)>0 && timeDiff<=reloadTimeDiff) {
+          if(interactive()) {
+            cli::cli_alert_success(
+              "Existing file within desired reload time difference
+          of {as.integer(reloadTimeDiff)} hour(s)."
+            )
+          }
+          exlist_sub<-exlist_sub[1]
 
+        } else {
+          if(interactive()){
+            cli::cli_alert_info(
+              "Existing file older than desired reload time difference
+          of {as.integer(reloadTimeDiff)} hour(s). Creating new export"
+            )
+          }
+          exlist_sub<-data.table(character(0))
+        }
+      } else {
+        cli::cli_abort(c("x" = "You have to either provide a value for the reload time difference, or a from_date/time."))
+      }
 
     }
   } else {
