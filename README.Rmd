@@ -21,22 +21,31 @@ knitr::opts_chunk$set(
 
 <div align="justify">
 
-This is a new edition of the [Survey Solutions R API package](https://docs.mysurvey.solutions/headquarters/api/api-r-package/), based on the newly released [httr2](https://httr2.r-lib.org/index.html) package. Most of the syntax are the same as in the existing httr based [SurveySolutionsAPI](https://github.com/michael-cw/SurveySolutionsAPI) package, and therefore it should be easy to integrate it in your existing workflow, if you used the previous edition. 
+This is a new edition of the [Survey Solutions R API package](https://docs.mysurvey.solutions/headquarters/api/api-r-package/), based on the recently (as stable) released [httr2](https://httr2.r-lib.org/index.html) package. Most of the syntax are the same as in the existing httr based [SurveySolutionsAPI](https://github.com/michael-cw/SurveySolutionsAPI) package, and therefore it should be easy to integrate it in your existing workflow, if you have used the previous edition so far. 
 
-Nevertheless, there are several other updates like more meaningful error messages and other cosmetic changes and there are also quite a bunch of new features. Therefore i decided to release this package as a completely new one, such that users who do not want to switch to the new package or make use of the new features, can still work with the old package as usual.
+But besides a few syntax changes as well as several other updates like more meaningful error messages using the [cli](https://cli.r-lib.org/) and the [rlang](https://rlang.r-lib.org/) packages there are also quite a bunch of new features. Therefore i decided to release this package as a completely new one, such that users who do not want to switch to the new package or make use of the new features, can still work with the old package as usual. Nevertheless a transition to the new package is recommended.
 
-Nevertheless a transition to the new package is recommended. New features in this package are:
+Additionally the package also seeks a deeper integration with the updated [susographql](https://github.com/michael-cw/susographql) package, wich now also is purely based on the httr2 package.
 
-- workspace can now be set with *suso_set_key*
-- *suso_export* allows to merge all the data export files into one
-- Spatial data (i.e. polygons, point locations, lines) can be processed into sf objects
-- For potentially long running jobs, like assignment creation, httr2's parallel request feature is used
-- available value labels are applied to categorical variables, and even translation can be added.
-- and many more.
+### New features in this package specific to one or several functions are:
 
-It allows you to export data/paradata collected through CAWI, CATI or CAPI operations, manipulate users and questionnaires, create assignments, get information about the survey progress etc.. All directly out of R. 
+- **suso_get_stats_interview, suso_get_assignments, suso_createUSER, suso_createASS, suso_getSV** and **suso_getINT** with potentially long running jobs now use httr2's parallel request feature, which reduces processing time substantially. For example 10k assignments can now be created in about 200 seconds.In particular in large scale surveys and censuses, this feature may facilitat working with the API considerably.
+- **suso_set_key:** workspace can now be set as an environment variable, like it was already the case for server, user and password.
+- **suso_export:** now has the option to merge all the data export files into a single data table and also add survey weights, for analysis ready data sets.
+- **suso_export:** of spatial (map question) data (i.e. polygons, point locations, lines) can be processed into [sf (simple feature)](https://r-spatial.github.io/sf/articles/sf1.html) objects directly, by setting *process_mapquestions = TRUE*.
+- **suso_export:** now also processes available value labels and applies them to categorical variables, as well as variable labels. In case you have also translations for your questionnaire, these can be used as well.
+- **suso_export_paradata:** now uses milliseconds for all time based calculations, and also adds comprehensive questionnaire information to the data, like i.e. question type.
+- **suso_export_paradata:** now also identifys gps variable in your questionnaire, and uses it, to provide location data to the paradata.
+- **suso_mapupload, suso_mapassign, suso_maps, suso_mapreport** and **suso_deletemap** now also enable complete map management with a single package, and the same syntax/outputs[^1].
 
-However it is more than just a simple wrapper around the Survey Solutions REST API, which one can easily address through using i.e. the excellent httr package which also constitutes the basis for this package. The main intention of this package though, is to be integrated into your own data collection workflow, either through a shiny application or just through a simple script. This allows you to build your own workflows with your own customized user interfaces for your Survey Solutions data collection operations, no matter if you are dealing with a small scale impact evaluation or a large scale census. For this reason, the API calls return easy to process data tables, and in some cases, like paradata, even add additional variables useful for further processing.
+### New general features in this package are:
+
+- New classes and methods, i.e.: AssignmentClass, ExportClass, UserClass, and methods like summaryTable.exportClass (DT based) or boxplot_summary.exportClass (ggplot2 based).
+- Http error messages are translated into R errors, and use the error codes (and messages as provided by the Survey Solutions API response), which makes debugging easier.
+- Several options, which allows the user to customize processing to their environment, like: *suso.maxpar.req* for the maximum number of parallel requests, *suso.para.break* for customizing breaks when calculating paradata response times or *suso.para.tz* for setting the time zone.
+
+
+Again, and even more than the previous httr based API package, this package is more than just a simple wrapper around the Survey Solutions REST API (or GraphQL) endpoints. The main intention of this package though, is to be integrated into your own data collection workflow, either through a shiny application or just through a simple script without a lot of addtional data wrangling and adjustments. As such, the package allows you to build your own workflows with your own customized user interfaces for your Survey Solutions data collection operations, no matter if you are dealing with a small scale impact evaluation or a large scale census. For this reason, the API calls return easy to process data tables, and in some cases, like paradata, even add additional variables useful for further processing. For example the outputs of the newly added *summaryTable.exportClass* and *boxplot_summary.exportClass* can be used in a shiny application right away, by either using renderDT or renderPlotly.
 
 Important to note here is, that the package also makes extensive use of the **data.table** package, which allows for fast (multi-core) processing of large data sets. The individual functions either return a data.table, or a specific S3 extension of data.table, with individual methods defined. In case you are not familiar with it yet, you should probably have a look a this [introduction](https://cran.r-project.org/web/packages/data.table/vignettes/datatable-intro.html).
 
@@ -265,6 +274,8 @@ And to find more information on the package, check out the package vignettes.
 ## Feature requests and bug reports
 
 You can either use the standard GitHub approach by filing a bug report/feature request [here](https://github.com/michael-cw/SurveySolutionsAPIv2/issues) or you use the Survey Solutions user forum [here](https://forum.mysurvey.solutions/c/api/13).
+
+[^1]: All functions use the susographql functions, but are adjusted to the syntax of this package.
 
 
 </div>

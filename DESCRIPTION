@@ -26,6 +26,7 @@ Imports:
     stringr,
     susographql (>= 0.1.1),
     tidyjson,
+    tidyr,
     withr,
     zip
 Encoding: UTF-8
