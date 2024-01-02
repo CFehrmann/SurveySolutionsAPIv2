@@ -270,7 +270,8 @@ And to find more information on the package, check out the package vignettes.
 
 ## Feature requests and bug reports
 
-You can either use the standard GitHub approach by filing a bug report/feature request [here](https://github.com/michael-cw/SurveySolutionsAPIv2/issues) or you use the Survey Solutions user forum [here](https://forum.mysurvey.solutions/c/api/13).
+
+Since this is a beta release, feedback, bug reports and feature requests are very welcome. You can either use the standard GitHub approach by filing a bug report/feature request [here](https://github.com/michael-cw/SurveySolutionsAPIv2/issues) or you use the Survey Solutions user forum [here](https://forum.mysurvey.solutions/c/api/13).
 
 [^1]: The package is still under testing and also development of some features, therefore it is only recommended for experienced users.
 

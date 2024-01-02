@@ -358,8 +358,9 @@ vignettes.
 
 ## Feature requests and bug reports
 
-You can either use the standard GitHub approach by filing a bug
-report/feature request
+Since this is a beta release, feedback, bug reports and feature requests
+are very welcome. You can either use the standard GitHub approach by
+filing a bug report/feature request
 [here](https://github.com/michael-cw/SurveySolutionsAPIv2/issues) or you
 use the Survey Solutions user forum
 [here](https://forum.mysurvey.solutions/c/api/13).
