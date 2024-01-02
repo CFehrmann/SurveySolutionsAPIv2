@@ -61,7 +61,8 @@ package, which now also is purely based on the httr2 package.
   calculations, and also adds comprehensive questionnaire information to
   the data, like i.e. question type.
 - **suso_export_paradata:** now also identifies GPS variable in your
-  questionnaire, and uses it, to provide location data to the paradata.
+  questionnaire, and uses it, to add GPS location data to the paradata,
+  which facilitates spatial analysis of paradata considerably.
 - **suso_mapupload, suso_mapassign, suso_maps, suso_mapreport** and
   **suso_deletemap** now also enable complete map management with a
   single package, and the same syntax/outputs[^1].
@@ -77,8 +78,20 @@ package, which now also is purely based on the httr2 package.
 - Several options, which allows the user to customize processing to
   their environment, like: *suso.maxpar.req* for the maximum number of
   parallel requests, *suso.para.break* for customizing breaks when
-  calculating paradata response times or *suso.para.tz* for setting the
-  time zone.
+  calculating paradata response times, *suso.para.tz* for setting the
+  time zone or *suso.para.maxcore* for the number of cores used in
+  parallel processing.
+
+This is just a very rough overview of the most prominent features, for
+details please see the individual functions’ documentation. An extensive
+documentation is still in preparation and will follow over the next
+weeks, as well as some more class specific methods. For now, until the
+new documentation (i.e vignettes, gihub.io website) is released please
+use the original [SurveySolutionsAPI package
+documentation](https://michael-cw.github.io/SurveySolutionsAPI/), which
+is still valid for most of the functions.
+
+##### Further details on the package philospy
 
 Again, and even more than the previous httr based API package, this
 package is more than just a simple wrapper around the Survey Solutions
@@ -94,7 +107,9 @@ process data tables, and in some cases, like paradata, even add
 additional variables useful for further processing. For example the
 outputs of the newly added *summaryTable.exportClass* and
 *boxplot_summary.exportClass* can be used in a shiny application right
-away, by either using renderDT or renderPlotly.
+away, by either using *renderDT* from the R
+[DT](https://rstudio.github.io/DT/shiny.html) package, or
+*renderPlotly.* from the R [plotly](https://plotly-r.com/) package.
 
 Important to note here is, that the package also makes extensive use of
 the **data.table** package, which allows for fast (multi-core)
