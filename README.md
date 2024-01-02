@@ -11,7 +11,8 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 
 <div align="justify">
 
-This is a new edition of the [Survey Solutions R API
+This is a (beta - release[^1]) new edition of the [Survey Solutions R
+API
 package](https://docs.mysurvey.solutions/headquarters/api/api-r-package/),
 based on the recently (as stable) released
 [httr2](https://httr2.r-lib.org/index.html) package. Most of the syntax
@@ -65,7 +66,7 @@ package, which now also is purely based on the httr2 package.
   which facilitates spatial analysis of paradata considerably.
 - **suso_mapupload, suso_mapassign, suso_maps, suso_mapreport** and
   **suso_deletemap** now also enable complete map management with a
-  single package, and the same syntax/outputs[^1].
+  single package, and the same syntax/outputs[^2].
 
 #### New general features in this package are:
 
@@ -357,5 +358,8 @@ use the Survey Solutions user forum
 
 </div>
 
-[^1]: All functions use the susographql functions, but are adjusted to
+[^1]: The package is still under testing and also development of some
+    features, therefore it is only recommended for experienced users.
+
+[^2]: All functions use the susographql functions, but are adjusted to
     the syntax of this package.

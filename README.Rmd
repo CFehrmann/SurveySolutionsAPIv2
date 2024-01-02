@@ -21,7 +21,7 @@ knitr::opts_chunk$set(
 
 <div align="justify">
 
-This is a new edition of the [Survey Solutions R API package](https://docs.mysurvey.solutions/headquarters/api/api-r-package/), based on the recently (as stable) released [httr2](https://httr2.r-lib.org/index.html) package. Most of the syntax are the same as in the existing httr based [SurveySolutionsAPI](https://github.com/michael-cw/SurveySolutionsAPI) package, and therefore it should be easy to integrate it in your existing workflow, if you have used the previous edition so far. 
+This is a (beta - release[^1]) new edition of the [Survey Solutions R API package](https://docs.mysurvey.solutions/headquarters/api/api-r-package/), based on the recently (as stable) released [httr2](https://httr2.r-lib.org/index.html) package. Most of the syntax are the same as in the existing httr based [SurveySolutionsAPI](https://github.com/michael-cw/SurveySolutionsAPI) package, and therefore it should be easy to integrate it in your existing workflow, if you have used the previous edition so far. 
 
 But besides a few syntax changes as well as several other updates like more meaningful error messages using the [cli](https://cli.r-lib.org/) and the [rlang](https://rlang.r-lib.org/) packages there are also quite a bunch of new features. Therefore i decided to release this package as a completely new one, such that users who do not want to switch to the new package or make use of the new features, can still work with the old package as usual. Nevertheless a transition to the new package is recommended.
 
@@ -36,7 +36,7 @@ Additionally the package also seeks a deeper integration with the updated [susog
 - **suso_export:** now also processes available value labels and applies them to categorical variables, as well as variable labels. In case you have also translations for your questionnaire, these can be used as well.
 - **suso_export_paradata:** now uses milliseconds for all time based calculations, and also adds comprehensive questionnaire information to the data, like i.e. question type.
 - **suso_export_paradata:** now also identifies GPS variable in your questionnaire, and uses it, to add GPS location data to the paradata, which facilitates spatial analysis of paradata considerably.
-- **suso_mapupload, suso_mapassign, suso_maps, suso_mapreport** and **suso_deletemap** now also enable complete map management with a single package, and the same syntax/outputs[^1].
+- **suso_mapupload, suso_mapassign, suso_maps, suso_mapreport** and **suso_deletemap** now also enable complete map management with a single package, and the same syntax/outputs[^2].
 
 #### New general features in this package are:
 
@@ -44,7 +44,7 @@ Additionally the package also seeks a deeper integration with the updated [susog
 - Http error messages are translated into R errors, and use the error codes (and messages as provided by the Survey Solutions API response), which makes debugging easier.
 - Several options, which allows the user to customize processing to their environment, like: *suso.maxpar.req* for the maximum number of parallel requests, *suso.para.break* for customizing breaks when calculating paradata response times, *suso.para.tz* for setting the time zone or *suso.para.maxcore* for the number of cores used in parallel processing.
 
-This is just a very rough overview of the most prominent features, for details please see the individual functions' documentation. An extensive documentation is still in preparation and will follow over the next weeks, as well as some more class specific methods. For now, until the new documentation (i.e vignettes, gihub.io website) is released please use the original [SurveySolutionsAPI package documentation](https://michael-cw.github.io/SurveySolutionsAPI/), which is still valid for most of the functions.
+This is just a very rough overview of the most prominent features, for details please see the individual functions' documentation. An extensive documentation is still in preparation and will follow over the next weeks, as well as some more class specific methods. For now, until the new documentation (i.e vignettes, gihub.io website) is released please use the original [SurveySolutionsAPI package documentation](https://michael-cw.github.io/SurveySolutionsAPI/), which is still valid for most of the functions. 
 
 ##### Further details on the package philospy
 
@@ -272,7 +272,9 @@ And to find more information on the package, check out the package vignettes.
 
 You can either use the standard GitHub approach by filing a bug report/feature request [here](https://github.com/michael-cw/SurveySolutionsAPIv2/issues) or you use the Survey Solutions user forum [here](https://forum.mysurvey.solutions/c/api/13).
 
-[^1]: All functions use the susographql functions, but are adjusted to the syntax of this package.
+[^1]: The package is still under testing and also development of some features, therefore it is only recommended for experienced users.
+
+[^2]: All functions use the susographql functions, but are adjusted to the syntax of this package.
 
 
 </div>
