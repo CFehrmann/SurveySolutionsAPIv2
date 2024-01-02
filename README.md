@@ -48,16 +48,24 @@ package, which now also is purely based on the httr2 package.
 - **suso_set_key:** workspace can now be set as an environment variable,
   like it was already the case for server, user and password.
 - **suso_export:** now has the option to merge all the data export files
-  into a single data table and also add survey weights, for analysis
-  ready data sets.
-- **suso_export:** of spatial (map question) data (i.e. polygons, point
-  locations, lines) can be processed into [sf (simple
-  feature)](https://r-spatial.github.io/sf/articles/sf1.html) objects
-  directly, by setting *process_mapquestions = TRUE*.
+  into a single data table and also add survey weights, for
+  analysis-ready data sets.
+- **suso_export:** of spatial ([Survey Solutions Geography
+  Questions](https://docs.mysurvey.solutions/questionnaire-designer/questions/geography-question/))
+  data (i.e. polygons, point locations, lines) can be processed into [sf
+  (simple feature)](https://r-spatial.github.io/sf/articles/sf1.html)
+  objects directly, by setting *process_mapquestions = TRUE*. For
+  example a type polygons question, collected manually or automatic,
+  will result in an sf polygon, which can be stored directly as a shape
+  file with
+  [st_write](https://r-spatial.github.io/sf/reference/st_write.html).
 - **suso_export:** now also processes available value labels and applies
   them to categorical variables, as well as variable labels. In case you
-  have also translations for your questionnaire, these can be used as
-  well.
+  have one or several translations for your questionnaire, these can be
+  used as well, such that the labels applied are in the required
+  language. The (ExportClass) specific methods, subsequently make use of
+  these additional attributes. reulting in publication-ready tables and
+  graphs.
 - **suso_export_paradata:** now uses milliseconds for all time based
   calculations, and also adds comprehensive questionnaire information to
   the data, like i.e. question type.
@@ -74,8 +82,8 @@ package, which now also is purely based on the httr2 package.
   UserClass, and methods like summaryTable.exportClass (DT based) or
   boxplot_summary.exportClass (ggplot2 based).
 - Http error messages are translated into R errors, and use the error
-  codes (and messages as provided by the Survey Solutions API response),
-  which makes debugging easier.
+  codes (and messages) as provided by the Survey Solutions API
+  response), which makes debugging easier.
 - Several options, which allows the user to customize processing to
   their environment, like: *suso.maxpar.req* for the maximum number of
   parallel requests, *suso.para.break* for customizing breaks when
