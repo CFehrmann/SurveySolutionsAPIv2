@@ -11,9 +11,12 @@ Below are the options and environment variables, that are used by the \pkg{Surve
 Bellow is a list of options, with their default values.
 
 \itemize{
-\item \option{suso.maxpar.req} specifies the maximum number of parallel requests, default is 100
+\item \option{suso.maxpar.req} specifies the maximum number of parallel requests, default is 100.
 \item \option{suso.maxpar.con} specifies the maximum number of parallel connections,
 and must always be equal or greater than suso.maxpar.req, default is 100.
+\item \option{suso.para.break} specifies the maximum response time to be considered as a break in seconds, default 120.
+\item \option{suso.para.tz} specifies the local timezone for the processing of time values, default is \code{Sys.timezone()}.
+\item \option{suso.para.maxcore} specifies the number of cores used for parallel processing, default is \code{data.table::getDTthreads()-2}.
 }
 }
 

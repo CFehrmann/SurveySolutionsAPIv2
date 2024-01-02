@@ -32,4 +32,7 @@
   options(suso.para.break = 120)
   # tz defaults to system tz
   options(suso.para.tz = Sys.timezone())
+
+  # number of cores for parallel processing
+  options(suso.para.maxcore = data.table::getDTthreads()-2)
 }
