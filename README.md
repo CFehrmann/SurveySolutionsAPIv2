@@ -16,7 +16,7 @@ API
 package](https://docs.mysurvey.solutions/headquarters/api/api-r-package/),
 based on the recently (as stable) released
 [httr2](https://httr2.r-lib.org/index.html) package. Most of the syntax
-are the same as in the existing httr based
+is the same as in the existing httr based
 [SurveySolutionsAPI](https://github.com/michael-cw/SurveySolutionsAPI)
 package, and therefore it should be easy to integrate it in your
 existing workflow, if you have used the previous edition so far.
@@ -64,7 +64,7 @@ package, which now also is purely based on the httr2 package.
   have one or several translations for your questionnaire, these can be
   used as well, such that the labels applied are in the required
   language. The (ExportClass) specific methods, subsequently make use of
-  these additional attributes. reulting in publication-ready tables and
+  these additional attributes, resulting in publication-ready tables and
   graphs.
 - **suso_export_paradata:** now uses milliseconds for all time based
   calculations, and also adds comprehensive questionnaire information to
