@@ -18,11 +18,11 @@
 .check_basics<- function(token, server, apiUser, apiPass) {
   if(is.null(token)){
     if(is.null(server) | is.null(apiUser) | is.null(apiPass)){
-      stop("Please provide either a token or server, apiUser, and apiPass")
+      cli::cli_abort(c("x" = "Please provide either a token or server, apiUser, and apiPass"))
     }
   } else {
     if(is.null(server)){
-      stop("Please provide a server address")
+      cli::cli_abort(c("x" = "Please provide a server address"))
     }
   }
 }

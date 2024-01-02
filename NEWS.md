@@ -9,6 +9,6 @@
 * translation can be applied to export data for categorical variables
 * export allows to add weights file, so the data is analysis ready
 * more informative error messages by using the rlang and the cli package
-* implemented parallelization of requests with the httr2 req_perfrom_parallel function, reducing i.e. assingment creation to a fraction of a sequential process (use options to customize settings)
+* implemented parallelisation of requests with the httr2 req_perform_parallel function, reducing i.e. assignment creation to a fraction of a sequential process (use options to customize settings)
 * export classes produces (optional) DT summary table and ggplot2 summary plots
 * paradata time difference calculation is now based on milliseconds and includes information about questionnaire items, like question type etc.

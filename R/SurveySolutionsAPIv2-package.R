@@ -15,7 +15,7 @@
 #' @rawNamespace import(rlang, except = c(`:=`, unbox))
 #' @importFrom dplyr bind_rows select_if union
 #' @importFrom graphics boxplot
-#' @importFrom httr authenticate build_url GET parse_url
+# #' @importFrom httr authenticate build_url GET parse_url
 #' @importFrom jsonlite fromJSON unbox
 #' @importFrom stats setNames sd
 #' @importFrom lubridate as_datetime ymd ymd_hms now today

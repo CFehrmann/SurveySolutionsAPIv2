@@ -139,7 +139,8 @@
   msg404<-switch(type,
                  "ass" = c("x" = "Questionnaire/Assignment/Assignee not found."),
                  "usr" = c("x" = "User not found in current workspace."),
-                 "exp" = c("x" = "Export process was not found.")
+                 "exp" = c("x" = "Export process was not found."),
+                 "wsp" = c("x" = "Workspace not found.")
   )
   msg406<-switch(type,
                  "ass" = c("x" = "Assignee cannot be assigned to assignment."),
@@ -149,13 +150,19 @@
   msg400<-switch(type,
                  "ass" = c("x" = "Bad parameters provided or identifying data incorrect. See response details for more info."),
                  "usr" = c("x" = "User not found"),
-                 "exp" = c("x" = "Request is malformed/Export file was not generated yet")
+                 "exp" = c("x" = "Request is malformed/Export file was not generated yet"),
+                 "wsp" = c("x" = "Validation failed.")
   )
 
   msg401<-c("x"="Unauthorized/User not authorized.")
 
 
-  msg403<-c("x" = "Forbidden")
+  msg403<-switch(type,
+                 "ass" = c("x" = "Forbidden"),
+                 "usr" = c("x" = "Forbidden"),
+                 "exp" = c("x" = "Forbidden"),
+                 "wsp" = c("x" = "API credentials are not sufficient, please use admin credentials to perform this request.")
+  )
 
   msg409<-switch(type,
                  "usr" = c("x" = "User cannot be unarchived")
