@@ -31,17 +31,19 @@ recommended.
 
 Additionally the package also seeks a deeper integration with the
 updated [susographql](https://github.com/michael-cw/susographql)
-package, wich now also is purely based on the httr2 package.
+package, which now also is purely based on the httr2 package.
 
 #### New features in this package specific to one or several functions are:
 
 - **suso_get_stats_interview, suso_get_assignments, suso_createUSER,
   suso_createASS, suso_getSV** and **suso_getINT** with potentially long
-  running jobs now use httr2’s parallel request feature, which reduces
-  processing time substantially. For example 10k assignments can now be
-  created in about 200 seconds.In particular in large scale surveys and
-  censuses, this feature may facilitat working with the API
-  considerably.
+  running queries now use httr2’s parallel request feature, which
+  reduces processing time substantially. For example 10k assignments
+  (*suso_createASS*) can now be created in about 3 minutes, a list of
+  all interviewers (*suso_getINT*) in a workspace for 18K interviewers
+  and 5k supervisors now only takes around 1.5 minutes. In particular in
+  large scale surveys and censuses, this feature may facilitate working
+  with the API considerably.
 - **suso_set_key:** workspace can now be set as an environment variable,
   like it was already the case for server, user and password.
 - **suso_export:** now has the option to merge all the data export files
@@ -58,7 +60,7 @@ package, wich now also is purely based on the httr2 package.
 - **suso_export_paradata:** now uses milliseconds for all time based
   calculations, and also adds comprehensive questionnaire information to
   the data, like i.e. question type.
-- **suso_export_paradata:** now also identifys gps variable in your
+- **suso_export_paradata:** now also identifies GPS variable in your
   questionnaire, and uses it, to provide location data to the paradata.
 - **suso_mapupload, suso_mapassign, suso_maps, suso_mapreport** and
   **suso_deletemap** now also enable complete map management with a
@@ -83,7 +85,7 @@ package is more than just a simple wrapper around the Survey Solutions
 REST API (or GraphQL) endpoints. The main intention of this package
 though, is to be integrated into your own data collection workflow,
 either through a shiny application or just through a simple script
-without a lot of addtional data wrangling and adjustments. As such, the
+without a lot of additional data wrangling and adjustments. As such, the
 package allows you to build your own workflows with your own customized
 user interfaces for your Survey Solutions data collection operations, no
 matter if you are dealing with a small scale impact evaluation or a
