@@ -33,7 +33,7 @@ Additionally the package also seeks a deeper integration with the
 updated [susographql](https://github.com/michael-cw/susographql)
 package, wich now also is purely based on the httr2 package.
 
-### New features in this package specific to one or several functions are:
+#### New features in this package specific to one or several functions are:
 
 - **suso_get_stats_interview, suso_get_assignments, suso_createUSER,
   suso_createASS, suso_getSV** and **suso_getINT** with potentially long
@@ -64,7 +64,7 @@ package, wich now also is purely based on the httr2 package.
   **suso_deletemap** now also enable complete map management with a
   single package, and the same syntax/outputs[^1].
 
-### New general features in this package are:
+#### New general features in this package are:
 
 - New classes and methods, i.e.: AssignmentClass, ExportClass,
   UserClass, and methods like summaryTable.exportClass (DT based) or
@@ -108,15 +108,6 @@ even continue with it in the tidyverse. A package which combines both
 worlds is the [dtplyr](https://github.com/tidyverse/dtplyr) package, and
 for a comparison between the dplyr package and the data.table package
 see [here](https://atrebas.github.io/post/2019-03-03-datatable-dplyr/).
-
-Specific changes in version 0.6.X:
-
-- Preparation for token authentication (not active yet)
-- Map handling and management: suso_mapupload(), suso_mapassign(),
-  suso_mapinfo()
-- Introduction of S3 classes for return values, such that all
-  information returned from the API can be used efficiently. See news
-  for further details and classes.
 
 ## Installation
 

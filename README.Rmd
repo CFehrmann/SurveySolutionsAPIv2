@@ -27,7 +27,7 @@ But besides a few syntax changes as well as several other updates like more mean
 
 Additionally the package also seeks a deeper integration with the updated [susographql](https://github.com/michael-cw/susographql) package, wich now also is purely based on the httr2 package.
 
-### New features in this package specific to one or several functions are:
+#### New features in this package specific to one or several functions are:
 
 - **suso_get_stats_interview, suso_get_assignments, suso_createUSER, suso_createASS, suso_getSV** and **suso_getINT** with potentially long running jobs now use httr2's parallel request feature, which reduces processing time substantially. For example 10k assignments can now be created in about 200 seconds.In particular in large scale surveys and censuses, this feature may facilitat working with the API considerably.
 - **suso_set_key:** workspace can now be set as an environment variable, like it was already the case for server, user and password.
@@ -38,7 +38,7 @@ Additionally the package also seeks a deeper integration with the updated [susog
 - **suso_export_paradata:** now also identifys gps variable in your questionnaire, and uses it, to provide location data to the paradata.
 - **suso_mapupload, suso_mapassign, suso_maps, suso_mapreport** and **suso_deletemap** now also enable complete map management with a single package, and the same syntax/outputs[^1].
 
-### New general features in this package are:
+#### New general features in this package are:
 
 - New classes and methods, i.e.: AssignmentClass, ExportClass, UserClass, and methods like summaryTable.exportClass (DT based) or boxplot_summary.exportClass (ggplot2 based).
 - Http error messages are translated into R errors, and use the error codes (and messages as provided by the Survey Solutions API response), which makes debugging easier.
@@ -51,12 +51,6 @@ Important to note here is, that the package also makes extensive use of the **da
 
 Nevertheless, in case you don't require the capacities offered by data.table, you can still treat the return objects like a data frame or even continue with it in the tidyverse. A package which combines both worlds is the [dtplyr](https://github.com/tidyverse/dtplyr) package, and for a comparison between the dplyr package and the data.table package see [here](https://atrebas.github.io/post/2019-03-03-datatable-dplyr/). 
 
-Specific changes in version 0.6.X:
-
-- Preparation for token authentication (not active yet)
-- Map handling and management: suso_mapupload(), suso_mapassign(), suso_mapinfo()
-- Introduction of S3 classes for return values, such that all information returned from the API can be used
-efficiently. See news for further details and classes.
 
 ## Installation
 
