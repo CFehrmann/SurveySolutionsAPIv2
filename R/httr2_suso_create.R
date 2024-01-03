@@ -93,7 +93,7 @@ suso_createASS <- function(df = NULL,
   # H.3. Perform requests in parallel
   responses <- httr2::req_perform_parallel(
     requests,
-    pool = curl::new_pool(host_con = 100, total_con = 100),
+    pool = curl::new_pool(host_con = getOption("suso.maxpar.req"), total_con = getOption("suso.maxpar.con")),
     on_error = "continue"
   )
 

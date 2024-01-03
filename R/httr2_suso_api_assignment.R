@@ -202,7 +202,7 @@ suso_get_assignments<-function(server = suso_get_api_key("susoServer"),
       # execute requests in parallel !! move new pool settings to options
       responses <- httr2::req_perform_parallel(
         requests, paths = tmpfiles,
-        pool = curl::new_pool(host_con = 80, total_con = 80),
+        pool = curl::new_pool(host_con = getOption("suso.maxpar.req"), total_con = getOption("suso.maxpar.con")),
         on_error = "return"
       )
 
