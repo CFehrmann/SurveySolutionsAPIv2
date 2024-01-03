@@ -54,15 +54,7 @@ suso_get_stats <- function(server = suso_get_api_key("susoServer"),
   questID <- str_remove_all(questID, "-")
 
   # # append int_id to url
-  # url<-url |>
-  #   req_url_query(
-  #     query.questionnaireId = questID,
-  #     query.version = version,
-  #     query.question = qQuest,
-  #     query.exportType = qExp,
-  #     query.pivot = "false",
-  #     query.expandTeams = ifelse(byTeam,"true","false")
-  #   )
+
 
   # Query syntax from 01022024
   # https://mcw-demo.mysurvey.solutions/primary/api/v1/statistics?QuestionnaireId=b10435cc-1fe0-4888-9901-28182d25e746&

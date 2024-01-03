@@ -72,9 +72,10 @@ package, which now also is purely based on the httr2 package.
 - **suso_export_paradata:** now also identifies GPS variable in your
   questionnaire, and uses it, to add GPS location data to the paradata,
   which facilitates spatial analysis of paradata considerably.
-- **suso_mapupload, suso_mapassign, suso_maps, suso_mapreport** and
-  **suso_deletemap** now also enable complete map management with a
-  single package, and the same syntax/outputs[^2].
+- **suso_mapupload, suso_mapassign, suso_mapinfo, suso_mapreport** and
+  **suso_deletemap** now also integrates complete map management into a
+  single package using a harmonized syntax and returning the same output
+  types[^2].
 
 #### New general features in this package are:
 

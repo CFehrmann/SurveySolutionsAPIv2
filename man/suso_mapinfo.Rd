@@ -22,13 +22,13 @@ suso_mapinfo(
 )
 }
 \arguments{
-\item{server}{GraphQL endpoint of your server}
+\item{server}{Survey Solutions server address}
 
-\item{apiUser}{your API username}
+\item{apiUser}{Survey Solutions API user}
 
-\item{apiPass}{API password}
+\item{apiPass}{Survey Solutions API password}
 
-\item{workspace}{Server Workspace, if NULL uses default}
+\item{workspace}{server workspace, if nothing provided, defaults to primary}
 
 \item{token}{If Survey Solutions server token is provided \emph{apiUser} and \emph{apiPass} will be ignored}
 
@@ -55,7 +55,7 @@ Returns a data.table, with all the maps and additonal information. If multiple u
 the table is expanded, such that there is one user per map.
 }
 \description{
-Allows the user to retrieve filtered or unfiltered map data.
+Allows the user to retrieve filtered or unfiltered map data inlcuding map details, like size, assigned users etc..
 }
 \details{
 Attention: this uses the GraphQL API, not the REST API.

@@ -79,14 +79,14 @@ suso_mapupload <- function(server= suso_get_api_key("susoServer"),
 
 #' Receive maps currently uploaded to the server
 #'
-#' Allows the user to retrieve filtered or unfiltered map data.
+#' Allows the user to retrieve filtered or unfiltered map data inlcuding map details, like size, assigned users etc..
 #'
 #' @details Attention: this uses the GraphQL API, not the REST API.
 #'
-#' @param server GraphQL endpoint of your server
-#' @param workspace Server Workspace, if NULL uses default
-#' @param apiUser your API username
-#' @param apiPass API password
+#' @param server Survey Solutions server address
+#' @param apiUser Survey Solutions API user
+#' @param apiPass Survey Solutions API password
+#' @param workspace server workspace, if nothing provided, defaults to primary
 #' @param token If Survey Solutions server token is provided \emph{apiUser} and \emph{apiPass} will be ignored
 #' @param fileName name of the map on the server
 #' @param importDateUtc Import date
@@ -159,17 +159,18 @@ suso_mapinfo <- function(server= suso_get_api_key("susoServer"),
 
 }
 
-#' Assigns a map to a user
+#' Assigns/Unassign a map to a user
 #'
-#' Allows the user to assign a map to an interviewer to be used in CAPI data collection.
+#' Allows the user to assign/unassign a map to an interviewer to be used in CAPI data collection.
 #'
-#' @param server GraphQL endpoint of your server
-#' @param workspace Server Workspace, if NULL uses default
-#' @param apiUser your API username
-#' @param apiPass API password
+#' @param server Survey Solutions server address
+#' @param apiUser Survey Solutions API user
+#' @param apiPass Survey Solutions API password
+#' @param workspace server workspace, if nothing provided, defaults to primary
 #' @param token If Survey Solutions server token is provided \emph{apiUser} and \emph{apiPass} will be ignored
 #' @param fileName the name of the map file on the server
 #' @param userName the name of the interviewer to whom the map will be assigned to
+#' @param assignUser if TRUE user will be assigned to map, if FALSE user will be removed from map
 #'
 #'
 #' @examples
@@ -182,15 +183,14 @@ suso_mapinfo <- function(server= suso_get_api_key("susoServer"),
 #' @export
 
 
-
-
 suso_mapassign <- function(server= suso_get_api_key("susoServer"),
                            apiUser=suso_get_api_key("susoUser"),
                            apiPass=suso_get_api_key("susoPass"),
                            workspace = suso_get_api_key("workspace"),
                            token = NULL,
                            fileName = NULL,
-                           userName = NULL) {
+                           userName = NULL,
+                           assignUser = TRUE) {
 
   # workspace default
   workspace<-.ws_default(ws = workspace)
@@ -198,28 +198,204 @@ suso_mapassign <- function(server= suso_get_api_key("susoServer"),
   # check (.helpers.R)
   .check_basics(token, server, apiUser, apiPass)
 
-  result<-susographql::suso_gql_addusertomap(
-    endpoint = paste0(server, "graphql"),
-    workspace = workspace,
-    user = apiUser,
-    password = apiPass,
-    fileName = fileName,
-    userName = userName
-  )
 
-  result<-result$addUserToMap
-  result<-data.table::data.table(
-    fileName=result$fileName,
-    user=userName,
-    shapeType=result$shapeType,
-    importDateUtc=lubridate::as_datetime(result$importDateUtc)
-  )
+  # assign
+  if(assignUser) {
+    result<-susographql::suso_gql_addusertomap(
+      endpoint = paste0(server, "graphql"),
+      workspace = workspace,
+      user = apiUser,
+      password = apiPass,
+      fileName = fileName,
+      userName = userName
+    )
+
+    result<-result$addUserToMap
+    result<-data.table::data.table(
+      fileName=result$fileName,
+      user=userName,
+      shapeType=result$shapeType,
+      importDateUtc=lubridate::as_datetime(result$importDateUtc)
+    )
+  } else if(!assignUser) {
+    result<-susographql::suso_gql_deleteuserfrommap(
+      endpoint = paste0(server, "graphql"),
+      workspace = workspace,
+      user = apiUser,
+      password = apiPass,
+      fileName = fileName,
+      userName = userName
+    )
+
+    result<-result$deleteUserFromMap
+    result<-data.table::data.table(
+      fileName=result$fileName,
+      user=userName,
+      shapeType=result$shapeType,
+      importDateUtc=lubridate::as_datetime(result$importDateUtc)
+    )
+
+  }
   return(result)
 
 }
 
 
+#' Delete Map from Server
+#'
+#' Allows the user to delete maps stored on the server.
+#'
+#' @param server Survey Solutions server address
+#' @param apiUser Survey Solutions API user
+#' @param apiPass Survey Solutions API password
+#' @param workspace server workspace, if nothing provided, defaults to primary
+#' @param token If Survey Solutions server token is provided \emph{apiUser} and \emph{apiPass} will be ignored
+#' @param fileName the name of the map file on the server
+#'
+#'
+#' @examples
+#' \dontrun{
+#' suso_mapassign(workspace = "myworkspace",
+#'               fileName = "Lat9264Lon625_ALL.tif",
+#'               userName = "INT0004")
+#' }
+#'
+#' @export
 
+
+suso_deletemap <- function(server= suso_get_api_key("susoServer"),
+                           apiUser=suso_get_api_key("susoUser"),
+                           apiPass=suso_get_api_key("susoPass"),
+                           workspace = suso_get_api_key("workspace"),
+                           token = NULL,
+                           fileName = NULL) {
+
+  # workspace default
+  workspace<-.ws_default(ws = workspace)
+
+  # check (.helpers.R)
+  .check_basics(token, server, apiUser, apiPass)
+
+
+
+  result<-susographql::suso_gql_deletemap(
+    endpoint = paste0(server, "graphql"),
+    workspace = workspace,
+    user = apiUser,
+    password = apiPass,
+    fileName = fileName
+  )
+
+  result<-result$deleteMap
+  result<-data.table::data.table(
+    fileName=result$fileName,
+    shapeType=result$shapeType,
+    importDateUtc=lubridate::as_datetime(result$importDateUtc)
+  )
+
+
+  return(result)
+
+}
+
+#' Create a Map Report
+#'
+#' Allows the user to create a map report with pre-specified parameters.
+#'
+#' @param server Survey Solutions server address
+#' @param apiUser Survey Solutions API user
+#' @param apiPass Survey Solutions API password
+#' @param workspace server workspace, if nothing provided, defaults to primary
+#' @param token If Survey Solutions server token is provided \emph{apiUser} and \emph{apiPass} will be ignored
+#' @param questID Questionnaire ID
+#' @param version Questionnaire version
+#' @param variable Variable(s) of interest
+#' @param zoom Zoom of the map report
+#' @param clientMapWidth width of the client map
+#' @param west coordinates for bounding box
+#' @param east coordinates for bounding box
+#' @param north coordinates for bounding box
+#' @param south coordinates for bounding box
+#' @param assignmentId Assignment ID
+#' @param clientKey Interview key
+#' @param createdDate Creation data of the interview
+#' @param errorsCount number of errors
+#' @param identifyingData Pre-loaded identifying data
+#' @param interviewMode Interview mode (CAWI or CAPI)
+#' @param notAnsweredCount number of unanswered questions
+#'
+#'
+#' @examples
+#' \dontrun{
+#' suso_mapassign(workspace = "myworkspace",
+#'               fileName = "Lat9264Lon625_ALL.tif",
+#'               userName = "INT0004")
+#' }
+#'
+#' @export
+
+
+suso_mapreport <- function(server= suso_get_api_key("susoServer"),
+                           apiUser=suso_get_api_key("susoUser"),
+                           apiPass=suso_get_api_key("susoPass"),
+                           workspace = suso_get_api_key("workspace"),
+                           token = NULL,
+                           questID = NULL,
+                           version = NULL,
+                           variable = NULL,
+                           zoom = 1,
+                           clientMapWidth = 0,
+                           west = -180,
+                           east = 180,
+                           north = 90,
+                           south = -90,
+                           assignmentId = NULL,
+                           clientKey = NULL,
+                           createdDate = NULL,
+                           errorsCount = NULL,
+                           identifyingData = NULL,
+                           interviewMode = NULL,
+                           notAnsweredCount = NULL) {
+
+  # workspace default
+  workspace<-.ws_default(ws = workspace)
+
+  # check (.helpers.R)
+  .check_basics(token, server, apiUser, apiPass)
+
+
+
+  result<-susographql::suso_gql_mapreport(
+    endpoint = paste0(server, "graphql"),
+    workspace = workspace,
+    user = apiUser,
+    password = apiPass,
+    questID = questID,
+    version = version,
+    zoom = zoom,
+    clientMapWidth = clientMapWidth,
+    west = west,
+    east = east,
+    north = north,
+    south = south,
+    assignmentId = assignmentId,
+    clientKey = clientKey,
+    createdDate = createdDate,
+    errorsCount = errorsCount,
+    notAnsweredCount = notAnsweredCount
+  )
+
+  result<-result$mapReport
+  result<-data.table::data.table(
+    fileName=result$fileName,
+    shapeType=result$shapeType,
+    importDateUtc=lubridate::as_datetime(result$importDateUtc)
+  )
+
+
+  return(result)
+
+}
 
 
 
