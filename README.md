@@ -60,11 +60,13 @@ package, which now also is purely based on the httr2 package.
   file with
   [st_write](https://r-spatial.github.io/sf/reference/st_write.html).
 - **suso_export:** now also processes available value labels and applies
-  them to categorical variables, as well as variable labels. In case you
-  have one or several translations for your questionnaire, these can be
-  used as well, such that the labels applied are in the required
-  language. The (ExportClass) specific methods, subsequently make use of
-  these additional attributes, resulting in publication-ready tables and
+  them to categorical variables, as well as variable labels without
+  using the STATA export (and therefore the haven/readstata13 package
+  are not required any longer). In case you have one or several
+  translations for your questionnaire, these can be applied as well,
+  such that the labels appear are in the desired language. The
+  (ExportClass) specific methods, subsequently make use of these
+  additional attributes, resulting in publication-ready tables and
   graphs.
 - **suso_export_paradata:** now uses milliseconds for all time based
   calculations, and also adds comprehensive questionnaire information to
@@ -161,7 +163,7 @@ provide your credentials.
 ``` r
 library(SurveySolutionsAPIv2)
 suso_clear_keys()
-suso_set_key("https://xxx.mysurvey.solutions", "xxxxxx", "xxxxxxx")
+suso_set_key("https://xxx.mysurvey.solutions", "xxxxxx", "xxxxxxx", "test")
 suso_keys()
 #> $suso
 #> $suso$susoServer
@@ -172,6 +174,9 @@ suso_keys()
 #> 
 #> $suso$susoPass
 #> [1] "xxxxxxx"
+#> 
+#> $suso$workspace
+#> [1] "test"
 #> 
 #> 
 #> attr(,"class")
@@ -210,7 +215,7 @@ details can be found in the corresponding vignette on survey management.
 Lets start with getting a list of all supervisors on the server.
 
 ``` r
-sv <- suso_getSV(workspace = "test")
+sv <- suso_getSV()
 print(head(sv))
 #>    IsLocked        CreationDate                               UserId   UserName
 #> 1:    FALSE 2023-02-07 17:33:40 00d21677-0331-4698-ae7b-908aeac14dd6 somesvuser
@@ -230,14 +235,14 @@ If no input is provided, the function returns a list of all
 questionnaires on the server:
 
 ``` r
-questlist <- suso_getQuestDetails(workspace = "test")
+questlist <- suso_getQuestDetails()
 # print(questlist)
 ```
 
 Specifying *operation.type = status*, you receive a list of statuses.
 
 ``` r
-statlist <- suso_getQuestDetails(operation.type = "statuses", workspace = "test")
+statlist <- suso_getQuestDetails(operation.type = "statuses")
 print(statlist)
 #>  [1] "Restored"               "Created"                "SupervisorAssigned"     "InterviewerAssigned"    "RejectedBySupervisor"   "ReadyForInterview"      "SentToCapi"            
 #>  [8] "Restarted"              "Completed"              "ApprovedBySupervisor"   "RejectedByHeadquarters" "ApprovedByHeadquarters" "Deleted"
@@ -288,7 +293,7 @@ To retrieve the paradata for a particular interview you use
 *suso_export_paradata*
 
 ``` r
-system.time(para1 <- suso_export_paradata(questID = questlist[1, QuestionnaireId], workspace = "test", version = questlist[1, Version], reloadTimeDiff = 24, onlyActiveEvents = F, allResponses = T))
+system.time(para1 <- suso_export_paradata(questID = questlist[1, QuestionnaireId], version = questlist[1, Version], reloadTimeDiff = 24, onlyActiveEvents = F, allResponses = T))
 #> 
 #> The last file has been created 1 hours ago.
 #> 
@@ -327,7 +332,7 @@ To upload a map, you can just use the **suso_mapupload** function like
 this:
 
 ``` r
-suso_mapupload(workspace = "test", path_to_zip = mapPath)
+suso_mapupload(path_to_zip = mapPath)
 #>    xMaxVal yMaxVal xMinVal yMinVal wkid             fileName  size maxScale minScale shapeType       importDateUtc                           uploadedBy     users
 #> 1:  -78.39    26.8  -78.62   26.55 4326 checkshapesimple.shp 20467        0        0   Polygon 2023-02-16 17:24:47 961d073f-f316-4353-9e7e-1f00899cb837 <list[0]>
 ```
@@ -335,7 +340,7 @@ suso_mapupload(workspace = "test", path_to_zip = mapPath)
 To assign a map you can use the **suso_mapassign** function:
 
 ``` r
-suso_mapassign(workspace = "test", fileName = "checkshapesimple.shp", userName = "INT0004")
+suso_mapassign(fileName = "checkshapesimple.shp", userName = "INT0004")
 #>                fileName    user shapeType       importDateUtc
 #> 1: checkshapesimple.shp INT0004   Polygon 2023-02-16 17:24:47
 ```
