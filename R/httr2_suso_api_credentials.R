@@ -26,7 +26,7 @@ print.suso_api <- function(x, ...) {
   }
 }
 
-#' Set Credentials
+#' Set all credentials at once
 #'
 #' Sets API credentials so it's available for all API calls. See details
 #'
@@ -53,7 +53,7 @@ suso_set_key <- function(
   suso_server = "",
   suso_user = "",
   suso_password = "",
-  workspace = "",
+  workspace = NULL,
   suso_token = ""
 ) {
   # workspace default
@@ -68,6 +68,38 @@ suso_set_key <- function(
   options[['suso']][['susoUser']] <- suso_user
   options[['suso']][['susoPass']] <- suso_password
   options[['suso']][['workspace']] <- workspace
+  class(options) <- "suso_api"
+  options(SurveySolutionsAPI = options)
+  invisible(NULL)
+
+}
+
+#' Set workspace only
+#'
+#' Sets the workspace only, but leaves all other credentials the same.
+#'
+#' @param workspace server workspace, if nothing provided, defaults to primary
+#'
+#' @details
+#' Use \code{suso_set_workspace} to make the desired workspace available for all the \code{suso_}
+#' functions, so you don't need to specify the workspace parameter within those
+#' functions.
+#'
+#'
+#'
+#' @export
+#'
+suso_set_workspace <- function(
+    workspace = NULL
+) {
+  # workspace default
+  workspace<-.ws_default(ws = workspace)
+  # get options
+  options <- getOption("SurveySolutionsAPI")
+
+  # add to object
+  options[['suso']][['workspace']] <- workspace
+
   class(options) <- "suso_api"
   options(SurveySolutionsAPI = options)
   invisible(NULL)
@@ -183,11 +215,11 @@ suso_PwCheck<-function(server=suso_get_api_key("susoServer"),
   # if interactive, print message & query
   if(interactive()){
     if(test_detail==200){
-      cli::cli_alert_success("Credentials are correct & and the following successful request was performed:\n\n")
+      cli::cli_alert_success("Credentials are correct & and the following successful request was performed in workspace {workspace} :\n\n")
       url |> httr2::req_dry_run()
 
     } else {
-      cli::cli_alert_danger("Credentials are incorrect & and the following failed request was performed:\n\n")
+      cli::cli_alert_danger("Credentials are incorrect & and the following failed request was performed in workspace {workspace}:\n\n")
       url |> httr2::req_dry_run()
     }
   }

@@ -2,13 +2,13 @@
 % Please edit documentation in R/httr2_suso_api_credentials.R
 \name{suso_set_key}
 \alias{suso_set_key}
-\title{Set Credentials}
+\title{Set all credentials at once}
 \usage{
 suso_set_key(
   suso_server = "",
   suso_user = "",
   suso_password = "",
-  workspace = "",
+  workspace = NULL,
   suso_token = ""
 )
 }
