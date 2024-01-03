@@ -214,14 +214,17 @@ suso_PwCheck<-function(server=suso_get_api_key("susoServer"),
   )
   # if interactive, print message & query
   if(interactive()){
+    cli::cli_div(theme = list(span.emph = list(color = "green",
+                                               `font-weight` = "bold")))
     if(test_detail==200){
-      cli::cli_alert_success("Credentials are correct & and the following successful request was performed in workspace {workspace} :\n\n")
+      cli::cli_alert_success("Credentials are correct & and the following successful request\n was performed in workspace {.emph  {toupper(workspace)}} :\n\n")
       url |> httr2::req_dry_run()
 
     } else {
-      cli::cli_alert_danger("Credentials are incorrect & and the following failed request was performed in workspace {workspace}:\n\n")
+      cli::cli_alert_danger("Credentials are incorrect & and the following failed request was performed in workspace {.emph  {toupper(workspace)}}:\n\n")
       url |> httr2::req_dry_run()
     }
+    cli::cli_end()
   }
 
   return(test_detail)

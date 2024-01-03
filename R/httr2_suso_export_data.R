@@ -98,6 +98,21 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
   # workspace default
   workspace<-.ws_default(ws = workspace)
 
+  # if combinefiles is true, show warning and set process_mapquestions to false
+  if(process_mapquestions) {
+    if(combineFiles) {
+      if(interactive()){
+        cli::cli_div(theme = list(span.emph = list(color = "red",
+                                                   `font-weight` = "bold")))
+        cli::cli_alert_warning("Processing of map questions is not supported when combineFiles is TRUE.
+                                Setting process_mapquestions to {.emph FALSE}.")
+        cli::cli_end()
+      }
+
+      process_mapquestions<-FALSE
+    }
+  }
+
   # check sf installed when process_mapquestions TRUE
   if(process_mapquestions) {
     rlang::check_installed(
@@ -302,7 +317,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
       InterviewStatus = workStatus, #required
       From = from_datetime, # can be null
       To = to_datetime, # can be null
-      TranslationId = addTranslation, #if not null then id
+      TranslationId = NULL, #addTranslation, #if not null then id
       IncludeMeta = TRUE #required
     )
 
@@ -435,6 +450,28 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
   # iii. created list with questions and validations
   allcontent<-.suso_transform_fullValid_q(ajson)
   allquestions<-allcontent$q
+  # iv. read translations if folder exist
+  if(addTranslation) {
+    trfp<-file.path(tmpdir, "Questionnaire", "Translations")
+    if(dir.exists(trfp)) {
+      flist<-list.files(trfp, pattern = ".xlsx", full.names = T)
+      if(length(flist)>0) {
+        # check package availability
+        rlang::check_installed(
+          "readxl",
+          reason = "The readxl package is required for reading the translation files."
+        )
+
+        if(interactive()) cli::cli_alert_success("{length(flist)} translations found an processing.")
+        flist<-lapply(flist, readxl::read_xlsx)
+      }
+    } else {
+      if(interactive()) cli::cli_alert_warning("No translation found, procedding without.")
+
+      addTranslation<-FALSE
+    }
+  }
+
 
   # get questionnaire variable
   questName <- .get_first_tab_filename(file.path(tmpdir, "export__readme.txt"))

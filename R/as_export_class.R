@@ -230,6 +230,7 @@ summaryTable.exportClass <- function(x, useDT = TRUE, ...) {
     SD = numeric(0),
     Max = numeric(0),
     Min = numeric(0),
+    Count = numeric(0),
     NA_Count = numeric(0)
   )
   # set decimal digits to 3 with withr or use ...$digits if provided
@@ -247,6 +248,7 @@ summaryTable.exportClass <- function(x, useDT = TRUE, ...) {
                SD = round(sd(x[[col]], na.rm = TRUE), digits = dig),
                Max = round(max(x[[col]], na.rm = TRUE), digits = dig),
                Min = round(min(x[[col]], na.rm = TRUE), digits = dig),
+               count = length(x[[col]]),
                NA_Count = sum(is.na(x[[col]]))
              )), fill = TRUE
       )

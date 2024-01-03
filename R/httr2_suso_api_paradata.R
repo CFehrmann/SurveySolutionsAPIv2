@@ -405,7 +405,7 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
                                    server = server, operation.type = "structure")
   allquestions<-allcontent$q
   qgps<-.questionnaire_gpsquestion(allquestions)
-  qgps<-qgps[type1 == "GPS"]
+  if(nrow(qgps)>0) qgps<-qgps[type1 == "GPS"]
 
   #aaa<-data.table::fread(file.path(tempdir(), 19474, "paradata.tab"), sep = "\t")
   fp<-file.path(tmpdir, "paradata.tab")
@@ -505,11 +505,19 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
   varNames<-levels(para1_answer$var)
   if(is.na(gpsVarName)) {
     if(nrow(qgps)>0) {
-      cli::cli_alert_info('The following GPS questions have been identified: {paste(qgps$VariableName, collapse = ", ")}\n')
-      cli::cli_alert_warning('Using {qgps$VariableName[1]} for coordinates, if you want to use a different one, please
+      if(interactive()){
+        cli::cli_alert_info('The following GPS questions have been identified: {paste(qgps$VariableName, collapse = ", ")}\n')
+        cli::cli_alert_warning('Using {qgps$VariableName[1]} for coordinates, if you want to use a different one, please
                              use gpsVarName argument.\n')
+      }
+      gpsVarMain<-qgps$VariableName[1]
+
+    } else {
+      if(interactive()){
+        cli::cli_alert_danger('No GPS questions have been identified. Proceeding without GPS.\n')
+      }
+      gpsVarMain<-character(0)
     }
-    gpsVarMain<-qgps$VariableName[1]
   } else {
     #stopifnot(is.character(gpsVarName), gpsVarName %in% varNames)
     if(!(gpsVarName %in% qgps$VariableName)) {
