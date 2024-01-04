@@ -20,6 +20,7 @@ suso_export(
     "RejectedBySupervisor", "Completed", "ApprovedBySupervisor",
     "RejectedByHeadquarters", "ApprovedByHeadquarters"),
   addTranslation = NULL,
+  translationLanguage = NULL,
   reloadTimeDiff = 1,
   inShinyApp = F,
   verbose = FALSE,
@@ -56,8 +57,10 @@ RejectedBySupervisor,ReadyForInterview,
 SentToCapi,Restarted,Completed,ApprovedBySupervisor,
 RejectedByHeadquarters,ApprovedByHeadquarters,Deleted}), if NULL all is exported}
 
-\item{addTranslation}{if not NULL, the translation name as specified in the designer, which will then be applied value labels
-\emph{(not implemented yet!)}}
+\item{addTranslation}{if not NULL, the translation name as specified in the designer, which will then be applied to value and variable labels}
+
+\item{translationLanguage}{if not NULL the desired translation to be applied, if NULL, the first one found will be applied, the same is true,
+if the provided translation language does not exist}
 
 \item{reloadTimeDiff}{time difference in hours between last generated file and now (will be ignored when \code{from_date} and
 \code{to_date} is not \code{NULL})}

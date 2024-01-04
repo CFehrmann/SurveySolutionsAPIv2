@@ -156,8 +156,14 @@ suso_getQuestDetails <- function(server = suso_get_api_key("susoServer"),
       # !! ATTENTION: susographql does currently not return the data, check and update
       # quest1[,LastEntryDate:=as_datetime(LastEntryDate)][]
 
+      # add translation ids (if any)
+      if(!is.null(quest1$translations)){
+        quest1<-.unnest_df_in_dt(quest1, col=translations, id = (names(quest1)[names(quest1)!="translations"]), "name", "id")
+        quest1<-quest1[,translations:=NULL]
+      }
+
       # return
-      return(quest1)
+      return(quest1[])
     }
   } else if (operation.type == "statuses") {
     # only for consistency reason, api is deprecated

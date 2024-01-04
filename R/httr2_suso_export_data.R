@@ -22,8 +22,9 @@
 #' @param from_time if provided, only interviews started at this time or later will be included
 #' @param to_date if provided, only interviews started before or on this date will be included
 #' @param to_time if provided, only interviews started before or at this time will be included
-#' @param addTranslation if not NULL, the translation name as specified in the designer, which will then be applied value labels
-#' \emph{(not implemented yet!)}
+#' @param addTranslation if not NULL, the translation name as specified in the designer, which will then be applied to value and variable labels
+#' @param translationLanguage if not NULL the desired translation to be applied, if NULL, the first one found will be applied, the same is true,
+#' if the provided translation language does not exist
 #' @param process_mapquestions (only when \code{combineFiles=FALSE}), should map questions be processed to spatial (sf) objects,
 #' if yes, gps and all types of mapquestions will be added to the list at their corresponding roster level, and with the prefix "sf_"
 #' \emph{(experimental!)}
@@ -86,7 +87,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
                                    "ApprovedBySupervisor",
                                    "RejectedByHeadquarters",
                                    "ApprovedByHeadquarters"),
-                      addTranslation = NULL,
+                      addTranslation = NULL, translationLanguage = NULL,
                       reloadTimeDiff=1,
                       inShinyApp=F,
                       verbose = FALSE,
@@ -461,13 +462,70 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
           "readxl",
           reason = "The readxl package is required for reading the translation files."
         )
+        # read all translation files
+        flistxlxs<-sapply(flist, function(x) as.data.table(readxl::read_xlsx(x)), USE.NAMES = F, simplify = F)
+        # names(flistxlxs)<-(basename(tools::file_path_sans_ext(flist)))
+        tranlLanguage<-suso_getQuestDetails()
+        tranlLanguage<-tranlLanguage[QuestionnaireId==questID & Version==version]
+        exclcols<-c("Variable","QuestionnaireId","Version","QuestionnaireIdentity", "Title","defaultLanguageName")
+        tranlLanguage<-tranlLanguage[,.SD, .SDcols = !exclcols]
+        flist<-(basename(tools::file_path_sans_ext(flist)))
 
-        if(interactive()) cli::cli_alert_success("{length(flist)} translations found an processing.")
-        flist<-lapply(flist, readxl::read_xlsx)
-      }
+        # match languages
+        .get_translation_name <- function(dt, ids) {
+          dt<-dt[,sapply(.SD, stringr::str_remove_all, pattern = "-")]
+          find_column_for_id <- function(id, dt) {
+            for (col in names(dt)) {
+              # Check if the ID matches the value in the column
+              if (dt[[col]][1] == id) {
+                return(col)
+              }
+            }
+            return(NA) # Return NA if no match is found
+          }
+
+          # Apply the function to each ID and return the vector of column names
+          sapply(ids, find_column_for_id, dt)
+        }
+
+        # names the list of files
+        names(flistxlxs)<-.get_translation_name(tranlLanguage, flist)
+
+        if(interactive()) {
+          cli::cli_div(theme = list(span.emph = list(color = "blue",
+                                                     `font-weight` = "bold")))
+          cli::cli_alert_success("\nThe following translation(s) have been found:\n{.emph {paste(names(flistxlxs), collapse = ', ')}}")
+          cli::cli_end()
+        }
+
+        # check if translation name is null, if null first translation, if not compare and abort if not exist
+        if(is.null(translationLanguage)) {
+          translationLanguage<-names(flistxlxs)[1]
+          if(interactive()) {
+            cli::cli_div(theme = list(span.emph = list(color = "green",
+                                                       `font-weight` = "bold")))
+            cli::cli_alert_success("\nNo translation Language was provided, selecting:\n{.emph {translationLanguage}}")
+            cli::cli_end()
+          }
+        } else if(tolower(translationLanguage) %in% names(flistxlxs)) {
+          if(interactive()) {
+            cli::cli_div(theme = list(span.emph = list(color = "green",
+                                                       `font-weight` = "bold")))
+            cli::cli_alert_success("\nTranslation Language was provided, you selected:\n{.emph {translationLanguage}}")
+            cli::cli_end()
+          }
+        } else {
+          translationLanguage<-names(flistxlxs)[1]
+          if(interactive()) {
+            cli::cli_div(theme = list(span.emph = list(color = "red",
+                                                       `font-weight` = "bold")))
+            cli::cli_alert_danger("\nSelected translation Language does not exist, proceeding with:\n{.emph {translationLanguage}}")
+            cli::cli_end()
+          }
+        }
+        }
     } else {
       if(interactive()) cli::cli_alert_warning("No translation found, procedding without.")
-
       addTranslation<-FALSE
     }
   }

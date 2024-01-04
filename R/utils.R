@@ -165,3 +165,24 @@
   args$workspace<-workspace
   return(args)
 }
+
+# unnest nested dataframe in data.table
+# !!!ATTENTION, COL IS UNQUOTED, ID IS QUOTED
+
+.unnest_df_in_dt <- function(dt, col, id, name.var, valvar){
+  stopifnot(is.data.table(dt))
+  col <- substitute(unlist(col, recursive = FALSE))
+  dtlong<-dt[, eval(col), by = id]
+  dcarg<-sprintf("%s ~ %s", paste(id, collapse = "+"), name.var)
+  dtwide <- dcast(dtlong,  eval(rlang::parse_expr(dcarg)),
+                  value.var = valvar)
+  dt<-merge(dt, dtwide, all.x = T)
+  return(dt)
+
+}
+
+
+
+
+
+
