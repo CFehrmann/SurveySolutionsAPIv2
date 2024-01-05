@@ -633,7 +633,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
   # create string for eval expression: .(L0, L1, L2, L3, L4, Title, PublicKey, VariableName, type, ..JSON)
   questcols<-sprintf(".(%s)", paste0(c(Lindata, "Title", "QuestionText", "PublicKey", "VariableName", "type", "..JSON"), collapse = ","))
   quest<-.questionnaire_allquestions(allquestions)[,eval(parse(text = questcols))]
-
+  # quest<-allquestions
   # Remove HTML tags in QuestionText
   quest<-.questionnaire_remove_html_tags(quest, "QuestionText")
 

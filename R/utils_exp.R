@@ -58,8 +58,8 @@
     stop("The 'type' column does not exist in the data table.")
   }
 
-  # Identify rows where 'type' contains 'Question'
-  rows_with_question <- dt[grepl("Question", type), ]
+  # Identify rows with questions
+  rows_with_question <- dt[!(type%in%c("Group", "StaticText", "Variable")), ]
 
   return(rows_with_question)
 }

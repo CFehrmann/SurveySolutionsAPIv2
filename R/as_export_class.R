@@ -28,7 +28,11 @@ exportClass<-function(x, varLabels, ..., type = "main") {
       labs<-varLabels[["VariableName"]]
       labs<-labs[!is.na(labs)]
       # Check for variable names in wide format
-      base_vars <- unique(sub("__.*", "", names(x)))
+      # subset all with __ first
+      base_vars<-names(x)[stringr::str_which(names(x), pattern = "__")]
+      # get unique values from variables without
+      base_vars <- unique(sub("__.*", "", base_vars))
+      # get the base vars
       base_vars <- base_vars[base_vars %in% labs]
       if (length(base_vars) > 0) {
         # wide format
@@ -166,16 +170,18 @@ is.exportClass<-function(x) {
 
 #' S3 method to create a summary table of numeric variables for an exportClass object
 #'
-#' This function generates a summary table of numeric variables in a exportClass
+#' This function generates a summary table of numeric variables in an exportClass
 #' object. The table includes statistics such as mean, standard deviation, maximum,
-#' minimum, and count of NA values.
+#' minimum, and total count as well as count of NA values.
 #'
 #' @param x A exportClass object.
+#' @param includeFactors if \code{TRUE}, factor variables will be converted to numeric and included in the table.
 #' @param useDT Logical, if TRUE (default) the function returns a DataTable (DT) object (HTML table), otherwise
 #' a data.table object is returned.
+#' @param DTstyle if \code{TRUE} and \code{useDT = TRUE}, then a custom style will be applied, otherwise a plain DT table will be returned.
 #' @param ... Additional arguments (not used).
 #'
-#' @return A DataTable (DT) object (HTML table) displaying the summary statistics.
+#' @return A DataTable (DT) object (HTML table) displaying the summary statistics, if \code{useDT = TRUE}, and a plain data.table otherwise.
 #'
 #' @export
 #'
@@ -194,13 +200,13 @@ is.exportClass<-function(x) {
 #' summary_data_table
 #' }
 #'
-summaryTable <- function(x, useDT = TRUE, ...) {
+summaryTable <- function(x, includeFactors = FALSE, useDT = TRUE,  DTstyle = TRUE, ...) {
   UseMethod("summaryTable")
 }
 
 
 #' @export
-summaryTable.exportClass <- function(x, useDT = TRUE, ...) {
+summaryTable.exportClass <- function(x, includeFactors = FALSE, useDT = TRUE, DTstyle = TRUE, ...) {
 
   # check if x is of class exportClass
   if (!is.exportClass(x)) {
@@ -209,6 +215,17 @@ summaryTable.exportClass <- function(x, useDT = TRUE, ...) {
 
   # Get the numeric columns
   numeric_cols <- names(x)[sapply(x, is.numeric)]
+  # transform factors and add
+
+  # !!! Currently gives error with additonal NA values --> check
+  # if(includeFactors) {
+  if(FALSE) {
+    factor_cols <- names(x)[sapply(x, is.factor)]
+    x<-x[,lapply(.SD, as.numeric), .SDcols = factor_cols]
+    # update numeric cols
+    numeric_cols <- c(numeric_cols, factor_cols)
+
+  }
   # exclude survey solutions system columns
   numeric_cols <- .excludeSysVars(numeric_cols)
 
@@ -243,7 +260,7 @@ summaryTable.exportClass <- function(x, useDT = TRUE, ...) {
         list(summary_data,
              data.table(
                Variable = col,
-               Label = attr(x, col),
+               Label = attr(x, tolower(col)),
                Mean = round(mean(x[[col]], na.rm = TRUE), digits = dig),
                SD = round(sd(x[[col]], na.rm = TRUE), digits = dig),
                Max = round(max(x[[col]], na.rm = TRUE), digits = dig),
@@ -256,14 +273,50 @@ summaryTable.exportClass <- function(x, useDT = TRUE, ...) {
 
     # If useDT is FALSE return the data.table
     if (!useDT) {
+      # Return plain data.table
       return(summary_data)
     } else {
+      # Return DT
       # cli abort if DT is not found
       if (!(rlang::is_installed("DT"))) {
         cli::cli_abort(c("x" ="DT package is required to use this function and not found on your system."))
       }
-      # Convert the summary data.table to a DT DataTable
-      DT<-DT::datatable(summary_data, options = list(dom = 't'))
+      # GEN DT
+      # define options
+      if(DTstyle) {
+      smTabDir <- list(
+        dom = "t",
+        pagelength = nrow(summary_data),
+        paging = FALSE,
+        # dom = 'Blft',
+        fixedHeader = TRUE,
+        # Solution for rowwise from: https://stackoverflow.com/questions/69812528/r-data-table-alternating-row-color-with-groupings
+        initComplete = DT::JS(
+          "function(settings, json) {",
+          "$(this.api().table().header()).css({'background-color': '#002244', 'color': '#FFFFFF'});",
+          "$('table.dataTable.display tbody tr.odd').css('background-color', '#FFFFFF');",
+          "$('table.dataTable.display tbody tr.even').css('background-color', '#009FDA80');",
+          "}"),
+        columnDefs = list(list(className = 'dt-center', targets = c(0,1)))
+        )
+      } else {
+        smTabDir <- list(
+          pagelength = nrow(summary_data),
+          paging = FALSE
+        )
+      }
+
+      # render
+      DT<-DT::datatable(summary_data,
+                        smTabDir, rownames = F
+                        #style = "bootstrap4"
+                        ) |>
+        DT::formatStyle(1:length(summary_data),
+                    color = '#002244',
+                    #backgroundColor = 'orange',
+                    fontWeight = 'bold')
+
+      # DT<-DT::datatable(summary_data)
       return(DT)
     }
 }

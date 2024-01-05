@@ -4,23 +4,27 @@
 \alias{summaryTable}
 \title{S3 method to create a summary table of numeric variables for an exportClass object}
 \usage{
-summaryTable(x, useDT = TRUE, ...)
+summaryTable(x, includeFactors = FALSE, useDT = TRUE, DTstyle = TRUE, ...)
 }
 \arguments{
 \item{x}{A exportClass object.}
 
+\item{includeFactors}{if \code{TRUE}, factor variables will be converted to numeric and included in the table.}
+
 \item{useDT}{Logical, if TRUE (default) the function returns a DataTable (DT) object (HTML table), otherwise
 a data.table object is returned.}
+
+\item{DTstyle}{if \code{TRUE} and \code{useDT = TRUE}, then a custom style will be applied, otherwise a plain DT table will be returned.}
 
 \item{...}{Additional arguments (not used).}
 }
 \value{
-A DataTable (DT) object (HTML table) displaying the summary statistics.
+A DataTable (DT) object (HTML table) displaying the summary statistics, if \code{useDT = TRUE}, and a plain data.table otherwise.
 }
 \description{
-This function generates a summary table of numeric variables in a exportClass
+This function generates a summary table of numeric variables in an exportClass
 object. The table includes statistics such as mean, standard deviation, maximum,
-minimum, and count of NA values.
+minimum, and total count as well as count of NA values.
 }
 \examples{
 \dontrun{
