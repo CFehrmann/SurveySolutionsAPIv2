@@ -157,8 +157,11 @@ suso_getQuestDetails <- function(server = suso_get_api_key("susoServer"),
       # quest1[,LastEntryDate:=as_datetime(LastEntryDate)][]
 
       # add translation ids (if any)
-      if(!is.null(quest1$translations)){
+      if(!is.null(quest1$translations) && !(all(sapply(quest1[["translations"]], function(x) length(x) == 0)))){
         quest1<-.unnest_df_in_dt(quest1, col=translations, id = (names(quest1)[names(quest1)!="translations"]), "name", "id")
+        quest1<-quest1[,translations:=NULL]
+      } else if (!is.null(quest1$translations)) {
+        # if none available delete
         quest1<-quest1[,translations:=NULL]
       }
 

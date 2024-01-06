@@ -19,11 +19,13 @@ suso_PwCheck(
 
 \item{apiPass}{API password}
 
-\item{workspace}{server workspace, if nothing provided, defaults to primary}
+\item{workspace}{server workspace Name, if nothing provided, defaults to primary}
 
 \item{token}{If Survey Solutions server token is provided \emph{apiUser} and \emph{apiPass} will be ignored}
 }
+\value{
+200 code if correct, 400 if incorrect.
+}
 \description{
-This function returns a 200 status if the correct credentials have been provided. If credentials are correct but
-user is not eligible to access the workspace, then a 403 error is returned.
+This function returns a 200 status code if credentials are correct and a 400 code otherwise.
 }

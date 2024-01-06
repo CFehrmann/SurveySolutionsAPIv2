@@ -37,7 +37,7 @@ if(getRversion() >= "3.3.0")  {
     "HasExportFile", "JobId", "StartDate", "ReceivedByDeviceAtUtc",
     "variable", "value", "Role", "UserName", "FullName", "Password",
     "Supervisor", "PhoneNumber", "Featured", "type1", "isFixeRoster",
-    "QuestionText", "translations", "Version",
+    "QuestionText", "translations", "Version", "Completed", "Assigned",
     "resp_time",
     "action",
     "time",

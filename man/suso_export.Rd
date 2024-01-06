@@ -19,7 +19,7 @@ suso_export(
   workStatus = c("All", "SupervisorAssigned", "InterviewerAssigned",
     "RejectedBySupervisor", "Completed", "ApprovedBySupervisor",
     "RejectedByHeadquarters", "ApprovedByHeadquarters"),
-  addTranslation = NULL,
+  addTranslation = FALSE,
   translationLanguage = NULL,
   reloadTimeDiff = 1,
   inShinyApp = F,
@@ -110,6 +110,6 @@ format will be returned. This is the result of the following processing steps:
 \item Third the result of the previous step is merged with the main file
 }
 The resulting data.table contains value labels for factor variables. If the file path
-to a weight file is provided, the these will be added too, and is as such ready
+to a weight file is provided, then these will be added too, and is as such ready
 for analysis.
 }

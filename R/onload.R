@@ -35,4 +35,8 @@
 
   # number of cores for parallel processing
   options(suso.para.maxcore = data.table::getDTthreads()-2)
+
+  # type of parallel i.e. multisession, sequential multicore
+  options(suso.para.plan = "multisession")
+
 }

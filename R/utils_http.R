@@ -19,6 +19,16 @@
   }
 }
 
+.addSlashToEnd <- function(url) {
+  # Check if the URL ends with a slash
+  if (substring(url, nchar(url)) != "/") {
+    # Add a slash to the end if it doesn't
+    url <- paste0(url, "/")
+  }
+  return(url)
+}
+
+
 # base url builder base auth
 .baseurl_baseauth<-function(server, workspace, apiUser, apiPass, api, version = "v1"){
   # Build the URL

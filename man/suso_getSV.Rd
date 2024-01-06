@@ -29,12 +29,8 @@ Gets list of supervisors
 }
 \examples{
 \dontrun{
-suso_getSV(
-          workspace = "myworkspace"
-          )
-# or without any workspace and receive the default workspace
+# receive all supervisors in the workspace
 suso_getSV()
-
 }
 
 

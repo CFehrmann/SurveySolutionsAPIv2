@@ -36,10 +36,15 @@ Get list of all interviewers by supervisor id, or a list of all interviewers in 
 }
 \examples{
 \dontrun{
+
+# Get all members for a single supervisor
 suso_getINT(
-          workspace = "myworkspace",
           sv_id = "xxxx-xxxx-xxxx-xxx"
           )
+
+# Get all members in the workspace
+suso_getINT()
+
 }
 
 }

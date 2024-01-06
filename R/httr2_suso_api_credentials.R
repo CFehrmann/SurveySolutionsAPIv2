@@ -34,7 +34,7 @@ print.suso_api <- function(x, ...) {
 #' @param suso_user Survey Solutions API user
 #' @param suso_password Survey Solutions API password
 #' @param suso_token If Survey Solutions server token is provided \emph{suso_user} and \emph{suso_password} will be ignored
-#' @param workspace server workspace, if nothing provided, defaults to primary
+#' @param workspace server workspace Name, if nothing provided, defaults to primary
 #'
 #' @details
 #' Use \code{suso_set_key} to make API keys available for all the \code{suso_}
@@ -63,6 +63,8 @@ suso_set_key <- function(
   # sanitize string to ssl (http?)
   suso_server<-ifelse(stringr::str_count(suso_server, "https://")==1,
                       suso_server, paste0("https://", suso_server))
+  # check if ends w slash
+  suso_server<-.addSlashToEnd(suso_server)
   # add to object
   options[['suso']][['susoServer']] <- suso_server
   options[['suso']][['susoUser']] <- suso_user
@@ -78,14 +80,15 @@ suso_set_key <- function(
 #'
 #' Sets the workspace only, but leaves all other credentials the same.
 #'
-#' @param workspace server workspace, if nothing provided, defaults to primary
+#' @param workspace server workspace Name (not the display name), if nothing provided, defaults to primary
 #'
 #' @details
 #' Use \code{suso_set_workspace} to make the desired workspace available for all the \code{suso_}
 #' functions, so you don't need to specify the workspace parameter within those
-#' functions.
+#' functions. The function also checks if the workspace name is correct, and the user with the current credentials is
+#' authorized.If the workspace requires a different user/credentials, then use \code{\link{suso_set_key}}.
 #'
-#'
+#' @return invisibly TRUE if successful.
 #'
 #' @export
 #'
@@ -94,6 +97,17 @@ suso_set_workspace <- function(
 ) {
   # workspace default
   workspace<-.ws_default(ws = workspace)
+  # check if ws exists and user is authorized
+  wsauth<-suso_getWorkspace()$Name
+  if(!(workspace %in% wsauth)) {
+    cli::cli_abort(c("x" = "The provided workspace is not available. Either you used the wrong name, or you are not authorized. Please check!"))
+  } else {
+    if(interactive()) {
+      cli::cli_div(theme = list(span.emph = list(color = "green",
+                                                 `font-weight` = "bold")))
+      cli::cli_alert_success("Workspace changed to: {.emph {toupper(workspace)}}")}
+      cli::cli_end()
+  }
   # get options
   options <- getOption("SurveySolutionsAPI")
 
@@ -102,7 +116,7 @@ suso_set_workspace <- function(
 
   class(options) <- "suso_api"
   options(SurveySolutionsAPI = options)
-  invisible(NULL)
+  invisible(TRUE)
 
 }
 
@@ -125,6 +139,10 @@ suso_clear_keys <- function() {
   attr(options, "class") <- "suso_api"
   options(SurveySolutionsAPI = options)
 
+  if(interactive()) {
+    cli::cli_alert_success("Survey Solutions credentials are cleared!")
+  }
+
 }
 
 #' Get credentials
@@ -141,7 +159,7 @@ suso_clear_keys <- function() {
 #'
 suso_get_api_key <- function(api = c("susoServer", "susoUser", "susoPass", "workspace")) {
 
-  api<-match.arg(api)
+  rlang::arg_match(api)
   ## Return value for selected API component
   api <- getOption("SurveySolutionsAPI")[['suso']][[api]]
   if(is.na(api)) return(suso_get_default_key(api))
@@ -157,7 +175,7 @@ suso_get_api_key <- function(api = c("susoServer", "susoUser", "susoPass", "work
 #'
 #' @export
 suso_get_default_key <- function(api = c("susoServer", "susoUser", "susoPass", "workspace")) {
-  api<-match.arg(api)
+  rlang::arg_match(api)
   key <- getOption("SurveySolutionsAPI")[['suso']][[api]]
   if(is.na(key)) withr::with_options(
     list(rlang_backtrace_on_error = "none"),
@@ -170,14 +188,15 @@ suso_get_default_key <- function(api = c("susoServer", "susoUser", "susoPass", "
 
 #' Utility function to check if credentials are correct
 #'
-#' This function returns a 200 status if the correct credentials have been provided. If credentials are correct but
-#' user is not eligible to access the workspace, then a 403 error is returned.
+#' This function returns a 200 status code if credentials are correct and a 400 code otherwise.
 #'
 #' @param server Survey Solutions Server
 #' @param apiUser API user
 #' @param apiPass API password
-#' @param workspace server workspace, if nothing provided, defaults to primary
+#' @param workspace server workspace Name, if nothing provided, defaults to primary
 #' @param token If Survey Solutions server token is provided \emph{apiUser} and \emph{apiPass} will be ignored
+#'
+#' @return 200 code if correct, 400 if incorrect.
 #'
 #'
 #' @export

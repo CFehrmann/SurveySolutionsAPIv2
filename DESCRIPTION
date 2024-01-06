@@ -22,6 +22,7 @@ Imports:
     lubridate,
     readr,
     rlang,
+    shiny,
     stats,
     stringr,
     susographql (>= 0.1.1),
@@ -37,6 +38,9 @@ Remotes:
     michael-cw/susographql
 Suggests: 
     DT,
+    future,
+    future.apply,
     ggplot2,
+    progressr,
     readxl,
     sf

@@ -17,6 +17,8 @@ and must always be equal or greater than suso.maxpar.req, default is 100.
 \item \option{suso.para.break} specifies the maximum response time to be considered as a break in seconds, default 120.
 \item \option{suso.para.tz} specifies the local timezone for the processing of time values, default is \code{Sys.timezone()}.
 \item \option{suso.para.maxcore} specifies the number of cores used for parallel processing, default is \code{data.table::getDTthreads()-2}.
+\item \option{suso.para.plan} specifies plane used for parallel processing, default is \code{multisession}. For details please see
+\code{future::\link[future]{plan}}
 }
 }
 

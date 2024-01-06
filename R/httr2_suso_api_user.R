@@ -11,12 +11,8 @@
 #'
 #' @examples
 #' \dontrun{
-#' suso_getSV(
-#'           workspace = "myworkspace"
-#'           )
-#' # or without any workspace and receive the default workspace
+#' # receive all supervisors in the workspace
 #' suso_getSV()
-#'
 #' }
 #'
 #'
@@ -131,7 +127,8 @@ suso_getSV <- function(server = suso_get_api_key("susoServer"),
     }
   }
 
-
+  # convert date if nrow>0
+  if(nrow(test_json)>0) test_json[, CreationDate := lubridate::as_datetime(CreationDate)][]
   return(test_json)
 }
 
@@ -155,10 +152,15 @@ suso_getSV <- function(server = suso_get_api_key("susoServer"),
 #'
 #' @examples
 #' \dontrun{
+#'
+#' # Get all members for a single supervisor
 #' suso_getINT(
-#'           workspace = "myworkspace",
 #'           sv_id = "xxxx-xxxx-xxxx-xxx"
 #'           )
+#'
+#' # Get all members in the workspace
+#' suso_getINT()
+#'
 #' }
 #'
 #' @export
@@ -320,7 +322,7 @@ suso_getINT <- function(server=suso_get_api_key("susoServer"),
         on_error = "continue"
       )
       # I. Response
-      # I.1. Get faild responses
+      # I.1. Get failed responses
       failed <- responses |> httr2::resps_failures()
       # I.2. Get successful responses
       success <-responses |> httr2::resps_successes()
@@ -343,7 +345,10 @@ suso_getINT <- function(server=suso_get_api_key("susoServer"),
         "responses", "interviewers", workspace,
         success, "Users"
       )
-      test_json<-data.table::rbindlist(test_json, fill = T)
+
+      # ADD sv id-->only if no failes (for now)
+      if(length(failed)==0) names(test_json)<-allsv$UserId
+      test_json<-data.table::rbindlist(test_json, fill = T, idcol = "sv_id")
 
     }
   }
@@ -359,6 +364,8 @@ suso_getINT <- function(server=suso_get_api_key("susoServer"),
 
   } else {
     x<-list()
+    # convert date if nrow>0
+    if(nrow(test_json)>0) test_json[, CreationDate := lubridate::as_datetime(CreationDate)][]
     x$Users<-test_json
     test_json<-UserClass(x, args)
     return(test_json)

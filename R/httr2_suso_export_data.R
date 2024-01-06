@@ -62,7 +62,7 @@
 #'   \item Third the result of the previous step is merged with the main file
 #' }
 #' The resulting data.table contains value labels for factor variables. If the file path
-#' to a weight file is provided, the these will be added too, and is as such ready
+#' to a weight file is provided, then these will be added too, and is as such ready
 #' for analysis.
 #'
 #'
@@ -87,7 +87,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
                                    "ApprovedBySupervisor",
                                    "RejectedByHeadquarters",
                                    "ApprovedByHeadquarters"),
-                      addTranslation = NULL, translationLanguage = NULL,
+                      addTranslation = FALSE, translationLanguage = NULL,
                       reloadTimeDiff=1,
                       inShinyApp=F,
                       verbose = FALSE,
@@ -534,7 +534,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
   # get questionnaire variable
   questName <- .get_first_tab_filename(file.path(tmpdir, "export__readme.txt"))
 
-  # get section titles
+  # get section titles --> ADD SECTION TITLES TO QUESTIONS/ATTRIBUTES
   section_titles<-allquestions[type== "Group" & !is.na(L0) & is.na(L1), .(L0, Title, PublicKey, VariableName)]
 
   # get roster titles

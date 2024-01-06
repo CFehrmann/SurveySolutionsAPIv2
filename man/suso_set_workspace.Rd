@@ -7,7 +7,10 @@
 suso_set_workspace(workspace = NULL)
 }
 \arguments{
-\item{workspace}{server workspace, if nothing provided, defaults to primary}
+\item{workspace}{server workspace Name (not the display name), if nothing provided, defaults to primary}
+}
+\value{
+invisibly TRUE if successful.
 }
 \description{
 Sets the workspace only, but leaves all other credentials the same.
@@ -15,5 +18,6 @@ Sets the workspace only, but leaves all other credentials the same.
 \details{
 Use \code{suso_set_workspace} to make the desired workspace available for all the \code{suso_}
 functions, so you don't need to specify the workspace parameter within those
-functions.
+functions. The function also checks if the workspace name is correct, and the user with the current credentials is
+authorized.If the workspace requires a different user/credentials, then use \code{\link{suso_set_key}}.
 }
