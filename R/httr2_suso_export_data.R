@@ -354,6 +354,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
     # check file status, and if creation completed, download
     jobid<-exlist1$JobId[1]
     status<-exlist1$ExportStatus[1]
+    prog<-1 #exlist1$Progress[1]
     # remove json body
     url$body<-NULL
     # update path for details request
@@ -361,54 +362,32 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
       req_method("GET") |>
       req_url_path_append(jobid)
 
-    # perform reques in while loop until file is ready
+    # perform request in while loop until file is ready
     # i. add progress bar
-    # pb <- txtProgressBar(min = 0, max = 25, style = 3, char = "=")
-    # counter <- 1
-    # cli::cli_progress_bar("Creating new export file", total = 100)
+    cli::cli_progress_bar(getOption("suso.progressbar.message"), total = 100, type = "iterator")
     # ii. add while loop
-    loop_expr<-rlang::expr(
-      { while(args$status != "Completed"){
-        # get status
-        tryCatch(
-          { resp<-args$url |>
-            httr2::req_perform()
+    while(status != "Completed"){
+      # get status
+      tryCatch(
+        { resp<-url |>
+          httr2::req_perform()
 
-          # get the response data
-          if(resp_has_body(resp)){
-            # get body by content type
-            if(resp_content_type(resp) == "application/json") {
-              test_json<-resp_body_json(resp, simplifyVector = T)
-              args$status<-test_json$ExportStatus
-              counter<-test_json$Progress
-            }
+        # get the response data
+        if(resp_has_body(resp)){
+          # get body by content type
+          if(resp_content_type(resp) == "application/json") {
+            test_json<-resp_body_json(resp, simplifyVector = T)
+            status<-test_json$ExportStatus
+            prog<-test_json$Progress
           }
-          },
-          error = function(e) .http_error_handler(e, "exp")
-        )
-        # update progress bar
-        # print(test_json$Progress)
-        # setTxtProgressBar(pb, counter)
-          if(!shiny::isRunning() && interactive()){
-            cli::cli_progress_update(set = test_json$Progress)
-          } else if(shiny::isRunning() && getOption("suso.useshiny")) {
-            shiny::setProgress(test_json$Progress)
-          }
-        # counter <- counter + 1
-        Sys.sleep(1)
-      }}
-    )
-    .progress_bar_selector(
-      loop_expr = loop_expr,
-      mess = getOption("suso.progressbar.message"),
-      totit = 100,
-      status = status,
-      url = url
-    )
-    # close progress bar
-    # close(pb)
-    # cli::cli_process_done()
-
+        }
+        },
+        error = function(e) .http_error_handler(e, "exp")
+      )
+      # update progress bar -->SuSo not always reports correctly. if call is completed, set to 100
+      prog<-ifelse(status=="Completed", 100, prog)
+      cli::cli_progress_update(set = prog) #set = prog, force = T
+    }
     # when finished get file
     url<-url |>
       req_method("GET") |>

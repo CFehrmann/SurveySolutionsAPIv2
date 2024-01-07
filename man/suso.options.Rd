@@ -21,7 +21,8 @@ and must always be equal or greater than suso.maxpar.req, default is 100.
 \code{future::\link[future]{plan}}
 \item \option{suso.useshiny} should R shiny elements be used if running in shiny app, default is TRUE. Currently implemented for:
 \itemize{
-\item \code{\link{suso_PwCheck}}, providing feedback for credentials check.
+\item \code{\link{suso_PwCheck}}, providing feedback for credentials check, the \option{suso.pwcheck.message_succ} and \option{suso.pwcheck.message_fail} can
+be modified.
 \item \code{\link{suso_export}}, providing different progress bars for interactive (cli) use and in shiny app use (\code{shiny::\link[shiny]{withProgress}},
 to also customize the progress bar message, i.e. in a different language, the \option{suso.progressbar.message} can
 be modified.

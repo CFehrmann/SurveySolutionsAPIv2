@@ -42,5 +42,12 @@
   # option to use shiny features (i.e. showNotification)
   options(suso.useshiny = TRUE)
   options(suso.progressbar.message = "Creating new export file")
+  options(suso.pwcheck.message_succ = "Credentials are correct and a successful
+                              request\n was performed in workspace %s")
+  options(suso.pwcheck.message_fail = "Credentials are incorrect and a failed
+                              request\n was performed in workspace %s")
+
+  # cli progress bar delay
+  options(cli.progress_show_after = 2)
 
 }

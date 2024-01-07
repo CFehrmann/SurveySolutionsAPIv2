@@ -2,7 +2,7 @@
 % Please edit documentation in R/suso_options.R
 \name{suso_set_maxpar_req}
 \alias{suso_set_maxpar_req}
-\title{Convenience Function to modify the maximum number of parallel requests}
+\title{Convenience Function to modify the maximum number of parallel requests option}
 \usage{
 suso_set_maxpar_req(max_req = 100)
 }

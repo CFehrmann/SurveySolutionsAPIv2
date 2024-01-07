@@ -311,6 +311,7 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
     # check file status, and if creation completed, download
     jobid<-exlist1$JobId[1]
     status<-exlist1$ExportStatus[1]
+    prog<-1 #exlist1$Progress[1]
     # remove json body
     url$body<-NULL
     # update path for details request
@@ -318,10 +319,9 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
       req_method("GET") |>
       req_url_path_append(jobid)
 
-    # perform reques in while loop until file is ready
+    # perform request in while loop until file is ready
     # i. add progress bar
-    pb <- txtProgressBar(min = 0, max = 25, style = 3, char = "=")
-    counter <- 1
+    cli::cli_progress_bar(getOption("suso.progressbar.message"), total = 100, type = "iterator")
     # ii. add while loop
     while(status != "Completed"){
       # get status
@@ -335,19 +335,16 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
           if(resp_content_type(resp) == "application/json") {
             test_json<-resp_body_json(resp, simplifyVector = T)
             status<-test_json$ExportStatus
+            prog<-test_json$Progress
           }
         }
         },
         error = function(e) .http_error_handler(e, "exp")
       )
-      # update progress bar
-      setTxtProgressBar(pb, counter)
-      counter <- counter + 1
-      Sys.sleep(2)
+      # update progress bar -->SuSo not always reports correctly. if call is completed, set to 100
+      prog<-ifelse(status=="Completed", 100, prog)
+      cli::cli_progress_update(set = prog) #set = prog, force = T
     }
-
-    # close progress bar
-    close(pb)
 
     # when finished get file
     url<-url |>
