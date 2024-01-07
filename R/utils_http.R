@@ -38,7 +38,9 @@
     req_url_path_append(version) |>
     req_url_path_append(api) |>
     req_headers(`User-Agent` = "r_surveysolutionsapi_v2") |>
-    req_auth_basic(apiUser, apiPass)
+    req_auth_basic(apiUser, apiPass) |>
+    # when 500 return, retry
+    req_retry(is_transient = \(resp) resp_status(resp) %in% c(429, 500, 503), max_tries = 2)
   return(url)
 }
 
@@ -51,7 +53,9 @@
     req_url_path_append(version) |>
     req_url_path_append(api) |>
     req_headers(`User-Agent` = "r_surveysolutionsapi_v2") |>
-    req_auth_bearer_token(token)
+    req_auth_bearer_token(token)|>
+    # when 500 return, retry
+    req_retry(is_transient = \(resp) resp_status(resp) %in% c(429, 500, 503), max_tries = 2)
   return(url)
 }
 
@@ -60,6 +64,35 @@
   url<-url |>
     req_url_query(...)
   return(url)
+}
+
+# progress bar for cli and shiny
+.progress_bar_selector <- function(loop_expr,
+                                   mess = getOption("suso.progressbar.message"),
+                                   totit = 100, ...){
+  args<-list(...)
+
+  # Check if the session is interactive or Shiny
+  if(!shiny::isRunning() && interactive()){
+    # Use cli progress bar
+
+    cli::cli_progress_bar(mess, total = totit)
+    #on.exit(cli::cli_process_done())
+
+    # Evaluate the while loop expression
+    eval(loop_expr) #, envir = rlang::caller_env())
+
+    # End the cli progress bar
+    # cli::cli_end_progress()
+  } else if(shiny::isRunning() && getOption("suso.useshiny")) {
+    # Use Shiny progress bar
+    shiny::withProgress(
+      message = mess,
+      detail = "This may take a while ...", value = 0, {
+        eval(loop_expr)
+      }
+    )
+  }
 }
 
 # request generator with offset query

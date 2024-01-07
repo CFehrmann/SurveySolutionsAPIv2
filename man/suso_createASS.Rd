@@ -11,7 +11,7 @@ suso_createASS(
   apiPass = suso_get_api_key("susoPass"),
   workspace = suso_get_api_key("workspace"),
   token = NULL,
-  QUID = NULL,
+  questID = NULL,
   version = NULL
 )
 }
@@ -28,7 +28,7 @@ suso_createASS(
 
 \item{token}{If Survey Solutions server token is provided \emph{apiUser} and \emph{apiPass} will be ignored}
 
-\item{QUID}{the questionnaire id}
+\item{questID}{the questionnaire id}
 
 \item{version}{the questionnaire version}
 }

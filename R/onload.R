@@ -39,4 +39,8 @@
   # type of parallel i.e. multisession, sequential multicore
   options(suso.para.plan = "multisession")
 
+  # option to use shiny features (i.e. showNotification)
+  options(suso.useshiny = TRUE)
+  options(suso.progressbar.message = "Creating new export file")
+
 }

@@ -15,6 +15,14 @@
 #'   \item \option{suso.para.maxcore} specifies the number of cores used for parallel processing, default is \code{data.table::getDTthreads()-2}.
 #'   \item \option{suso.para.plan} specifies plane used for parallel processing, default is \code{multisession}. For details please see
 #'   \code{future::\link[future]{plan}}
+#'   \item \option{suso.useshiny} should R shiny elements be used if running in shiny app, default is TRUE. Currently implemented for:
+#'   \itemize{
+#'      \item \code{\link{suso_PwCheck}}, providing feedback for credentials check.
+#'      \item \code{\link{suso_export}}, providing different progress bars for interactive (cli) use and in shiny app use (\code{shiny::\link[shiny]{withProgress}},
+#'      to also customize the progress bar message, i.e. in a different language, the \option{suso.progressbar.message} can
+#'      be modified.
+#'      \item TBD
+#'   }
 #' }
 #'
 #' @name suso.options

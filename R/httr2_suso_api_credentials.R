@@ -198,6 +198,11 @@ suso_get_default_key <- function(api = c("susoServer", "susoUser", "susoPass", "
 #'
 #' @return 200 code if correct, 400 if incorrect.
 #'
+#' @details
+#' If the app runs interactively, status is printed to the console, if it runs in a shiny app, a status
+#' notification will be shown, if option \option{suso.useshiny} is \code{TRUE}.
+#'
+#'
 #'
 #' @export
 suso_PwCheck<-function(server=suso_get_api_key("susoServer"),
@@ -232,11 +237,11 @@ suso_PwCheck<-function(server=suso_get_api_key("susoServer"),
     error=function(e) {a<-400; return(a)}
   )
   # if interactive, print message & query
-  if(interactive()){
+  if(!shiny::isRunning() && interactive()){
     cli::cli_div(theme = list(span.emph = list(color = "green",
                                                `font-weight` = "bold")))
     if(test_detail==200){
-      cli::cli_alert_success("Credentials are correct & and the following successful request\n was performed in workspace {.emph  {toupper(workspace)}} :\n\n")
+      cli::cli_alert_success("Credentials are correct and the following successful request\n was performed in workspace {.emph  {toupper(workspace)}} :\n\n")
       url |> httr2::req_dry_run()
 
     } else {
@@ -244,6 +249,18 @@ suso_PwCheck<-function(server=suso_get_api_key("susoServer"),
       url |> httr2::req_dry_run()
     }
     cli::cli_end()
+  } else if(shiny::isRunning() && getOption("suso.useshiny")) {
+    # if in shiny, show notification
+    if(test_detail==200){
+      shiny::showNotification(sprintf("Credentials are correct and a successful
+                              request\n was performed in workspace %s", workspace), type = "warning")
+
+
+    } else {
+      shiny::showNotification(sprintf("Credentials are incorrect and a failed
+                              request\n was performed in workspace %s", workspace), type = "error")
+    }
+
   }
 
   return(test_detail)

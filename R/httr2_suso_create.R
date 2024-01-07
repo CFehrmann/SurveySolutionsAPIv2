@@ -10,7 +10,7 @@
 #' @param apiPass Survey Solutions API password
 #' @param workspace server workspace, if nothing provided, defaults to primary
 #' @param token If Survey Solutions server token is provided \emph{apiUser} and \emph{apiPass} will be ignored
-#' @param QUID the questionnaire id
+#' @param questID the questionnaire id
 #' @param version the questionnaire version
 #' @details Dataframe needs to be provided with columns
 #' for prefilling data, as well as \emph{Quantity} and \emph{ResponsibleName}. Return value is a data.table,
@@ -25,11 +25,11 @@ suso_createASS <- function(df = NULL,
                            apiPass = suso_get_api_key("susoPass"),
                            workspace = suso_get_api_key("workspace"),
                            token = NULL,
-                           QUID = NULL,
+                           questID = NULL,
                            version = NULL) {
   # A. Check if all inputs are provided except for workspace which can be NULL
-  if (is.null(df) | is.null(server) | is.null(apiUser) | is.null(apiPass) | is.null(QUID) | is.null(version)) {
-    stop("Not all inputs provided")
+  if (is.null(df) | is.null(server) | is.null(apiUser) | is.null(apiPass) | is.null(questID) | is.null(version)) {
+    cli::cli_abort(c("x" = "Not all required inputs have been provided. Please check."))
   }
 
   # B. Check if is data.table if not transform to data.table
@@ -54,7 +54,7 @@ suso_createASS <- function(df = NULL,
   }
 
   # F. Questionnaire ID
-  quid <- paste0(QUID, "$", version)
+  quid <- paste0(questID, "$", version)
 
   # G. Transform input df
   respname<-df$ResponsibleName

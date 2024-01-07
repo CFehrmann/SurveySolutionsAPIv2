@@ -65,7 +65,8 @@ if the provided translation language does not exist}
 \item{reloadTimeDiff}{time difference in hours between last generated file and now (will be ignored when \code{from_date} and
 \code{to_date} is not \code{NULL})}
 
-\item{inShinyApp}{if True, file interacts with shiny progress bar}
+\item{inShinyApp}{if True, file interacts with shiny progress bar.
+\emph{DEPRECATED, not used any longer, only for compatability reasons with previous SurveySolutionsAPI R package.}}
 
 \item{verbose}{if TRUE, prints out information about the progress}
 

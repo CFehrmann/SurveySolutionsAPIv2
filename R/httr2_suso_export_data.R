@@ -15,7 +15,8 @@
 #' RejectedByHeadquarters,ApprovedByHeadquarters,Deleted}), if NULL all is exported
 #' @param reloadTimeDiff time difference in hours between last generated file and now (will be ignored when \code{from_date} and
 #' \code{to_date} is not \code{NULL})
-#' @param inShinyApp if True, file interacts with shiny progress bar
+#' @param inShinyApp if True, file interacts with shiny progress bar.
+#' \emph{DEPRECATED, not used any longer, only for compatability reasons with previous SurveySolutionsAPI R package.}
 #' @param verbose if TRUE, prints out information about the progress
 #' @param weight_file file path to file with survey weights. if provided, the weights will be added to the export
 #' @param from_date if provided, only interviews started on this date or later will be included
@@ -303,7 +304,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
 
     if(interactive()){
       cli::cli_alert_info(
-        "\nCreating new export file. This may take a while.\n"
+        "\nCreating new export file. This may take some time!\n"
       )
     }
 
@@ -362,35 +363,51 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
 
     # perform reques in while loop until file is ready
     # i. add progress bar
-    pb <- txtProgressBar(min = 0, max = 25, style = 3, char = "=")
-    counter <- 1
+    # pb <- txtProgressBar(min = 0, max = 25, style = 3, char = "=")
+    # counter <- 1
+    # cli::cli_progress_bar("Creating new export file", total = 100)
     # ii. add while loop
-    while(status != "Completed"){
-      # get status
-      tryCatch(
-        { resp<-url |>
-          httr2::req_perform()
+    loop_expr<-rlang::expr(
+      { while(args$status != "Completed"){
+        # get status
+        tryCatch(
+          { resp<-args$url |>
+            httr2::req_perform()
 
-        # get the response data
-        if(resp_has_body(resp)){
-          # get body by content type
-          if(resp_content_type(resp) == "application/json") {
-            test_json<-resp_body_json(resp, simplifyVector = T)
-            status<-test_json$ExportStatus
-            counter<-test_json$Progress
+          # get the response data
+          if(resp_has_body(resp)){
+            # get body by content type
+            if(resp_content_type(resp) == "application/json") {
+              test_json<-resp_body_json(resp, simplifyVector = T)
+              args$status<-test_json$ExportStatus
+              counter<-test_json$Progress
+            }
           }
-        }
-        },
-        error = function(e) .http_error_handler(e, "exp")
-      )
-      # update progress bar
-      setTxtProgressBar(pb, counter)
-      # counter <- counter + 1
-      Sys.sleep(2)
-    }
-
+          },
+          error = function(e) .http_error_handler(e, "exp")
+        )
+        # update progress bar
+        # print(test_json$Progress)
+        # setTxtProgressBar(pb, counter)
+          if(!shiny::isRunning() && interactive()){
+            cli::cli_progress_update(set = test_json$Progress)
+          } else if(shiny::isRunning() && getOption("suso.useshiny")) {
+            shiny::setProgress(test_json$Progress)
+          }
+        # counter <- counter + 1
+        Sys.sleep(1)
+      }}
+    )
+    .progress_bar_selector(
+      loop_expr = loop_expr,
+      mess = getOption("suso.progressbar.message"),
+      totit = 100,
+      status = status,
+      url = url
+    )
     # close progress bar
-    close(pb)
+    # close(pb)
+    # cli::cli_process_done()
 
     # when finished get file
     url<-url |>
@@ -424,7 +441,6 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
     cat("In Shiny App: ", inShinyApp, "\n")
     cat("\n\n")
   }
-
 
   # temp zip file
   tmp<-tempfile(fileext = ".zip")
