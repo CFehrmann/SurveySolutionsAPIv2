@@ -192,9 +192,6 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
   args<-.getargsforclass(workspace = workspace)
 
   # check if export file with same parameters is is available
-  # full query:https://mcw-demo.mysurvey.solutions/primary/api/v2/export?exportType=Tabular&
-  # interviewStatus=RejectedBySupervisor&questionnaireIdentity=b10435cc1fe04888990128182d25e746%241&
-  # exportStatus=Completed&hasFile=true&limit=100&offset=1
   url_w_query<-.addQuery(url, exportType="Tabular",
                          interviewStatus=workStatus,
                          questionnaireIdentity = qid,
@@ -319,7 +316,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
       InterviewStatus = workStatus, #required
       From = from_datetime, # can be null
       To = to_datetime, # can be null
-      TranslationId = NULL, #addTranslation, #if not null then id
+      TranslationId = NULL, #addTranslation, -->translations are loaded from export
       IncludeMeta = TRUE #required
     )
 
@@ -344,7 +341,6 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
           if(nrow(exlist1)==2) {
             exlist1[,LinkType:=c("cancel","download")][]
           }
-          # return(exlist1)
         }
       }
       },
@@ -365,7 +361,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
     # perform request in while loop until file is ready
     # i. add progress bar
     cli::cli_progress_bar(getOption("suso.progressbar.message"), total = 150, type = "iterator")
-    # on exit always close pb otherwise error?
+    # on exit always close pb (otherwise error?)
     on.exit(cli::cli_progress_done())
     # ii. add while loop
     while(status != "Completed"){
@@ -387,7 +383,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
         },
         error = function(e) .http_error_handler(e, "exp")
       )
-      # update progress bar -->SuSo not always reports correctly. if call is completed, set to 100
+      # update progress bar -->SuSo not always reports correctly. if status is completed, set to 100
       prog<-ifelse(prog>progresp, prog+1, progresp)
       prog<-ifelse(status=="Completed", 98, prog)
       if(status!= "Completed") cli::cli_progress_update(set = prog) else cli::cli_progress_done()
@@ -436,7 +432,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
   )
 
   # unzip file with unzip package
-  # create temp directory jobid
+  # create temp directory with jobid
   tmpdir<-file.path(tempdir(), jobid)
   if(!dir.exists(tmpdir)) dir.create(tmpdir)
   # unzip file
@@ -1065,7 +1061,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
       mainout<-file_collector$main[[questName]]
 
       # L3:
-      # check for same parentid & mege all files within the group into one
+      # check for same parentid & merge all files within the group into one
       roster_titlesL3[, parentgroup:= .GRP, by = parentid2][, pargroupcount:=.N, by=parentgroup]
       # if group count larger 1 merge within
 
@@ -1222,45 +1218,3 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
 
   ############################################################################################################
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

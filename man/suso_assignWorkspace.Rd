@@ -2,7 +2,7 @@
 % Please edit documentation in R/httr2_suso_api_workspace.R
 \name{suso_assignWorkspace}
 \alias{suso_assignWorkspace}
-\title{Survey Solutions API call to assign workspace}
+\title{Survey Solutions API call to assign workspace (!! WORKS ONLY WITH ADMIN CREDENTIALS)}
 \usage{
 suso_assignWorkspace(
   server = suso_get_api_key("susoServer"),
@@ -10,6 +10,7 @@ suso_assignWorkspace(
   apiPass = suso_get_api_key("susoPass"),
   token = NULL,
   assign_workspace = NULL,
+  keep_old_workspace = TRUE,
   uid = NULL,
   sv_id = NULL
 )
@@ -25,6 +26,8 @@ suso_assignWorkspace(
 
 \item{assign_workspace}{The workspace which you want to assign to the new user}
 
+\item{keep_old_workspace}{if TRUE, exsting assigned workspaces will be kept, if FALSE only the new one will be assigned, see details.}
+
 \item{uid}{The User ID of the user to be assigned.}
 
 \item{sv_id}{The supervisor's ID to which the interviewer should be assigned to, if it is a supervisor who is assigned, just use the same
@@ -36,10 +39,12 @@ If succesfull, returns a data.table with the details as well as the Status messa
 \description{
 \code{suso_assignWorkspace} Allows you to assign a workspace to a specific user.
 For more details please read \url{https://docs.mysurvey.solutions/headquarters/accounts/workspaces/}. To run this command
-you require admin credentials.
+you require admin credentials. Be aware, that for using this call you require admin credentials, and not the regular API user credentials.
 }
 \details{
-Be aware, that for using this call you require admin credentials, and not the regular API user credentials.
+When \code{keep_old_workspace=FALSE} the user will only be assigned to the new workspace, otherwise the existing ones will be added, if the former
+is the case, then you need to make sure, that all assignments, interviews, team members etc. are cleared in the old workspace. Be aware,
+that for using this call you require admin credentials, and not the regular API user credentials.
 }
 \examples{
 \dontrun{

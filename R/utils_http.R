@@ -124,6 +124,15 @@
   return(url)
 }
 
+# request generator with json body
+.genrequests_w_jsonbody<-function(i, url, js_ch, ..., method = "POST") {
+  args<-rlang::list2(...)
+  req <- url  |>
+    req_body_json(eval(js_ch))  |>
+    req_method(method)
+  return(req)
+}
+
 # generate lapply wit cli_progress_along/seq_along, function and arguments
 .gen_lapply_with_progress<-function(vec, fun, stage, type ,workspace, ..., call = rlang::caller_env()) {
   force(vec)

@@ -182,23 +182,28 @@ suso_createWorkspace <- function(server = suso_get_api_key("susoServer"),
 
 
 
-#' Survey Solutions API call to assign workspace
+#' Survey Solutions API call to assign workspace (!! WORKS ONLY WITH ADMIN CREDENTIALS)
 #'
 #'
 #' @description \code{suso_assignWorkspace} Allows you to assign a workspace to a specific user.
 #' For more details please read \url{https://docs.mysurvey.solutions/headquarters/accounts/workspaces/}. To run this command
-#' you require admin credentials.
-#'
-#' @details Be aware, that for using this call you require admin credentials, and not the regular API user credentials.
+#' you require admin credentials. Be aware, that for using this call you require admin credentials, and not the regular API user credentials.
 #'
 #' @param server Survey Solutions server address
 #' @param apiUser Survey Solutions ADMIN user
 #' @param apiPass Survey Solutions ADMIN password
 #' @param token If Survey Solutions server token is provided \emph{apiUser} and \emph{apiPass} will be ignored
 #' @param assign_workspace The workspace which you want to assign to the new user
+#' @param keep_old_workspace if TRUE, exsting assigned workspaces will be kept, if FALSE only the new one will be assigned, see details.
 #' @param uid The User ID of the user to be assigned.
 #' @param sv_id The supervisor's ID to which the interviewer should be assigned to, if it is a supervisor who is assigned, just use the same
 #' as in \emph{uid}.
+#'
+#' @details
+#' When \code{keep_old_workspace=FALSE} the user will only be assigned to the new workspace, otherwise the existing ones will be added, if the former
+#' is the case, then you need to make sure, that all assignments, interviews, team members etc. are cleared in the old workspace. Be aware,
+#' that for using this call you require admin credentials, and not the regular API user credentials.
+#'
 #'
 #' @return If succesfull, returns a data.table with the details as well as the Status message "Worspaces list updated".
 #'
@@ -223,6 +228,7 @@ suso_assignWorkspace <- function(server = suso_get_api_key("susoServer"),
                                  apiPass = suso_get_api_key("susoPass"),
                                  token = NULL,
                                  assign_workspace = NULL,
+                                 keep_old_workspace = TRUE,
                                  uid = NULL,
                                  sv_id = NULL) {
 
@@ -234,7 +240,8 @@ suso_assignWorkspace <- function(server = suso_get_api_key("susoServer"),
   if(is.null(uid)){
     cli::cli_abort("Please provide a User ID")
   } else {
-    .checkUUIDFormat(uid)
+    # checks only first element, assumes rest is same
+    .checkUUIDFormat(uid[1])
   }
 
   # if(is.null(sv_id)){
@@ -245,6 +252,9 @@ suso_assignWorkspace <- function(server = suso_get_api_key("susoServer"),
 
   if(is.null(assign_workspace)) cli::cli_abort(c("x" = "Please provide a workspace name"))
 
+  # Backup of ws for message in pg bar
+  assign_workspace_new<-assign_workspace
+
   # Base URL and path
   # Build the URL, first for token, then for base auth
   if(!is.null(token)){
@@ -253,43 +263,136 @@ suso_assignWorkspace <- function(server = suso_get_api_key("susoServer"),
     url<-.baseurl_baseauth(server, NULL, apiUser, apiPass, "workspaces/assign")
   }
 
-  js_ch<-list(
-    UserIds=I(uid),
-    Workspaces=data.table(
-      Workspace=assign_workspace,
-      SupervisorId=sv_id
-    ),
-    Mode=jsonlite::unbox("Assign")
-  )
+  # single user
+  if(length(uid) == 1) {
+    # old ws
+    if(keep_old_workspace) {
+      ep<-paste0(server, "graphql")
+      usr<-apiUser
+      p<-apiPass
+      wsold<-susographql::suso_gql_users(
+        endpoint = ep,
+        user = usr,
+        password = p,
+        id = stringr::str_remove_all(uid, "-")
+      )$users$nodes$workspaces
 
-  url<- url |>
-    req_body_json(
-      js_ch
-    ) |>
-    req_method("POST")
-
-  tryCatch(
-    {resp<-req_perform(url)},
-    error = function(e) .http_error_handler(e, "wsp")
-  )
-
-  # get the response data
-  if(resp_has_body(resp)){
-    # get body by content type
-    if(resp_content_type(resp) == "application/json") {
-      test_json<-resp_body_json(resp, simplifyVector = T, flatten = F)
-      # Export only records
-      test_json<-data.table((test_json$Errors))
-      # Set date time to utc with lubridate
-      return(test_json[])
+      assign_workspace<-unique(c(assign_workspace, wsold[[1]]))
+      sv_id<-rep(sv_id, length(assign_workspace))
     }
-  } else {
-    test_json<-data.table::data.table(UserIds = uid, Workspace = assign_workspace, SupervisorId = sv_id, Status = "Workspaces list updated")
-    return(test_json)
-  }
+    js_ch<-list(
+      UserIds=I(uid),
+      Workspaces=data.table(
+        Workspace=assign_workspace,
+        SupervisorId=sv_id
+      ),
+      Mode=jsonlite::unbox("Assign")
+    )
+    url<- url |>
+      req_body_json(
+        js_ch
+      ) |>
+      req_method("POST")
+
+    tryCatch(
+      {resp<-req_perform(url)},
+      error = function(e) .http_error_handler(e, "wsp")
+    )
+
+    # get the response data
+    if(resp_has_body(resp)){
+      # get body by content type
+      if(resp_content_type(resp) == "application/json") {
+        test_json<-resp_body_json(resp, simplifyVector = T, flatten = F)
+        # Export only records
+        test_json<-data.table((test_json$Errors))
+        # Set date time to utc with lubridate
+        return(test_json[])
+      }
+    } else {
+      test_json<-data.table::data.table(UserIds = uid, Workspace = assign_workspace, SupervisorId = sv_id, Status = "Workspaces list updated")
+      return(test_json)
+    }
+  } else if(length(uid)>1) {
+    # old ws
+    if(keep_old_workspace) {
+      ep<-paste0(server, "graphql")
+      usr<-apiUser
+      p<-apiPass
+      getwsold<-function(uid, ...) {
+        wsold<-susographql::suso_gql_users(
+          endpoint = ep,
+          user = usr,
+          password = p,
+          id = stringr::str_remove_all(uid, "-")
+        )$users$nodes$workspaces
+        ws<-unique(c(assign_workspace, wsold[[1]]))
+        return(ws)
+      }
+      # Now a matrix with one row for each uid
+      assign_workspace<-t(sapply(uid, getwsold, assign_workspace, USE.NAMES = F, simplify = T))
+
+      # define the expression for the loop
+      js_ch<-rlang::expr(
+        list(
+          UserIds=I(args$uid[i]),
+          Workspaces=data.table(
+            Workspace=args$assign_workspace[i,],
+            SupervisorId=args$sv_id[i]
+          ),
+          Mode=jsonlite::unbox("Assign")
+        )
+      )
+    } else {
+      ## NEW WORKSPACE ONLY
+      # define the expression for the loop
+      js_ch<-rlang::expr(
+        list(
+          UserIds=I(args$uid[i]),
+          Workspaces=data.table(
+            Workspace=args$assign_workspace,
+            SupervisorId=args$sv_id[i]
+          ),
+          Mode=jsonlite::unbox("Assign")
+        )
+      )
+    }
 
 
+    # Generate the requests
+    requests<-.gen_lapply_with_progress(
+      1:length(uid),
+      .genrequests_w_jsonbody,
+      "requests", "workspace assignments", assign_workspace_new,
+      url, js_ch, uid = uid, sv_id = sv_id, assign_workspace = assign_workspace
+    )
+    # execute requests in parallel
+    responses <- httr2::req_perform_parallel(
+      requests,
+      pool = curl::new_pool(host_con = getOption("suso.maxpar.req"), total_con = getOption("suso.maxpar.con")),
+      on_error = "return"
+    )
+
+    # generate response for successfull requests
+    if(length(responses) == 0) {
+      cli::cli_alert_danger(c("x" = "No successfull requests. Please check your inputs. Did you use admin credentials?"))
+      return(data.table(NULL))
+    } else {
+      test_json<-vector("list", length = length(responses))
+      for(i in seq_along(responses)) {
+        test_json[[i]]<-data.table::data.table(
+          UserIds = uid[i],
+          Workspace = assign_workspace[i,],
+          SupervisorId = sv_id[i],
+          Status = "Workspaces list updated")
+      }
+
+      test_json<-rbindlist(test_json)
+      return(test_json)
+    }
   }
+
+}
 
 
 
