@@ -47,7 +47,9 @@
   options(suso.pwcheck.message_fail = "Credentials are incorrect and a failed
                               request\n was performed in workspace %s")
 
-  # cli progress bar delay
-  options(cli.progress_show_after = 2)
+  # cli progress bar delay-->longer delay as api response is 0 when completed immediately.
+  # oldoptclipgb<-getOption("cli.progress_show_after")
+  # on.exit(options(cli.progress_show_after = oldoptclipgb))
+  options(cli.progress_show_after = 4)
 
 }

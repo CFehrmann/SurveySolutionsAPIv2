@@ -364,7 +364,9 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
 
     # perform request in while loop until file is ready
     # i. add progress bar
-    cli::cli_progress_bar(getOption("suso.progressbar.message"), total = 100, type = "iterator")
+    cli::cli_progress_bar(getOption("suso.progressbar.message"), total = 150, type = "iterator")
+    # on exit always close pb otherwise error?
+    on.exit(cli::cli_progress_done())
     # ii. add while loop
     while(status != "Completed"){
       # get status
@@ -378,15 +380,17 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
           if(resp_content_type(resp) == "application/json") {
             test_json<-resp_body_json(resp, simplifyVector = T)
             status<-test_json$ExportStatus
-            prog<-test_json$Progress
+            progresp<-test_json$Progress
+            # CHECK<<-test_json
           }
         }
         },
         error = function(e) .http_error_handler(e, "exp")
       )
       # update progress bar -->SuSo not always reports correctly. if call is completed, set to 100
-      prog<-ifelse(status=="Completed", 100, prog)
-      cli::cli_progress_update(set = prog) #set = prog, force = T
+      prog<-ifelse(prog>progresp, prog+1, progresp)
+      prog<-ifelse(status=="Completed", 98, prog)
+      if(status!= "Completed") cli::cli_progress_update(set = prog) else cli::cli_progress_done()
     }
     # when finished get file
     url<-url |>
