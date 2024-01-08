@@ -24,13 +24,13 @@ existing workflow, if you have used the previous edition so far.
 But besides a few syntax changes as well as several other updates like
 more meaningful error messages using the [cli](https://cli.r-lib.org/)
 and the [rlang](https://rlang.r-lib.org/) packages there are also quite
-a bunch of new features. Therefore i decided to release this package as
+a bunch of new features. Therefore, i decided to release this package as
 a completely new one, such that users who do not want to switch to the
 new package or make use of the new features, can still work with the old
-package as usual. Nevertheless a transition to the new package is
+package as usual. Nevertheless, a transition to the new package is
 recommended.
 
-Additionally the package also seeks a deeper integration with the
+Additionally, the package also seeks a deeper integration with the
 updated [susographql](https://github.com/michael-cw/susographql)
 package, which now also is purely based on the httr2 package.
 
@@ -39,14 +39,14 @@ package, which now also is purely based on the httr2 package.
 - **suso_get_stats_interview, suso_get_assignments, suso_createUSER,
   suso_createASS, suso_getSV** and **suso_getINT** with potentially long
   running queries now use httr2’s parallel request feature, which
-  reduces processing time substantially. For example 10k assignments
+  reduces processing time substantially. For example, 10k assignments
   (*suso_createASS*) can now be created in about 3 minutes, a list of
   all interviewers (*suso_getINT*) in a workspace for 18K interviewers
   and 5k supervisors now only takes around 1.5 minutes. In particular in
   large scale surveys and censuses, this feature may facilitate working
   with the API considerably.
 - **suso_set_key:** workspace can now be set as an environment variable,
-  like it was already the case for server, user and password.
+  like it was already the case for server, user, and password.
 - **suso_export:** now has the option to merge all the data export files
   into a single data table and also add survey weights, for
   analysis-ready data sets.
@@ -78,13 +78,19 @@ package, which now also is purely based on the httr2 package.
   **suso_deletemap** now also integrates complete map management into a
   single package using a harmonized syntax and returning the same output
   types[^2].
+- **suso_assignWorkspace:** now also supports workspace assignment of
+  multiple supervisors and interviewers in one go. In addition it has
+  the argument *keep_old_workspace*. If *TRUE*, then the existing
+  workspaces the user is already assigned to are automatically added.
+  With this new feature, all users from one workspace can be assigned to
+  a new workspace with a single function call[^3].
 
 #### New general features in this package are:
 
 - New classes and methods, i.e.: AssignmentClass, ExportClass,
   UserClass, and methods like summaryTable.exportClass (DT based) or
   boxplot_summary.exportClass (ggplot2 based).
-- Http error messages are translated into R errors, and use the error
+- Http error messages are translated into R errors and use the error
   codes (and messages) as provided by the Survey Solutions API
   response), which makes debugging easier.
 - Several options, which allows the user to customize processing to
@@ -93,6 +99,11 @@ package, which now also is purely based on the httr2 package.
   calculating paradata response times, *suso.para.tz* for setting the
   time zone or *suso.para.maxcore* for the number of cores used in
   parallel processing.
+- Several functions also includes notifications and progress bars when
+  running in a shiny app, text content of these messages can be modified
+  through several global options, such that the UI can be customized to
+  the user language. In case you don’t need any of these notifications,
+  you can also deactivate them globally.
 
 This is just a very rough overview of the most prominent features, for
 details please see the individual functions’ documentation. An extensive
@@ -371,10 +382,13 @@ filing a bug report/feature request
 use the Survey Solutions user forum
 [here](https://forum.mysurvey.solutions/c/api/13).
 
-</div>
-
 [^1]: The package is still under testing and also development of some
     features, therefore it is only recommended for experienced users.
 
 [^2]: All functions use the susographql functions, but are adjusted to
     the syntax of this package.
+
+[^3]: Be aware, that workspace assignment requires admin credentials.
+    Regular API user credentials would not work.
+
+    </div>
