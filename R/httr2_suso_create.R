@@ -1,20 +1,42 @@
-#' Survey Solutions API call for Assignment Creation (httr2 version)
+#' Survey Solutions API call for Assignment Creation
 #'
 #'
-#' Creates assignment with prefilled data. Uses the httr2 package,
-#' and specifically the \code{\link[httr2]{req_perform_parallel}} function
+#' Creates assignment with ID data. Uses the httr2 package,
+#' and specifically the \code{\link[httr2]{req_perform_parallel}} function. Compared to a sequential approach, this significantly
+#' and safely decreases the overall processing time. Adjust relevant option \option{suso.maxpar.req} for number of parallel processes to
+#' match the capacity of your system (default is 100 parallel requests).
 #'
-#' @param df dataframe with upload data
-#' @param server Survey Solutions server address
-#' @param apiUser Survey Solutions API user
-#' @param apiPass Survey Solutions API password
-#' @param workspace server workspace, if nothing provided, defaults to primary
-#' @param token If Survey Solutions server token is provided \emph{apiUser} and \emph{apiPass} will be ignored
-#' @param questID the questionnaire id
-#' @param version the questionnaire version
+#' @param df dataframe with upload data for ID (identifying data) assignments, see details for structure.
+#' @param server Survey Solutions server address.
+#' @param apiUser Survey Solutions API user.
+#' @param apiPass Survey Solutions API password.
+#' @param workspace server workspace, if nothing provided, defaults to primary.
+#' @param token If Survey Solutions server token is provided \emph{apiUser} and \emph{apiPass} will be ignored.
+#' @param questID the questionnaire id.
+#' @param version the questionnaire version.
+#'
 #' @details Dataframe needs to be provided with columns
-#' for prefilling data, as well as \emph{Quantity} and \emph{ResponsibleName}. Return value is a data.table,
-#' with the prefilling data, if successful
+#' for ID data, matching the required type, as well as \emph{Quantity} and \emph{ResponsibleName}. Return value is a data.table,
+#' with the ID data, if successful.
+#'
+#' @return Returns a data.table with a row for each assignment, containing identifying data, responsible id etc.
+#'
+#' @examples
+#' \dontrun{
+#'
+#' # get the list of questionnaires in the workspace
+#' questlist<-suso_getQuestDetails()
+#'
+#'
+#' # Create the assignments with your upload data
+#' asslist <- suso_createASS(df = IdentifyingData,
+#'                           questID = questlist$QuestionnaireId[1],
+#'                           version = questlist$Version[1])
+#'
+#' }
+#'
+#'
+#'
 #' @export
 #'
 #'
@@ -118,9 +140,14 @@ suso_createASS <- function(df = NULL,
     # ii. Get identifying data
     # transform to wide format
     resp<-data.frame(respfull$Assignment$IdentifyingData)
-    reshaped_data <- as.vector(t(resp))
-    new_col_names <- paste0(rep(names(resp), each = nrow(resp)), 1:nrow(resp))
-    resp<-setNames(data.frame(matrix(reshaped_data, ncol = length(reshaped_data), byrow = TRUE)), new_col_names)
+    # skip when id dataframe is 0 rows
+    if(nrow(resp)>0) {
+      reshaped_data <- as.vector(t(resp))
+      new_col_names <- paste0(rep(names(resp), each = nrow(resp)), 1:nrow(resp))
+      resp<-setNames(data.frame(matrix(reshaped_data, ncol = length(reshaped_data), byrow = TRUE)), new_col_names)
+    } else if(nrow(resp)==0) {
+      resp<-data.frame(NO_ID_DATA="NO ID DATA LOADED")
+    }
     # iii. Get other data
     nodf<-names(respfull$Assignment)[!grepl("IdentifyingData", names(respfull$Assignment))]
     for(x in nodf){
@@ -135,10 +162,16 @@ suso_createASS <- function(df = NULL,
     "responses", "assignments created", workspace,
     responses
   )
-  # I.3.2. Convert to data.table and bind
+  # Convert to data.table and bind
   status_list<-data.table::rbindlist(status_list, fill = TRUE)
 
-  return(status_list)
+  # Transform Columns
+  if(nrow(status_list)>0) {
+    # transform date
+    status_list[,CreatedAtUtc:=lubridate::as_datetime(CreatedAtUtc)][,UpdatedAtUtc:=lubridate::as_datetime(UpdatedAtUtc)]
+  }
+
+  return(status_list[])
 }
 
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/httr2_suso_create.R
 \name{suso_createASS}
 \alias{suso_createASS}
-\title{Survey Solutions API call for Assignment Creation (httr2 version)}
+\title{Survey Solutions API call for Assignment Creation}
 \usage{
 suso_createASS(
   df = NULL,
@@ -16,28 +16,50 @@ suso_createASS(
 )
 }
 \arguments{
-\item{df}{dataframe with upload data}
+\item{df}{dataframe with upload data for ID (identifying data) assignments, see details for structure.}
 
-\item{server}{Survey Solutions server address}
+\item{server}{Survey Solutions server address.}
 
-\item{apiUser}{Survey Solutions API user}
+\item{apiUser}{Survey Solutions API user.}
 
-\item{apiPass}{Survey Solutions API password}
+\item{apiPass}{Survey Solutions API password.}
 
-\item{workspace}{server workspace, if nothing provided, defaults to primary}
+\item{workspace}{server workspace, if nothing provided, defaults to primary.}
 
-\item{token}{If Survey Solutions server token is provided \emph{apiUser} and \emph{apiPass} will be ignored}
+\item{token}{If Survey Solutions server token is provided \emph{apiUser} and \emph{apiPass} will be ignored.}
 
-\item{questID}{the questionnaire id}
+\item{questID}{the questionnaire id.}
 
-\item{version}{the questionnaire version}
+\item{version}{the questionnaire version.}
+}
+\value{
+Returns a data.table with a row for each assignment, containing identifying data, responsible id etc.
 }
 \description{
-Creates assignment with prefilled data. Uses the httr2 package,
-and specifically the \code{\link[httr2]{req_perform_parallel}} function
+Creates assignment with ID data. Uses the httr2 package,
+and specifically the \code{\link[httr2]{req_perform_parallel}} function. Compared to a sequential approach, this significantly
+and safely decreases the overall processing time. Adjust relevant option \option{suso.maxpar.req} for number of parallel processes to
+match the capacity of your system (default is 100 parallel requests).
 }
 \details{
 Dataframe needs to be provided with columns
-for prefilling data, as well as \emph{Quantity} and \emph{ResponsibleName}. Return value is a data.table,
-with the prefilling data, if successful
+for ID data, matching the required type, as well as \emph{Quantity} and \emph{ResponsibleName}. Return value is a data.table,
+with the ID data, if successful.
+}
+\examples{
+\dontrun{
+
+# get the list of questionnaires in the workspace
+questlist<-suso_getQuestDetails()
+
+
+# Create the assignments with your upload data
+asslist <- suso_createASS(df = IdentifyingData,
+                          questID = questlist$QuestionnaireId[1],
+                          version = questlist$Version[1])
+
+}
+
+
+
 }
