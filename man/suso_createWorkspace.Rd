@@ -22,7 +22,7 @@ suso_createWorkspace(
 
 \item{token}{If Survey Solutions server token is provided \emph{apiUser} and \emph{apiPass} will be ignored}
 
-\item{new_workspace}{The name used by the system for this workspace. Make sure you follow the rules outlined
+\item{new_workspace}{The name used by the system for this workspace. Make sure you follow the nameing rules outlined
 under \url{https://docs.mysurvey.solutions/headquarters/accounts/workspaces/}}
 
 \item{displayName}{The name visible to the users}
@@ -39,7 +39,6 @@ Be aware, that for using this call you require the ADMIN credentials, and not th
 \dontrun{
 # Use Admin Credentials!
 suso_createWorkspace(
-          your_workspace = "myworkspace",
           new_workspace = "myworkspace1",
           displayName = "SpecialWorkspace",
           apiUser = "xxxxxx",

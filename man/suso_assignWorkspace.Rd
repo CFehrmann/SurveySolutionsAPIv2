@@ -16,30 +16,30 @@ suso_assignWorkspace(
 )
 }
 \arguments{
-\item{server}{Survey Solutions server address}
+\item{server}{Survey Solutions server address.}
 
-\item{apiUser}{Survey Solutions ADMIN user}
+\item{apiUser}{Survey Solutions ADMIN user.}
 
-\item{apiPass}{Survey Solutions ADMIN password}
+\item{apiPass}{Survey Solutions ADMIN password.}
 
-\item{token}{If Survey Solutions server token is provided \emph{apiUser} and \emph{apiPass} will be ignored}
+\item{token}{If Survey Solutions server token is provided \emph{apiUser} and \emph{apiPass} will be ignored.}
 
-\item{assign_workspace}{The workspace which you want to assign to the new user}
+\item{assign_workspace}{The workspace which you want to assign to the new user.}
 
 \item{keep_old_workspace}{if TRUE, exsting assigned workspaces will be kept, if FALSE only the new one will be assigned, see details.}
 
-\item{uid}{The User ID of the user to be assigned.}
+\item{uid}{Either a single User ID of the user to be assigned, or a vector.}
 
 \item{sv_id}{The supervisor's ID to which the interviewer should be assigned to, if it is a supervisor who is assigned, just use the same
-as in \emph{uid}.}
+as in \emph{uid}. Must be the same length as \code{uid}}
 }
 \value{
-If succesfull, returns a data.table with the details as well as the Status message "Worspaces list updated".
+If successful, returns a data.table with the details as well as the Status message \code{workspace list updated}.
 }
 \description{
-\code{suso_assignWorkspace} Allows you to assign a workspace to a specific user.
+\code{suso_assignWorkspace} Allows you to assign a workspace to a specific user or a group of users.
 For more details please read \url{https://docs.mysurvey.solutions/headquarters/accounts/workspaces/}. To run this command
-you require admin credentials. Be aware, that for using this call you require admin credentials, and not the regular API user credentials.
+you require admin credentials and not the regular API user credentials.
 }
 \details{
 When \code{keep_old_workspace=FALSE} the user will only be assigned to the new workspace, otherwise the existing ones will be added, if the former
@@ -48,14 +48,50 @@ that for using this call you require admin credentials, and not the regular API 
 }
 \examples{
 \dontrun{
-# Use Admin Credentials!
+## Use Admin Credentials!
+
+# Assign a new workspace to a single user, keep old one(s)
 suso_assignWorkspace(
-          your_workspace = "myworkspace",
           assign_workspace = "myworkspace1",
           uid = "xxx-xxx-xxx-xxx-xxx",
           sv_id = "xxx-xxx-xxx-xxx-xxx",
           apiUser = "xxxxxx",
-          apiPass = "xxxxxx")
+          apiPass = "xxxxxx",
+          keep_old_workspace = TRUE
+          )
+
+# Assign a new workspace to a single user, drop old one(s)
+suso_assignWorkspace(
+          assign_workspace = "myworkspace1",
+          uid = "xxx-xxx-xxx-xxx-xxx",
+          sv_id = "xxx-xxx-xxx-xxx-xxx",
+          apiUser = "xxxxxx",
+          apiPass = "xxxxxx",
+          keep_old_workspace = TRUE
+          )
+
+# Assign all supervisors from on workspace to a new one, keep old one
+allsv<-suso_getSV(workspace = old)
+suso_assignWorkspace(
+          assign_workspace = "new",
+          uid = "allsv$UserId,
+          sv_id = allsv$UserId,
+          apiUser = "xxxxxx",
+          apiPass = "xxxxxx",
+          keep_old_workspace = TRUE
+          )
+
+# Assign all interviewers from on workspace to a new one, keep old one
+allint<-suso_getINT(workspace = old)
+suso_assignWorkspace(
+          assign_workspace = "new",
+          uid = "allint$UserId,
+          sv_id = allint$sv_id,
+          apiUser = "xxxxxx",
+          apiPass = "xxxxxx",
+          keep_old_workspace = TRUE
+          )
+
 }
 
 

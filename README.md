@@ -9,6 +9,10 @@
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
+<p float="center">
+<img src="warning.svg" width="100%" />
+</p
+&#10;
 <div align="justify">
 
 This is a (beta - release[^1]) new edition of the [Survey Solutions R
@@ -390,5 +394,4 @@ use the Survey Solutions user forum
 
 [^3]: Be aware, that workspace assignment requires admin credentials.
     Regular API user credentials would not work.
-
     </div>

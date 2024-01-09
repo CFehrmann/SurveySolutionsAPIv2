@@ -1,4 +1,4 @@
-#' Survey Solutions API call for workspace
+#' Survey Solutions API call for workspace information
 #'
 #'
 #' \code{suso_getWorkspace} allows you to get the list of workspaces, information about individual workspace names
@@ -10,7 +10,7 @@
 #' @param apiPass Survey Solutions API password
 #' @param token If Survey Solutions server token is provided \emph{apiUser} and \emph{apiPass} will be ignored
 #' @param workspace If workspace name is provide requests are made regarding this specific workspace
-#' @param status if status is \emph{TRUE} worskpace must be not NULL and status information about the specific
+#' @param status if status is \emph{TRUE} worskpace must be not NULL and status information about a specific
 #' workspace is requested
 #'
 #' @examples
@@ -19,14 +19,13 @@
 #' # sucessful
 #'
 #' # shows all workspaces in the system AND the user has access to
-#' suso_createWorkspace(
-#'           workspace = "myworkspace",
+#' suso_getWorkspace(
 #'           status = F)
 #'
 #' # shows details for specific workspace myworkspace
-#' suso_createWorkspace(
+#' suso_getWorkspace(
 #'           workspace = "myworkspace",
-#'           status = F)
+#'           status = T)
 #' }
 #'
 #'
@@ -116,7 +115,7 @@ suso_getWorkspace <- function(server = suso_get_api_key("susoServer"),
 #' @param apiUser Survey Solutions ADMIN user
 #' @param apiPass Survey Solutions ADMIN password
 #' @param token If Survey Solutions server token is provided \emph{apiUser} and \emph{apiPass} will be ignored
-#' @param new_workspace The name used by the system for this workspace. Make sure you follow the rules outlined
+#' @param new_workspace The name used by the system for this workspace. Make sure you follow the nameing rules outlined
 #' under \url{https://docs.mysurvey.solutions/headquarters/accounts/workspaces/}
 #' @param displayName The name visible to the users
 #'
@@ -124,7 +123,6 @@ suso_getWorkspace <- function(server = suso_get_api_key("susoServer"),
 #' \dontrun{
 #' # Use Admin Credentials!
 #' suso_createWorkspace(
-#'           your_workspace = "myworkspace",
 #'           new_workspace = "myworkspace1",
 #'           displayName = "SpecialWorkspace",
 #'           apiUser = "xxxxxx",
@@ -185,19 +183,19 @@ suso_createWorkspace <- function(server = suso_get_api_key("susoServer"),
 #' Survey Solutions API call to assign workspace (!! WORKS ONLY WITH ADMIN CREDENTIALS)
 #'
 #'
-#' @description \code{suso_assignWorkspace} Allows you to assign a workspace to a specific user.
+#' @description \code{suso_assignWorkspace} Allows you to assign a workspace to a specific user or a group of users.
 #' For more details please read \url{https://docs.mysurvey.solutions/headquarters/accounts/workspaces/}. To run this command
-#' you require admin credentials. Be aware, that for using this call you require admin credentials, and not the regular API user credentials.
+#' you require admin credentials and not the regular API user credentials.
 #'
-#' @param server Survey Solutions server address
-#' @param apiUser Survey Solutions ADMIN user
-#' @param apiPass Survey Solutions ADMIN password
-#' @param token If Survey Solutions server token is provided \emph{apiUser} and \emph{apiPass} will be ignored
-#' @param assign_workspace The workspace which you want to assign to the new user
+#' @param server Survey Solutions server address.
+#' @param apiUser Survey Solutions ADMIN user.
+#' @param apiPass Survey Solutions ADMIN password.
+#' @param token If Survey Solutions server token is provided \emph{apiUser} and \emph{apiPass} will be ignored.
+#' @param assign_workspace The workspace which you want to assign to the new user.
 #' @param keep_old_workspace if TRUE, exsting assigned workspaces will be kept, if FALSE only the new one will be assigned, see details.
-#' @param uid The User ID of the user to be assigned.
+#' @param uid Either a single User ID of the user to be assigned, or a vector.
 #' @param sv_id The supervisor's ID to which the interviewer should be assigned to, if it is a supervisor who is assigned, just use the same
-#' as in \emph{uid}.
+#' as in \emph{uid}. Must be the same length as \code{uid}
 #'
 #' @details
 #' When \code{keep_old_workspace=FALSE} the user will only be assigned to the new workspace, otherwise the existing ones will be added, if the former
@@ -205,18 +203,54 @@ suso_createWorkspace <- function(server = suso_get_api_key("susoServer"),
 #' that for using this call you require admin credentials, and not the regular API user credentials.
 #'
 #'
-#' @return If succesfull, returns a data.table with the details as well as the Status message "Worspaces list updated".
+#' @return If successful, returns a data.table with the details as well as the Status message \code{workspace list updated}.
 #'
 #' @examples
 #' \dontrun{
-#' # Use Admin Credentials!
+#' ## Use Admin Credentials!
+#'
+#' # Assign a new workspace to a single user, keep old one(s)
 #' suso_assignWorkspace(
-#'           your_workspace = "myworkspace",
 #'           assign_workspace = "myworkspace1",
 #'           uid = "xxx-xxx-xxx-xxx-xxx",
 #'           sv_id = "xxx-xxx-xxx-xxx-xxx",
 #'           apiUser = "xxxxxx",
-#'           apiPass = "xxxxxx")
+#'           apiPass = "xxxxxx",
+#'           keep_old_workspace = TRUE
+#'           )
+#'
+#' # Assign a new workspace to a single user, drop old one(s)
+#' suso_assignWorkspace(
+#'           assign_workspace = "myworkspace1",
+#'           uid = "xxx-xxx-xxx-xxx-xxx",
+#'           sv_id = "xxx-xxx-xxx-xxx-xxx",
+#'           apiUser = "xxxxxx",
+#'           apiPass = "xxxxxx",
+#'           keep_old_workspace = TRUE
+#'           )
+#'
+#' # Assign all supervisors from on workspace to a new one, keep old one
+#' allsv<-suso_getSV(workspace = old)
+#' suso_assignWorkspace(
+#'           assign_workspace = "new",
+#'           uid = "allsv$UserId,
+#'           sv_id = allsv$UserId,
+#'           apiUser = "xxxxxx",
+#'           apiPass = "xxxxxx",
+#'           keep_old_workspace = TRUE
+#'           )
+#'
+#' # Assign all interviewers from on workspace to a new one, keep old one
+#' allint<-suso_getINT(workspace = old)
+#' suso_assignWorkspace(
+#'           assign_workspace = "new",
+#'           uid = "allint$UserId,
+#'           sv_id = allint$sv_id,
+#'           apiUser = "xxxxxx",
+#'           apiPass = "xxxxxx",
+#'           keep_old_workspace = TRUE
+#'           )
+#'
 #' }
 #'
 #'

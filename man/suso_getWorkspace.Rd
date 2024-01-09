@@ -2,7 +2,7 @@
 % Please edit documentation in R/httr2_suso_api_workspace.R
 \name{suso_getWorkspace}
 \alias{suso_getWorkspace}
-\title{Survey Solutions API call for workspace}
+\title{Survey Solutions API call for workspace information}
 \usage{
 suso_getWorkspace(
   server = suso_get_api_key("susoServer"),
@@ -24,7 +24,7 @@ suso_getWorkspace(
 
 \item{workspace}{If workspace name is provide requests are made regarding this specific workspace}
 
-\item{status}{if status is \emph{TRUE} worskpace must be not NULL and status information about the specific
+\item{status}{if status is \emph{TRUE} worskpace must be not NULL and status information about a specific
 workspace is requested}
 }
 \description{
@@ -38,14 +38,13 @@ are eligible. For more details please read \url{https://docs.mysurvey.solutions/
 # sucessful
 
 # shows all workspaces in the system AND the user has access to
-suso_createWorkspace(
-          workspace = "myworkspace",
+suso_getWorkspace(
           status = F)
 
 # shows details for specific workspace myworkspace
-suso_createWorkspace(
+suso_getWorkspace(
           workspace = "myworkspace",
-          status = F)
+          status = T)
 }
 
 

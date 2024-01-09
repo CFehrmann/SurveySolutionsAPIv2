@@ -19,6 +19,12 @@ knitr::opts_chunk$set(
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
+
+<p float="center">
+    <img src="warning.svg" width="100%" />
+</p
+
+
 <div align="justify">
 
 This is a (beta - release[^1]) new edition of the [Survey Solutions R API package](https://docs.mysurvey.solutions/headquarters/api/api-r-package/), based on the recently (as stable) released [httr2](https://httr2.r-lib.org/index.html) package. Most of the syntax is the same as in the existing httr based [SurveySolutionsAPI](https://github.com/michael-cw/SurveySolutionsAPI) package, and therefore it should be easy to integrate it in your existing workflow, if you have used the previous edition so far. 
