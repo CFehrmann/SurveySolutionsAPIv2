@@ -84,18 +84,30 @@ suso_createASS <- function(df = NULL,
   df[, `:=`(ResponsibleName, NULL)][, `:=`(Quantity, NULL)]
   df<-as.data.frame(df)
 
+  # put warning when no identification data
+  if(interactive()) {
+    cli::cli_alert_warning("Assignment creation without identifying data.")
+  }
+
   # H. Request
   # H.1. Function to generate requests
   genrequests<- function(i, base_url, respname, quant, quid, df) {
-    js_ch <- list(
-      Responsible = unbox(respname[i]),
-      Quantity = unbox(quant[i]),
-      QuestionnaireId = unbox(quid),
-      IdentifyingData = data.frame(Variable = c(names(df)),
-                                   Identity = rep("", length(names(df))),
-                                   Answer = c(unlist(df[i,], use.names = FALSE)))
-    )
-
+    if(nrow(df)>0) {
+      js_ch <- list(
+        Responsible = unbox(respname[i]),
+        Quantity = unbox(quant[i]),
+        QuestionnaireId = unbox(quid),
+        IdentifyingData = data.frame(Variable = c(names(df)),
+                                     Identity = rep("", length(names(df))),
+                                     Answer = c(unlist(df[i,], use.names = FALSE)))
+      )
+    } else {
+      js_ch <- list(
+        Responsible = unbox(respname[i]),
+        Quantity = unbox(quant[i]),
+        QuestionnaireId = unbox(quid)
+      )
+    }
     req <- base_url  |>
       req_body_json(js_ch)  |>
       req_method("POST")
@@ -106,9 +118,9 @@ suso_createASS <- function(df = NULL,
   # requests <- lapply(1:nrow(df), genrequests)
 
   requests<-.gen_lapply_with_progress(
-    1:nrow(df),
+    seq_along(respname),
     genrequests,
-    "requests", "assignment creation", workspace,
+    "requests", "assignment", workspace,
     base_url, respname, quant, quid, df
   )
 
@@ -159,7 +171,7 @@ suso_createASS <- function(df = NULL,
   status_list<-.gen_lapply_with_progress(
     responses,
     transformresponse,
-    "responses", "assignments created", workspace,
+    "responses", "assignments", workspace,
     responses
   )
   # Convert to data.table and bind
