@@ -108,6 +108,9 @@ package, which now also is purely based on the httr2 package.
   through several global options, such that the UI can be customized to
   the user language. In case you don’t need any of these notifications,
   you can also deactivate them globally.
+- Handling of transient http errors (500), which are sometimes returned
+  by the Survey Solutions API, through an automatic retry after a short
+  delay, and a maximum number of 2 retry attempts.
 
 This is just a very rough overview of the most prominent features, for
 details please see the individual functions’ documentation. An extensive
