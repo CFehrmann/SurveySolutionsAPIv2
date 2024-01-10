@@ -2,7 +2,7 @@
 % Please edit documentation in R/httr2_suso_api_credentials.R
 \name{suso_set_workspace}
 \alias{suso_set_workspace}
-\title{Set workspace only}
+\title{Convenience function to switch workspace}
 \usage{
 suso_set_workspace(workspace = NULL)
 }
@@ -19,5 +19,17 @@ Sets the workspace only, but leaves all other credentials the same.
 Use \code{suso_set_workspace} to make the desired workspace available for all the \code{suso_}
 functions, so you don't need to specify the workspace parameter within those
 functions. The function also checks if the workspace name is correct, and the user with the current credentials is
-authorized.If the workspace requires a different user/credentials, then use \code{\link{suso_set_key}}.
+authorized.If the workspace requires different credentials, then use \code{\link{suso_set_key}} again.
+}
+\examples{
+\dontrun{
+
+# switch to workspace "windows"
+suso_set_workspace("windows")
+
+# switch to primary (default) workspace
+suso_set_workspace()
+
+}
+
 }

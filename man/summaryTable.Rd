@@ -4,10 +4,12 @@
 \alias{summaryTable}
 \title{S3 method to create a summary table of numeric variables for an exportClass object}
 \usage{
-summaryTable(x, includeFactors = FALSE, useDT = TRUE, DTstyle = TRUE, ...)
+summaryTable(x, ..., includeFactors = FALSE, useDT = TRUE, DTstyle = TRUE)
 }
 \arguments{
 \item{x}{A exportClass object.}
+
+\item{...}{further arguments.}
 
 \item{includeFactors}{if \code{TRUE}, factor variables will be converted to numeric and included in the table.}
 
@@ -15,20 +17,26 @@ summaryTable(x, includeFactors = FALSE, useDT = TRUE, DTstyle = TRUE, ...)
 a data.table object is returned.}
 
 \item{DTstyle}{if \code{TRUE} and \code{useDT = TRUE}, then a custom style will be applied, otherwise a plain DT table will be returned.}
-
-\item{...}{Additional arguments (not used).}
 }
 \value{
 A DataTable (DT) object (HTML table) displaying the summary statistics, if \code{useDT = TRUE}, and a plain data.table otherwise.
 }
 \description{
 This function generates a summary table of numeric variables in an exportClass
-object. The table includes statistics such as mean, standard deviation, maximum,
-minimum, and total count as well as count of NA values.
+object.
+}
+\details{
+\itemize{
+\item For the main data: The table includes statistics such as mean, standard deviation, maximum, minimum, and total
+count as well as count of NA values.
+\item For paradata: Different summary tables for response times, duration times etc. see examples.
+}
 }
 \examples{
 \dontrun{
-# Load your package
+questlist<-suso_getQuestDetails()
+
+### MAIN DATA
 export <- suso_export(questID = questlist$QuestionnaireId[7],
                       version = questlist$Version[7],
                       combineFiles = T,
@@ -39,6 +47,28 @@ summary_data_table <- summaryTable(export)
 
 # Display the summary table
 summary_data_table
+
+### PARADATA
+para<-suso_export_paradata(questID = questlist$QuestionnaireId[1],
+                          version = questlist$Version[1], reloadTimeDiff = 24,
+                          workStatus = "All", asList = F, onlyActiveEvents = T)
+
+# Create a summary table of all event counts by action (includes always passive and active one)
+actions <- summaryTable(para, "action")
+
+# Create a summary table of all event counts by user
+users <- summaryTable(para, "user")
+
+# Create a summary table of the average response time by variable
+resptime_var <- summaryTable(para, "VariableName")
+
+# Create a summary table of the average response time by question type
+resptime_type <- summaryTable(para, "type")
+
+# Create a summary table of the average response time by user
+resptime_user <- summaryTable(para, "responsible")
+
+
 }
 
 }

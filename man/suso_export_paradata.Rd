@@ -26,8 +26,8 @@ suso_export_paradata(
   asList = FALSE,
   allResponses = TRUE,
   gpsVarName = NA,
-  verbose = F,
-  showProgress = F
+  verbose = FALSE,
+  showProgress = FALSE
 )
 }
 \arguments{
@@ -96,4 +96,26 @@ Exporting \emph{onlyActiveEvents} substantially decrease processing time. The ev
 
 To further decrease the processing time, one could set \emph{allResponses} to FALSE. Doing so will still export all the data, however it will
 not attempt to extract all responses and setting them to factors.
+}
+\examples{
+\dontrun{
+questlist<-suso_getQuestDetails()
+# Get a single data.table with response timings,
+# only active events,
+# and responses are not expanded
+para<-suso_export_paradata(questID = questlist$QuestionnaireId[1],
+                           version = questlist$Version[1],
+                           reloadTimeDiff = 0,
+                           workStatus = "All",
+                           asList = FALSE,
+                           onlyActiveEvents = TRUE,
+                           allResponses = F)
+
+# Create a summary table
+summary_data_table <- summaryTable(para)
+
+# Display the summary table
+summary_data_table
+}
+
 }

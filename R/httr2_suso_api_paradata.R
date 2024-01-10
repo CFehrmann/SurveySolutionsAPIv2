@@ -46,6 +46,29 @@
 #' To further decrease the processing time, one could set \emph{allResponses} to FALSE. Doing so will still export all the data, however it will
 #' not attempt to extract all responses and setting them to factors.
 #'
+#'
+#'
+#' @examples
+#' \dontrun{
+#' questlist<-suso_getQuestDetails()
+#' # Get a single data.table with response timings,
+#' # only active events,
+#' # and responses are not expanded
+#' para<-suso_export_paradata(questID = questlist$QuestionnaireId[1],
+#'                            version = questlist$Version[1],
+#'                            reloadTimeDiff = 0,
+#'                            workStatus = "All",
+#'                            asList = FALSE,
+#'                            onlyActiveEvents = TRUE,
+#'                            allResponses = F)
+#'
+#' # Create a summary table
+#' summary_data_table <- summaryTable(para)
+#'
+#' # Display the summary table
+#' summary_data_table
+#' }
+#'
 #' @export
 #'
 
@@ -71,8 +94,8 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
                                onlyActiveEvents = FALSE, asList = FALSE,
                                allResponses = TRUE,
                                gpsVarName = NA,
-                               verbose = F,
-                               showProgress = F){
+                               verbose = FALSE,
+                               showProgress = FALSE){
   extype<-"Paradata"
   ######################################################################################
   ##          SETUP
@@ -657,27 +680,38 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
       return(para_data)
     } else if(onlyActiveEvents && !asList) {
       cli::cli_alert_info("Processing singel dataframe object.")
-      para_data<-data.table::rbindlist(para_data[c("AnswerSet", "AnswerRemoved", "Restarted")], fill = T)
+      # list for paradata to be handed to exportClass
+      para_data_all<-list()
+      pdmain<-data.table::rbindlist(para_data[c("AnswerSet", "AnswerRemoved", "Restarted")], fill = T)
       # adjust names to match suso
-      setnames(para_data,
+      setnames(pdmain,
                old = c("var", "key"),
                new = c("VariableName", "interview__key")
                )
       # remove redundant columns & !!!TD:  MOVE DURATION ETC TO ATTRIBUTES ADD SECTION TITLE
-      para_data[,c("var_resp", "rid"):=NULL][]
+      pdmain[,c("var_resp", "rid"):=NULL][]
       # para_data<-para_data[allquestions[,.(VariableName, type, QuestionText, Featured)], on="VariableName"]
       # para_data <- merge(para_data, allquestions[,.(VariableName, type, QuestionText, Featured)], all.x = T)
 
       # set key for index
-      setkeyv(para_data, c("interview__id", "counter"))
+      setkeyv(pdmain, c("interview__id", "counter"))
+      para_data_all[["paradata"]]<-pdmain
+
+      # get other elements already calculated
+      para_data_all[["action"]]<-para_data[["actionDistr"]]
+      para_data_all[["user"]]<-para_data[["userDistr"]]
+      para_data_all[["role"]]<-para_data[["roleDistr"]]
+      rm(para_data); gc()
+
 
       # add to export class
       # bbb[VariableName!= "<NA>",.(av_response_time=mean(resp_time)), by=.(VariableName)]
       # bbb[VariableName!= "<NA>",.(int_duration=sum(resp_time, na.rm = T)/60), by=.(interview__id)]
       # bbb[type!= "<NA>",.(av_resp_time=sum(resp_time, na.rm = T)/60), by=.(type)]
 
-
-      return(para_data)
+      # convert to export class
+      para_data_all<-exportClass(para_data_all, NULL, args)
+      return(para_data_all)
 
     }
   }
