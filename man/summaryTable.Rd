@@ -2,12 +2,18 @@
 % Please edit documentation in R/as_export_class.R
 \name{summaryTable}
 \alias{summaryTable}
+\alias{summaryTable.exportClass}
+\alias{summaryTable.paradata}
 \title{S3 method to create a summary table of numeric variables for an exportClass object}
 \usage{
-summaryTable(x, ..., includeFactors = FALSE, useDT = TRUE, DTstyle = TRUE)
+summaryTable(x, ...)
+
+\method{summaryTable}{exportClass}(x, ..., includeFactors = FALSE, useDT = TRUE, DTstyle = TRUE)
+
+\method{summaryTable}{paradata}(x, ..., useDT = TRUE, DTstyle = TRUE)
 }
 \arguments{
-\item{x}{A exportClass object.}
+\item{x}{exportClass object.}
 
 \item{...}{further arguments.}
 
@@ -29,6 +35,9 @@ object.
 \itemize{
 \item For the main data: The table includes statistics such as mean, standard deviation, maximum, minimum, and total
 count as well as count of NA values.
+}
+
+\itemize{
 \item For paradata: Different summary tables for response times, duration times etc. see examples.
 }
 }
@@ -47,6 +56,13 @@ summary_data_table <- summaryTable(export)
 
 # Display the summary table
 summary_data_table
+
+
+
+}
+
+\dontrun{
+questlist<-suso_getQuestDetails()
 
 ### PARADATA
 para<-suso_export_paradata(questID = questlist$QuestionnaireId[1],
