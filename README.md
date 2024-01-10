@@ -389,6 +389,8 @@ filing a bug report/feature request
 use the Survey Solutions user forum
 [here](https://forum.mysurvey.solutions/c/api/13).
 
+</div>
+
 [^1]: The package is still under testing and also development of some
     features, therefore it is only recommended for experienced users.
 
@@ -397,4 +399,3 @@ use the Survey Solutions user forum
 
 [^3]: Be aware, that workspace assignment requires admin credentials.
     Regular API user credentials would not work.
-    </div>

@@ -27,6 +27,7 @@ knitr::opts_chunk$set(
 
 <div align="justify">
 
+
 This is a (beta - release[^1]) new edition of the [Survey Solutions R API package](https://docs.mysurvey.solutions/headquarters/api/api-r-package/), based on the recently (as stable) released [httr2](https://httr2.r-lib.org/index.html) package. Most of the syntax is the same as in the existing httr based [SurveySolutionsAPI](https://github.com/michael-cw/SurveySolutionsAPI) package, and therefore it should be easy to integrate it in your existing workflow, if you have used the previous edition so far. 
 
 But besides a few syntax changes as well as several other updates like more meaningful error messages using the [cli](https://cli.r-lib.org/) and the [rlang](https://rlang.r-lib.org/) packages there are also quite a bunch of new features. Therefore, i decided to release this package as a completely new one, such that users who do not want to switch to the new package or make use of the new features, can still work with the old package as usual. Nevertheless, a transition to the new package is recommended.
@@ -290,4 +291,6 @@ Since this is a beta release, feedback, bug reports and feature requests are ver
 [^2]: All functions use the susographql functions, but are adjusted to the syntax of this package.
 
 [^3]: Be aware, that workspace assignment requires admin credentials. Regular API user credentials would not work.
+
+
 </div>
