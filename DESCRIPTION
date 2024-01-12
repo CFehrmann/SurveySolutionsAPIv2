@@ -16,6 +16,7 @@ Imports:
     curl,
     data.table,
     dplyr,
+    foreach,
     graphics,
     httr2,
     jsonlite,
@@ -37,6 +38,7 @@ RoxygenNote: 7.2.3
 Remotes: 
     michael-cw/susographql
 Suggests: 
+    doFuture,
     DT,
     future,
     future.apply,

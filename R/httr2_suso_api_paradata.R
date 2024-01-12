@@ -676,45 +676,129 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
     para_data[["roleDistr"]]<-roleDistr
     cat("\nExport & Transformation finished.\n")
 
-    if(!onlyActiveEvents | asList) {
-      return(para_data)
-    } else if(onlyActiveEvents && !asList) {
-      cli::cli_alert_info("Processing singel dataframe object.")
-      # list for paradata to be handed to exportClass
-      para_data_all<-list()
-      pdmain<-data.table::rbindlist(para_data[c("AnswerSet", "AnswerRemoved", "Restarted")], fill = T)
-      # adjust names to match suso
-      setnames(pdmain,
-               old = c("var", "key"),
-               new = c("VariableName", "interview__key")
-               )
-      # remove redundant columns & !!!TD:  MOVE DURATION ETC TO ATTRIBUTES ADD SECTION TITLE
-      pdmain[,c("var_resp", "rid"):=NULL][]
-      # para_data<-para_data[allquestions[,.(VariableName, type, QuestionText, Featured)], on="VariableName"]
-      # para_data <- merge(para_data, allquestions[,.(VariableName, type, QuestionText, Featured)], all.x = T)
+  } else if(is.numeric(multiCore) && multiCore>1) {
+    ###############################
+    ## MULTICORE:
+    # check for package and ask for install
+    rlang::check_installed(
+      c("doFuture", "future"),
+      reason = "The doFuture and future packages are required for parallel processing of paradata."
+    )
+    # get required cores, one for each action
+    simu<-length(levels(droplevels(paradata_files$action)))
+    # SET to 16gb for future parallel (probably later modify w option)
+    options(future.globals.maxSize=15000*1024^2)
+    ncores<-getOption("suso.para.maxcore")
+    multiCore <- min(simu, ncores)
+    cat("\nStarting Multicore with:\t", multiCore, " cores.\n")
 
-      # set key for index
-      setkeyv(pdmain, c("interview__id", "counter"))
-      para_data_all[["paradata"]]<-pdmain
-
-      # get other elements already calculated
-      para_data_all[["action"]]<-para_data[["actionDistr"]]
-      para_data_all[["user"]]<-para_data[["userDistr"]]
-      para_data_all[["role"]]<-para_data[["roleDistr"]]
-      rm(para_data); gc()
-
-
-      # add to export class
-      # bbb[VariableName!= "<NA>",.(av_response_time=mean(resp_time)), by=.(VariableName)]
-      # bbb[VariableName!= "<NA>",.(int_duration=sum(resp_time, na.rm = T)/60), by=.(interview__id)]
-      # bbb[type!= "<NA>",.(av_resp_time=sum(resp_time, na.rm = T)/60), by=.(type)]
-
-      # convert to export class
-      para_data_all<-exportClass(para_data_all, NULL, args)
-      return(para_data_all)
-
+    # launching the future backend
+    # get the options
+    oplan<-future::plan("multisession")
+    on.exit(future::plan(oplan))
+    nplan<-getOption("suso.para.plan")
+    # get current state and reset on exit as recommended
+    # in registerDoFuture documentatin
+    oldDoPar <- doFuture::registerDoFuture()
+    on.exit(with(oldDoPar, foreach::setDoPar(fun=fun, data=data, info=info)), add = TRUE)
+    # Current loop
+    doFuture::registerDoFuture()
+    if(nplan=="sequential") {
+      #  with workers gives warning
+      future::plan(nplan)
+    } else {
+      # maxCore retires
+      future::plan(nplan, workers = multiCore)
     }
+    progressr::handler_cli()
+    # if(!(shiny::isRunning())){
+    #   progressr::handlers(global = T)
+    #   on.exit(progressr::handlers(global = F))
+    # }
+
+    # for non-shiny
+    if(!(shiny::isRunning())){
+      progressr::with_progress({
+        p<-progressr::progressor(along = 1:simu)
+        withr::with_options(
+          list(future.globals.onReference = NULL),
+          para_data <- .process_para_foreach(simu = simu, para_data = para_data,
+                                             p = p, #pack_dp_sp = pack_dp_sp,
+                                             paradata_files = paradata_files,
+                                             gps_file_merge = gps_file_merge,
+                                             para1_answer_merge = para1_answer_merge,
+                                             KeyAssigned_merge  = KeyAssigned_merge,
+                                             onlyActiveEvents = onlyActiveEvents,
+                                             para1_answer = para1_answer)
+        )
+      })
+    } else {
+      progressr::withProgressShiny(
+        message = "Processing paradata",
+        detail = "This may take a while ...",
+        value = 0, {
+          p<-progressr::progressor(along = 1:simu)
+          withr::with_options(
+            list(future.globals.onReference = NULL),
+            para_data <- .process_para_foreach(simu = simu, para_data = para_data,
+                                               p = p, #pack_dp_sp = pack_dp_sp,
+                                               paradata_files = paradata_files,
+                                               gps_file_merge = gps_file_merge,
+                                               para1_answer_merge = para1_answer_merge,
+                                               KeyAssigned_merge  = KeyAssigned_merge,
+                                               onlyActiveEvents = onlyActiveEvents,
+                                               para1_answer = para1_answer)
+          )
+        })
+    }
+    # add action count summary tables
+    para_data[["actionDistr"]]<-actionDistr
+    para_data[["userDistr"]]<-userDistr
+    para_data[["roleDistr"]]<-roleDistr
+  } else {
+    cli::cli_abort(c("x" = "If multiCore is not NULL, it must be numeric and greater 1. Please check your inputs!"))
   }
+
+  # return list or exportClass data.table
+  if(!onlyActiveEvents | asList) {
+    return(para_data)
+  } else if(onlyActiveEvents && !asList) {
+    cli::cli_alert_info("Processing singel dataframe object.")
+    # list for paradata to be handed to exportClass
+    para_data_all<-list()
+    pdmain<-data.table::rbindlist(para_data[c("AnswerSet", "AnswerRemoved", "Restarted")], fill = T)
+    # adjust names to match suso
+    setnames(pdmain,
+             old = c("var", "key"),
+             new = c("VariableName", "interview__key")
+    )
+    # remove redundant columns & !!!TD:  MOVE DURATION ETC TO ATTRIBUTES ADD SECTION TITLE
+    pdmain[,c("var_resp", "rid"):=NULL][]
+    # para_data<-para_data[allquestions[,.(VariableName, type, QuestionText, Featured)], on="VariableName"]
+    # para_data <- merge(para_data, allquestions[,.(VariableName, type, QuestionText, Featured)], all.x = T)
+
+    # set key for index
+    setkeyv(pdmain, c("interview__id", "counter"))
+    para_data_all[["paradata"]]<-pdmain
+
+    # get other elements already calculated
+    para_data_all[["action"]]<-para_data[["actionDistr"]]
+    para_data_all[["user"]]<-para_data[["userDistr"]]
+    para_data_all[["role"]]<-para_data[["roleDistr"]]
+    rm(para_data); gc()
+
+
+    # add to export class
+    # bbb[VariableName!= "<NA>",.(av_response_time=mean(resp_time)), by=.(VariableName)]
+    # bbb[VariableName!= "<NA>",.(int_duration=sum(resp_time, na.rm = T)/60), by=.(interview__id)]
+    # bbb[type!= "<NA>",.(av_resp_time=sum(resp_time, na.rm = T)/60), by=.(type)]
+
+    # convert to export class
+    para_data_all<-exportClass(para_data_all, NULL, args)
+    return(para_data_all)
+
+  }
+
 
 
   ############################  FINFINFIN   #####################################

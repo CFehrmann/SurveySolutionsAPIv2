@@ -434,6 +434,7 @@ summaryTable.exportClass <- function(x, ... ,includeFactors = FALSE, useDT = TRU
 #' questlist<-suso_getQuestDetails()
 #'
 #' ### PARADATA
+#' # 1. Pre-Processed tables created during export
 #' para<-suso_export_paradata(questID = questlist$QuestionnaireId[1],
 #'                           version = questlist$Version[1], reloadTimeDiff = 24,
 #'                           workStatus = "All", asList = F, onlyActiveEvents = T)
@@ -443,6 +444,9 @@ summaryTable.exportClass <- function(x, ... ,includeFactors = FALSE, useDT = TRU
 #'
 #' # Create a summary table of all event counts by user
 #' users <- summaryTable(para, "user")
+#'
+#' # 2. Tables created on request for response times
+#' # grouped by variables, i.e. type, VariableName, responsible etc.
 #'
 #' # Create a summary table of the average response time by variable
 #' resptime_var <- summaryTable(para, "VariableName")
@@ -576,6 +580,10 @@ summaryTable.paradata <- function(x, ... ,useDT = TRUE, DTstyle = TRUE) {
     }
   } else if(getinfo(x, "isPara")) {
     # PARADATA
+    # check if x is of class exportClass
+    if (!is.exportClass(x)) {
+      cli::cli_abort(c("x" = "x must be of class exportClass."))
+    }
     args<-rlang::list2(...)
     arg<-as.character(args)
     arg<-rlang::set_names(arg, names(args))
