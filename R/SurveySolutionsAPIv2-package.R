@@ -23,7 +23,7 @@
 #' @importFrom tidyjson enter_object gather_array spread_all jstring jnumber jlogical bind_rows spread_values
 #' @importFrom zip unzip
 #' @importFrom utils setTxtProgressBar txtProgressBar
-#' @importFrom foreach foreach %dopar%
+#' @importFrom foreach foreach %dopar% %do%
 ## usethis namespace: end
 NULL
 

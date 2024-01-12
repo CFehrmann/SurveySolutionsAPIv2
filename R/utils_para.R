@@ -120,10 +120,10 @@
 #' @noRd
 #' @keywords internal
 #'
-.process_para_foreach<-function(...){
+.process_para_foreach<-function(..., parallel = TRUE){
   args<-rlang::list2(...)
   simu<-args$simu
-  p<-args$p
+  p<-args$prog
   paradata_files<-args$paradata_files
   gps_file_merge<-args$gps_file_merge
   para1_answer_merge<-args$para1_answer_merge
@@ -132,12 +132,16 @@
   onlyActiveEvents = args$onlyActiveEvents
   para1_answer = args$para1_answer
 
+  # solution from:
+  # https://stackoverflow.com/questions/43733271/
+  # how-to-switch-programmatically-between-do-and-dopar-in-foreach
+  `%doselect%` <-ifelse(parallel, `%dopar%`, `%do%`)
   para_data<-foreach(i=1:simu, #.packages = pack_dp_sp,
                      .combine=c,
                      .multicombine = T,
                      .export = c("para_data"),
                      #.verbose = T,
-                     .errorhandling="pass") %dopar% {
+                     .errorhandling="pass") %doselect% {
 
                        ## progress
                        #p(sprintf("event = %g", event))

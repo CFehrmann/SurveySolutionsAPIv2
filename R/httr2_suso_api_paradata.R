@@ -294,13 +294,13 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
 
     # creat body list
     js_body<-list(
-      ExportType = extype, #required
+      ExportType = "Paradata", #required
       QuestionnaireId = qid, #required
       InterviewStatus = workStatus, #required
       From = from_datetime, # can be null
       To = to_datetime, # can be null
-      # TranslationId = addTranslation, #if not null then id
-      IncludeMeta = FALSE #required to be false as otherwise additonal files are not exported
+      TranslationId = NULL, #!!!MUST BE INCLUDED AND SET TO NULL OTHERWISE EXP IN SEC
+      IncludeMeta = FALSE #required to be TRUE because otherwise, export is in SECONDS
     )
 
     # add body
@@ -606,70 +606,28 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
     return(file)
   }
 
+  # get number of processes
+  simu<-length(levels(droplevels(paradata_files$action)))
+
   if (is.null(multiCore)) {
-    cat("Processing: ")
-    cat("\n\tAnswerSet\n")
-    ##  ACTIVE EVENTS
-    ##  2.8 Answer Set
-    AnswerSet<-para1_answer
-    AnswerSet<-AnswerSet[!is.na(interview__id)]
-    setkeyv(AnswerSet, "interview__id")
-    if(exists("gps_file_merge"))  AnswerSet<-gps_file_merge[AnswerSet, on="interview__id"]
-    AnswerSet<-KeyAssigned_merge[AnswerSet, on="interview__id"]
-    para_data$AnswerSet<-AnswerSet
-    ##  2.9. Answer Removed (COUNT the number of Removed answer by questionnaire)
-    cat("\n\tAnswerRemoved\n")
-    AnswerRemoved<-paradata_files[action=="AnswerRemoved"]
-    AnswerRemoved<-AnswerRemoved[!is.na(interview__id)]
-    AnswerRemoved[, count:=length(counter), by=interview__id]
-    AnswerRemoved[,c("responsible", "role"):=NULL]
-    #AnswerRemoved<-droplevels(AnswerRemoved)
-    AnswerRemoved<-merge(AnswerRemoved, para1_answer_merge, by="interview__id", allow.cartesian=T)
-    setkeyv(AnswerRemoved, "interview__id")
-    if(exists("gps_file_merge")) AnswerRemoved<-gps_file_merge[AnswerRemoved, on="interview__id"]
-    AnswerRemoved<-KeyAssigned_merge[AnswerRemoved, on="interview__id"]
-    para_data$AnswerRemoved<-AnswerRemoved
-    ##  2.10. Approved
-    cat("\n\tApproveByHeadquarter\n")
-    ApproveByHeadquarter<-paradata_files[action=="ApproveByHeadquarter"]
-    ApproveByHeadquarter<-droplevels(ApproveByHeadquarter)
-    ApproveBySupervisor<-paradata_files[action=="ApproveBySupervisor"]
-    ApproveBySupervisor<-droplevels(ApproveBySupervisor)
-    ##  2.13 Restarted
-    cat("\n\tRestarted\n")
-    Restarted<-paradata_files[action=="Restarted"]
-    Restarted<-Restarted[!is.na(interview__id),]
-    Restarted[, count:=length(counter), by=interview__id]
-    setkeyv(Restarted, "interview__id")
-    if(exists("gps_file_merge")) Restarted<-gps_file_merge[Restarted, on="interview__id"]
-    Restarted<-KeyAssigned_merge[Restarted, on="interview__id"]
-    para_data$Restarted<-Restarted
-    ##  2.14. Rejected
-    cat("\n\tReject\n")
-    Reject<-paradata_files[action=="RejectedBySupervisor"|action=="RejectedByHeadquarter"][,c("var_resp", "rid"):=NULL]
-    setnames(Reject, "var", "comment")
-    Reject<-droplevels(Reject)
-    setkeyv(Reject, "interview__id")
-    if(exists("gps_file_merge")) Reject<-gps_file_merge[Reject, on="interview__id"]
-    Reject<-KeyAssigned_merge[Reject, on="interview__id"]
-    para_data$Reject<-Reject
-    ##  PASSIVE EVENTS (ONLY IF REQUESTED)
-    if (!onlyActiveEvents) {
-      ##  2.11. Invalid
-      cat("\n\tQuestionDeclaredInvalid\n")
-      QuestionDeclaredInvalid<-paradata_files[action=="QuestionDeclaredInvalid"]
-      QuestionDeclaredInvalid<-QuestionDeclaredInvalid[!is.na(interview__id)]
-      QuestionDeclaredInvalid[, count:=length(counter), by=interview__id]
-      setkeyv(QuestionDeclaredInvalid, "interview__id")
-      if(exists("gps_file_merge")) QuestionDeclaredInvalid<-gps_file_merge[QuestionDeclaredInvalid, on="interview__id"]
-      QuestionDeclaredInvalid<-KeyAssigned_merge[QuestionDeclaredInvalid, on="interview__id"]
-      para_data$QuestionDeclaredInvalid<-QuestionDeclaredInvalid
-      ##  2.12. Valid
-      cat("\n\tQuestionDeclaredValid\n")
-      QuestionDeclaredValid<-paradata_files[action=="QuestionDeclaredValid"]
-      QuestionDeclaredValid<-QuestionDeclaredValid[!is.na(interview__id),]
-      QuestionDeclaredValid[, count:=length(counter), by=interview__id]
-      para_data$QuestionDeclaredValid<-QuestionDeclaredValid
+    progressr::handler_cli()
+    if(!(shiny::isRunning())){
+      # progressr::handlers(global = T)
+      # on.exit(progressr::handlers(global = F))
+
+      progressr::with_progress({
+        p<-progressr::progressor(along = 1:simu)
+        para_data <- .process_para_foreach(simu = simu, para_data = para_data,
+                                           prog = p, #pack_dp_sp = pack_dp_sp,
+                                           paradata_files = paradata_files,
+                                           gps_file_merge = gps_file_merge,
+                                           para1_answer_merge = para1_answer_merge,
+                                           KeyAssigned_merge  = KeyAssigned_merge,
+                                           onlyActiveEvents = onlyActiveEvents,
+                                           para1_answer = para1_answer,
+                                           parallel = FALSE)
+
+      })
     }
     para_data[["actionDistr"]]<-actionDistr
     para_data[["userDistr"]]<-userDistr
@@ -724,7 +682,7 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
         withr::with_options(
           list(future.globals.onReference = NULL),
           para_data <- .process_para_foreach(simu = simu, para_data = para_data,
-                                             p = p, #pack_dp_sp = pack_dp_sp,
+                                             prog = p, #pack_dp_sp = pack_dp_sp,
                                              paradata_files = paradata_files,
                                              gps_file_merge = gps_file_merge,
                                              para1_answer_merge = para1_answer_merge,
@@ -742,7 +700,7 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
           withr::with_options(
             list(future.globals.onReference = NULL),
             para_data <- .process_para_foreach(simu = simu, para_data = para_data,
-                                               p = p, #pack_dp_sp = pack_dp_sp,
+                                               prog = p, #pack_dp_sp = pack_dp_sp,
                                                paradata_files = paradata_files,
                                                gps_file_merge = gps_file_merge,
                                                para1_answer_merge = para1_answer_merge,
@@ -764,7 +722,7 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
   if(!onlyActiveEvents | asList) {
     return(para_data)
   } else if(onlyActiveEvents && !asList) {
-    cli::cli_alert_info("Processing singel dataframe object.")
+    cli::cli_alert_info("Processing single dataframe object.")
     # list for paradata to be handed to exportClass
     para_data_all<-list()
     pdmain<-data.table::rbindlist(para_data[c("AnswerSet", "AnswerRemoved", "Restarted")], fill = T)
