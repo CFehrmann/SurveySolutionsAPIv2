@@ -181,6 +181,78 @@
 
 }
 
+#' get number of cores with base r
+#'
+#' @noRd
+#' @keywords internal
+.detectCores <- function() {
+  # Determine OS
+  os <- .Platform$OS.type
+
+  # Define system command based on the OS
+  if (os == "unix") {
+    command <- "nproc"
+  } else if (os == "windows") {
+    command <- "WMIC CPU Get NumberOfLogicalProcessors"
+  } else {
+    stop("Unsupported operating system.")
+  }
+
+  # Execute the command
+  result <- system(command, intern = TRUE)
+
+  # Process the output
+  if (os == "windows") {
+    # Extract the number from the output
+    cores <- as.numeric(result[2])
+  } else {
+    cores <- as.numeric(result)
+  }
+
+  return(cores)
+}
+
+
+#' get working memory
+#'
+#' @noRd
+#' @keywords internal
+.detectTotalMemory <- function() {
+  # Determine OS
+  os <- .Platform$OS.type
+
+  # Define system command based on the OS
+  if (os == "unix") {
+    # Check for the type of Unix system and set command
+    if (file.exists("/proc/meminfo")) {
+      # Linux systems
+      command <- "grep MemTotal /proc/meminfo | awk '{print $2}'"
+    } else {
+      # macOS and other Unix systems
+      command <- "vm_stat | grep 'free' | awk '{print $3}' | sed 's/\\./'"
+    }
+  } else if (os == "windows") {
+    command <- "wmic ComputerSystem get TotalPhysicalMemory"
+  } else {
+    stop("Unsupported operating system.")
+  }
+
+  # Execute the command
+  result <- system(command, intern = TRUE)
+
+  # Process the output
+  if (os == "windows") {
+    # Extract the number from the output and convert to megabytes
+    memory <- as.numeric(result[2]) / 1024^2
+  } else {
+    memory <- as.numeric(result) / 1024
+  }
+
+  return(memory)
+}
+
+
+
 
 
 

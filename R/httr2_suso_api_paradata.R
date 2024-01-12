@@ -687,7 +687,8 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
     # get required cores, one for each action
     simu<-length(levels(droplevels(paradata_files$action)))
     # SET to 16gb for future parallel (probably later modify w option)
-    options(future.globals.maxSize=15000*1024^2)
+    sizeRamMB<-floor(.detectTotalMemory())
+    options(future.globals.maxSize=sizeRamMB*1024^2)
     ncores<-getOption("suso.para.maxcore")
     multiCore <- min(simu, ncores)
     cat("\nStarting Multicore with:\t", multiCore, " cores.\n")

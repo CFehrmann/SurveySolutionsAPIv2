@@ -34,7 +34,7 @@
   options(suso.para.tz = Sys.timezone())
 
   # number of cores for parallel processing
-  options(suso.para.maxcore = data.table::getDTthreads()-2)
+  options(suso.para.maxcore = (.detectCores()-2))
 
   # type of parallel i.e. multisession, sequential multicore
   options(suso.para.plan = "multisession")
