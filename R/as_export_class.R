@@ -80,7 +80,7 @@ exportClass<-function(x, varLabels, ..., type = "main") {
       data.table::setattr(x, "class", base::union("exportClass", class(x)))
 
       # set paradata tag attribute to false
-      data.table::setattr(iddt, "isPara", FALSE)
+      data.table::setattr(x, "isPara", FALSE)
 
       invisible(x)
 
