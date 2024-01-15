@@ -1,10 +1,11 @@
-#'  SURVEY SOLUTIONS PARADATA EXPORT FUNCTION
+#'  Export Survey Solutions paradata
 #'
-#' Exports Survey Solutions Paradata, and returns a data.table.
+#' Exports Survey Solutions paradata, and returns either a single exportClass data.table,
+#' or a list of data.tables.
 #'
 #'
 #'  \code{suso_export_paradata} returns a data.table. Calculates the response time
-#'  and separtes multiple responses into individual columns. It also creates a variable
+#'  and separates multiple responses into individual columns. It also creates a variable
 #'  \emph{counter} which preserves the sequence of events.
 #'
 #'
@@ -46,7 +47,7 @@
 #' To further decrease the processing time, one could set \emph{allResponses} to FALSE. Doing so will still export all the data, however it will
 #' not attempt to extract all responses and setting them to factors.
 #'
-#'
+#' @return a single exportClass data.table or a list of data.tables.
 #'
 #' @examples
 #' \dontrun{

@@ -2,7 +2,7 @@
 % Please edit documentation in R/httr2_suso_api_assignment.R
 \name{suso_set_assignments}
 \alias{suso_set_assignments}
-\title{Survey Solutions API call for assingment manipulation}
+\title{Survey Solutions API call for assignment manipulation}
 \usage{
 suso_set_assignments(
   server = suso_get_api_key("susoServer"),

@@ -58,7 +58,7 @@ the data.table will be NULL, however any information returned from the API can b
 function with the corresponding arguments.
 }
 \description{
-\code{suso_get_assignments} calls the Survey Solutions assingment API
+\code{suso_get_assignments} calls the Survey Solutions assignment API
 }
 \examples{
 \dontrun{

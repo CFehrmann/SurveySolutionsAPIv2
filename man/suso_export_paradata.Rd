@@ -2,7 +2,7 @@
 % Please edit documentation in R/httr2_suso_api_paradata.R
 \name{suso_export_paradata}
 \alias{suso_export_paradata}
-\title{SURVEY SOLUTIONS PARADATA EXPORT FUNCTION}
+\title{Export Survey Solutions paradata}
 \usage{
 suso_export_paradata(
   server = suso_get_api_key("susoServer"),
@@ -79,12 +79,16 @@ memory requirements}
 
 \item{showProgress}{also display the progress bars.}
 }
+\value{
+a single exportClass data.table or a list of data.tables.
+}
 \description{
-Exports Survey Solutions Paradata, and returns a data.table.
+Exports Survey Solutions paradata, and returns either a single exportClass data.table,
+or a list of data.tables.
 }
 \details{
 \code{suso_export_paradata} returns a data.table. Calculates the response time
-and separtes multiple responses into individual columns. It also creates a variable
+and separates multiple responses into individual columns. It also creates a variable
 \emph{counter} which preserves the sequence of events.
 
 The return value is a list with a separate list element for each event. If any of the variable

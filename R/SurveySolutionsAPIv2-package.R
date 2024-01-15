@@ -18,7 +18,7 @@
 # #' @importFrom httr authenticate build_url GET parse_url
 #' @importFrom jsonlite fromJSON unbox
 #' @importFrom stats setNames sd
-#' @importFrom lubridate as_datetime ymd ymd_hms now today
+#' @importFrom lubridate as_datetime ymd ymd_hms now today hms
 #' @importFrom stringr str_count str_detect str_extract str_replace_all str_split str_sub str_remove
 #' @importFrom tidyjson enter_object gather_array spread_all jstring jnumber jlogical bind_rows spread_values
 #' @importFrom zip unzip

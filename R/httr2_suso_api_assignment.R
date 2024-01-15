@@ -1,7 +1,7 @@
 #' Survey Solutions API call for assignment list
 #'
 #'
-#' \code{suso_get_assignments} calls the Survey Solutions assingment API
+#' \code{suso_get_assignments} calls the Survey Solutions assignment API
 #'
 #'
 #' @param server Survey Solutions server address
@@ -373,7 +373,7 @@ suso_get_assignments<-function(server = suso_get_api_key("susoServer"),
 
 
 
-#' Survey Solutions API call for assingment manipulation
+#' Survey Solutions API call for assignment manipulation
 #'
 #' \code{suso_set_assignments} allows to (re-)assign, change limits or audio
 #' recording settings, as well as archiving/unarchive and close assignments.

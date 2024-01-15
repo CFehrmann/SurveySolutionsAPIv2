@@ -35,7 +35,7 @@
 
 # check input types
 .checkNum<-function(x) {
-  if (!is.numeric(x)) stop("Input must be numeric")
+  if (!is.numeric(x)) cli::cli_abort(c("x" = "Input must be numeric"))
 }
 
 
@@ -93,7 +93,7 @@
   if(grepl(email_pattern, email)) {
     invisible(TRUE)
   } else {
-    stop("Invalid email format. Please check your input.")
+    cli::cli_abort("Invalid email format. Please check your input.")
   }
 }
 
@@ -104,9 +104,53 @@
 
   # Check if the parsed date is NA (invalid) or if the format is not as expected
   if (is.na(parsed_date) || format(parsed_date, "%Y-%m-%d") != date_string) {
-    return(FALSE)
+    cli::cli_abort("Invalid date format. Please check your input.")
+
   } else {
-    return(TRUE)
+    invisible(TRUE)
+  }
+}
+
+# parse date and time and check against reference and return date time string
+.genDateTimeCheckNow <- function(date_string,
+                                 time_string,
+                                 tz) {
+
+  # Get System Time
+  reference_time = now(tzone = tz)
+
+  # Combine
+  dateTimeString<-paste(date_string, time_string)
+
+  # Combine into a dateTime object
+  dateTime <- ymd_hms(dateTimeString, tz = tz)
+
+  # Check if dateTime is earlier than reference time
+  if (dateTime < reference_time) {
+    cli::cli_abort("Provided date and time cannot be earlier than the reference time.")
+  } else {
+
+    # Return the valid dateTimeString object
+    return(dateTimeString)
+  }
+}
+
+# check time
+.checkTime <- function(time_string) {
+
+  # Parse the time using hms
+  parsed_time <- hms(time_string, quiet = TRUE)
+
+  # Check for validity, including hours, minutes, and seconds
+  if (is.na(parsed_time) ||
+      lubridate::hour(parsed_time) > 23 ||
+      lubridate::minute(parsed_time) > 59 ||
+      lubridate::second(parsed_time) > 59) {
+
+    cli::cli_abort("Invalid time format. Please check your input.")
+
+  } else {
+    invisible(TRUE)
   }
 }
 
@@ -119,12 +163,12 @@
   # Check if either date is invalid
   if (is.na(parsed_from_date) || format(parsed_from_date, "%Y-%m-%d") != from_date ||
       is.na(parsed_to_date) || format(parsed_to_date, "%Y-%m-%d") != to_date) {
-    stop("Invalid date format. Please check your input.")
+    cli::cli_abort("Invalid date format. Please check your input.")
   }
 
   # Check if from_date is not before to_date
   if(parsed_from_date > parsed_to_date) {
-    stop("from_date must be before to_date")
+    cli::cli_abort("from_date must be before to_date")
   }
 }
 
@@ -137,13 +181,43 @@
   # Check if either datetime is invalid
   if (is.na(parsed_from_datetime) || format(parsed_from_datetime, "%Y-%m-%d %H:%M:%S") != from_datetime ||
       is.na(parsed_to_datetime) || format(parsed_to_datetime, "%Y-%m-%d %H:%M:%S") != to_datetime) {
-    stop("Invalid date time format. Please check your input.")
+    cli::cli_abort("Invalid date time format. Please check your input.")
   }
 
   # Check if from_datetime is not before to_datetime
   if(parsed_from_datetime >= parsed_to_datetime) {
-    stop("from_date must be before to_date")
+    cli::cli_abort("from_date must be before to_date")
   }
+}
+
+# check time zone
+.checkTimeZone<- function(time_zone) {
+  valid_time_zones <- OlsonNames()
+
+  if (time_zone %in% valid_time_zones) {
+    invisible(TRUE)
+  } else {
+    cli::cli_abort(c("x" = "Invalid time zone name."))
+    return(FALSE)
+  }
+}
+
+# transform data.table char to date
+.transform_datetime <- function(data_table) {
+  # List of variables to be transformed
+  variables_to_transform <- c("createdDate", "LastEntryDate", "ReceivedByDeviceAtUtc",
+                              "calendarEvent.startUtc", "calendarEvent.updateDateUtc",
+                              "UpdatedAtUtc", "ReceivedByTabletAtUtc", "startUtc",
+                              "updateDateUtc", "importDateUtc")
+
+  # Check and transform each variable
+  for (var in variables_to_transform) {
+    if (var %in% names(data_table)) {
+      data_table[[var]] <- lubridate::as_datetime(data_table[[var]])
+    }
+  }
+
+  return(data_table)
 }
 
 

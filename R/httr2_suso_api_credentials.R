@@ -173,7 +173,7 @@ suso_get_api_key <- function(api = c("susoServer", "susoUser", "susoPass", "work
   rlang::arg_match(api)
   ## Return value for selected API component
   api <- getOption("SurveySolutionsAPI")[['suso']][[api]]
-  if(is.na(api)) return(suso_get_default_key(api))
+  #if(is.na(api)) return(suso_get_default_key(api))
 
   return(api)
 }
@@ -221,6 +221,10 @@ suso_PwCheck<-function(server=suso_get_api_key("susoServer"),
                        apiPass=suso_get_api_key("susoPass"),
                        workspace = suso_get_api_key("workspace"),
                        token = NULL) {
+  if(is.na(server) | is.na(apiUser) | is.na(apiPass)) {
+    # return 400 if any is missing
+    return(400)
+  }
   # check internet connection
   if(!(curl::has_internet())) {
     withr::with_options(
