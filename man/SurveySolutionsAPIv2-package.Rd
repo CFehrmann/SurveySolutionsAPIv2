@@ -6,10 +6,10 @@
 \alias{SurveySolutionsAPIv2-package}
 \title{SurveySolutionsAPIv2: Comprehensive API access to your Survey Solutions Server (httr2 version)}
 \description{
-This packages implements all the currently available POST, GET, and PATCH calls to the Survey Solutions RESTfull API. It contains several convenience functions to facilitate these operations, and can handle small impact evaluations as well as large scale cenuses. It is based on the httr2 package, and is officially replacing the httr based version.
+A comprehensive suite of functions for interfacing with the Survey Solutions API. It supports all the current POST, GET, and PATCH requests of the REST API and extends its capabilities by integrating selected GraphQL API queries and mutations when REST API equivalents are not available. Designed for ease of use, it includes several convenience functions to streamline operations. The package ensures that data retrieved from the API is automatically transformed into a single, easy-to-use data.frame, optimizing it for subsequent analysis and processing. Additionally, it is specifically designed to facilitate seamless integration into R Shiny applications, enhancing the interactive web application development experience. Built on the robust httr2 package, this version supersedes the previous httr-based implementation. Recognizing the needs of large-scale data operations such as censuses, the package also incorporates features for parallel processing, enhancing its efficiency and scalability.
 }
 \author{
-\strong{Maintainer}: Michael Wild \email{mwild@worldbank.org}
+\strong{Maintainer}: Michael Wild \email{mwild@worldbank.org} [copyright holder]
 
 }
 \keyword{internal}
