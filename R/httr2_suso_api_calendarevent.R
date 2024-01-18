@@ -1,6 +1,6 @@
-#' Create or update a calendar event
+#' Create, update or delete a calendar event
 #'
-#' Add or update a calendar event to or for an assignment or an interview.
+#' Create, update or delete a calendar event for one or several assignments or interviews.
 #'
 #'
 #' @param server Survey Solutions server address
@@ -19,29 +19,41 @@
 #'
 #' @details
 #' This function creates a calendar event either for one or several assignments or one or
-#' several interviews. Either one of \code{AssID} or \code{intID} must not be NULL.
+#' several interviews. Either one of \code{AssID} or \code{intID} must not be NULL. If
+#' \code{length(AssID)} or \code{length(AssID)} is greater 1, then \code{startDate},
+#' \code{startTime} and \code{startTZ} must either be each of length 1 (same event for
+#' all) or of the same length, allowing for multiple events with different times.
 #'
 #' @return a data.table with the created event(s).
 #'
 #' @examplesIf suso_PwCheck()==200
-#' # add calendar event to assignment
+#' # add single calendar event to assignment
 #' calEvass<-suso_createCALEV(AssId = 268,
 #'                            startDate = "2024-01-17",
 #'                            startTime = "10:40:00")
 #'
-#' # update the event
+#' # update single event
 #' calEvup<-suso_updateCALEV(publicKey = calEvass$publicKey[1],
 #'                          startDate = "2024-01-18",
 #'                         startTime = "10:40:00")
 #'
-#' # delete the event
+#' # delete single event
 #' calEvDel<-suso_delCALEV(publicKey = calEvup$publicKey[1])
 #'
-#' @name calenderevent
+#'
+#' # add calendar event to multiple assignments
+#' calEvass<-suso_createCALEV(AssId = 55:60,
+#'                            startDate = "2024-01-18",
+#'                            startTime = "11:40:00")
+#' # delete multiple calendar events
+#' calEvDel<-suso_delCALEV(publicKey = calEvass$publicKey)
+#'
+#'
+#' @name calendarevent
 NULL
 
 
-#' @describeIn calenderevent add a calendar event
+#' @describeIn calendarevent add a calendar event
 #' @export
 
 suso_createCALEV <- function(server= suso_get_api_key("susoServer"),
@@ -80,39 +92,73 @@ suso_createCALEV <- function(server= suso_get_api_key("susoServer"),
 
 
   if(!is.null(AssId)){
-    # assignments
-
     # check ass id
-    .checkNum(AssId)
+    .checkNum(AssId[1])
 
-    result<-susographql::suso_gql_addassignmentcalendarevent(
-      endpoint = paste0(server, "graphql"),
-      workspace = workspace,
-      user = apiUser,
-      password = apiPass,
-      assignmentId = AssId,
-      comment = comment,
-      newStart = startDateTime,
-      startTimezone = startTZ
-    )
-    result<-data.table(t(unlist(result$addAssignmentCalendarEvent)))
+    # SINGLE ASSIGNMENT
+    if(length(AssId)==1){
+      result<-.create_cal_event(
+        server = server,
+        workspace = workspace,
+        apiUser = apiUser,
+        apiPass = apiPass,
+        AssId = AssId,
+        comment = comment,
+        startDateTime = startDateTime,
+        startTZ = startTZ
+      )
+    } else if(length(AssId)>1) {
+      # multiple assignments
+
+      result<-sapply(seq_along(AssId),
+                     function(x) {
+                       .create_cal_event(
+                         server = server,
+                         workspace = workspace,
+                         apiUser = apiUser,
+                         apiPass = apiPass,
+                         AssId = AssId[x],
+                         comment = comment,
+                         startDateTime = startDateTime,
+                         startTZ = startTZ)},
+                     USE.NAMES = F, simplify = F)
+
+      result<-data.table::rbindlist(result, fill = T)
+    }
   } else if(!is.null(intID)){
-    # interviews
-
     # check interview uuid
     .checkUUIDFormat(intID[1])
 
-    result<-susographql::suso_gql_addinterviewcalendarevent(
-      endpoint = paste0(server, "graphql"),
-      workspace = workspace,
-      user = apiUser,
-      password = apiPass,
-      interviewId = intID,
-      comment = comment,
-      newStart = startDateTime,
-      startTimezone = startTZ
-    )
-    result<-data.table(t(unlist(result$addInterviewCalendarEvent)))
+    # SINGLE INTERVIEW
+    if(length(intID)==1) {
+      result<-.create_cal_event(
+        server = server,
+        workspace = workspace,
+        apiUser = apiUser,
+        apiPass = apiPass,
+        intID = intID,
+        comment = comment,
+        startDateTime = startDateTime,
+        startTZ = startTZ
+      )
+    }  else if(length(intID)>1) {
+      # multiple assignments
+      result<-sapply(seq_along(intID),
+                     function(x) {
+                       .create_cal_event(
+                         server = server,
+                         workspace = workspace,
+                         apiUser = apiUser,
+                         apiPass = apiPass,
+                         intID = intID[x],
+                         comment = comment,
+                         startDateTime = startDateTime,
+                         startTZ = startTZ)},
+                     USE.NAMES = F, simplify = F)
+
+      result<-data.table::rbindlist(result, fill = T)
+
+    }
   } else {
     cli::cli_abort(c("x" = "Please provide either assignment id(s) or interview id(s)."))
   }
@@ -124,7 +170,7 @@ suso_createCALEV <- function(server= suso_get_api_key("susoServer"),
 }
 
 
-#' @describeIn calenderevent update a calendar event
+#' @describeIn calendarevent update a calendar event
 #' @export
 
 suso_updateCALEV <- function(server= suso_get_api_key("susoServer"),
@@ -186,7 +232,7 @@ suso_updateCALEV <- function(server= suso_get_api_key("susoServer"),
   return(result)
 }
 
-#' @describeIn calenderevent delete a calendar event
+#' @describeIn calendarevent delete a calendar event
 #' @export
 
 suso_delCALEV <- function(server= suso_get_api_key("susoServer"),
@@ -205,15 +251,32 @@ suso_delCALEV <- function(server= suso_get_api_key("susoServer"),
   if(!is.null(publicKey)){
     # check interview uuid
     .checkUUIDFormat(publicKey[1])
-
-    result<-susographql::suso_gql_deletecalendarevent(
-      endpoint = paste0(server, "graphql"),
-      workspace = workspace,
-      user = apiUser,
-      password = apiPass,
-      publicKey  = publicKey
-    )
-    result<-data.table(t(unlist(result$deleteCalendarEvent)))
+    # single key
+    if(length(publicKey) == 1) {
+      result<-susographql::suso_gql_deletecalendarevent(
+        endpoint = paste0(server, "graphql"),
+        workspace = workspace,
+        user = apiUser,
+        password = apiPass,
+        publicKey  = publicKey
+      )
+      result<-data.table(t(unlist(result$deleteCalendarEvent)))
+    } else if(length(publicKey)>1) {
+      delmulti<-function(x) {
+        result<-susographql::suso_gql_deletecalendarevent(
+          endpoint = paste0(server, "graphql"),
+          workspace = workspace,
+          user = apiUser,
+          password = apiPass,
+          publicKey  = publicKey[x]
+        )
+        result<-data.table(t(unlist(result$deleteCalendarEvent)))
+      }
+      result<-sapply(seq_along(publicKey),
+                     delmulti,
+                     USE.NAMES = F, simplify = F)
+      result<-data.table::rbindlist(result, fill = T)
+    }
   } else {
     cli::cli_abort(c("x" = "Please provide a calendar event public key."))
   }
@@ -223,4 +286,44 @@ suso_delCALEV <- function(server= suso_get_api_key("susoServer"),
   if(nrow(result)>0) result<-.transform_datetime(result)
   return(result)
 }
+
+
+#' helper function for calendar events create
+#'
+#'
+#' @noRd
+#' @keywords internal calendarevent
+#'
+.create_cal_event<-function(...) {
+  args<-rlang::list2(...)
+  if(!is.null(args$AssId)){
+    result<-susographql::suso_gql_addassignmentcalendarevent(
+      endpoint = paste0(args$server, "graphql"),
+      workspace = args$workspace,
+      user = args$apiUser,
+      password = args$apiPass,
+      assignmentId = args$AssId,
+      comment = args$comment,
+      newStart = args$startDateTime,
+      startTimezone = args$startTZ
+    )
+    result<-data.table(t(unlist(result$addAssignmentCalendarEvent)))
+  }
+
+  if(!is.null(args$intID)) {
+    result<-susographql::suso_gql_addinterviewcalendarevent(
+      endpoint = paste0(args$server, "graphql"),
+      workspace = args$workspace,
+      user = args$apiUser,
+      password = args$apiPass,
+      interviewId = args$intID,
+      comment = args$comment,
+      newStart = args$startDateTime,
+      startTimezone = args$startTZ
+    )
+    result<-data.table(t(unlist(result$addInterviewCalendarEvent)))
+  }
+  return(result)
+}
+
 

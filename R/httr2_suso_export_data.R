@@ -66,7 +66,18 @@
 #' to a weight file is provided, then these will be added too, and is as such ready
 #' for analysis.
 #'
+#' @return a single exportClass data.table or a list of exportClass data.tables, see details.
 #'
+#' @examplesIf suso_PwCheck()==200
+#'
+#' questlist<-suso_getQuestDetails()
+#'
+#' exp<-suso_export(questID = questlist$QuestionnaireId[1],
+#'                  version = questlist$Version[1],
+#'                  workStatus = "All", process_mapquestions = T,
+#'                  combineFiles = T,
+#'                  reloadTimeDiff = 0,
+#'                  translationLanguage = "italian")
 #'
 #' @export
 #'

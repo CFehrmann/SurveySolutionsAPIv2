@@ -78,6 +78,9 @@ if yes, gps and all types of mapquestions will be added to the list at their cor
 
 \item{combineFiles}{if TRUE, the export will be combined into single data.table, see details for the processing steps}
 }
+\value{
+a single exportClass data.table or a list of exportClass data.tables, see details.
+}
 \description{
 Generates and downloads the data from your Survey Solutions server.
 }
@@ -113,4 +116,17 @@ format will be returned. This is the result of the following processing steps:
 The resulting data.table contains value labels for factor variables. If the file path
 to a weight file is provided, then these will be added too, and is as such ready
 for analysis.
+}
+\examples{
+\dontshow{if (suso_PwCheck()==200) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+
+questlist<-suso_getQuestDetails()
+
+exp<-suso_export(questID = questlist$QuestionnaireId[1],
+                 version = questlist$Version[1],
+                 workStatus = "All", process_mapquestions = T,
+                 combineFiles = T,
+                 reloadTimeDiff = 0,
+                 translationLanguage = "italian")
+\dontshow{\}) # examplesIf}
 }
