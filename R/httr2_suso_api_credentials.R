@@ -12,19 +12,21 @@
 suso_keys <- function() getOption("SurveySolutionsAPI")
 
 
-print.suso_api <- function(x, ...) {
-
-  for (i in 1:length(x)) {
-
-    cli::cli_alert_info("Survey Solutions API credentials\n")
-
-    for (j in 1:length(x[[i]])){
-      cat(" - ", names(x[[i]])[j], ": ")
-      key <- x[[i]][[j]]
-      cat(ifelse(is.na(key), "", key), "\n")
-    }
-  }
-}
+# #'
+# #' @export
+# print.suso_api <- function(x, ...) {
+# 
+#   for (i in 1:length(x)) {
+# 
+#     cli::cli_alert_info("Survey Solutions API credentials\n")
+# 
+#     for (j in 1:length(x[[i]])){
+#       cat(" - ", names(x[[i]])[j], ": ")
+#       key <- x[[i]][[j]]
+#       cat(ifelse(is.na(key), "", key), "\n")
+#     }
+#   }
+# }
 
 #' Set all credentials at once
 #'

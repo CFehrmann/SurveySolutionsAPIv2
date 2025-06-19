@@ -591,7 +591,8 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
   # get roster titles and source questions keys
   if(exists("roster_titlesL1") && nrow(roster_titlesL1)>0){
     roster_titlesL1[,isFixeRoster:=lapply(.SD, function(x) length(x[[1]]$FixedRosterTitles))>0, .SDcols="..JSON", by = .(PublicKey)]
-    roster_titlesL1[isFixeRoster==F ,RsizeKey:=lapply(.SD, function(x) x[[1]]$RosterSizeQuestionId), .SDcols="..JSON", by = .(PublicKey)][,..JSON:=NULL]
+    roster_titlesL1[isFixeRoster==F ,RsizeKey:=lapply(.SD, function(x) ifelse(!is.null(x[[1]]$RosterSizeQuestionId), x[[1]]$RosterSizeQuestionId, ""))
+                    , .SDcols="..JSON", by = .(PublicKey)][,..JSON:=NULL]
     roster_titlesL1[isFixeRoster==F,Rtype:=allquestions[PublicKey==RsizeKey, type], by=RsizeKey]
     roster_titlesL1[isFixeRoster==F,Rvar:=allquestions[PublicKey==RsizeKey, VariableName], by=RsizeKey]
   }
