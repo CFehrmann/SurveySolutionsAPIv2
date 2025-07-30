@@ -221,19 +221,13 @@
 }
 
 
-# get args for class
+# get args from input values for class
 .getargsforclass<-function(workspace = NULL) {
-  # except server, apiUser, apiPass, token
-  #args<-as.list(sys.call(-1))[-1]
+  # get all inputs except: server, apiUser, apiPass, token
   args<-as.list(match.call(
     definition = sys.function(-1),
     call = sys.call(-1)
   ))[-1]
-  # defaults<-as.list(
-  #   formals(
-  #     sys.function(-1)
-  #   )
-  # )
   # remove server, apiUser, apiPass, token, by name with grepl
   args<-args[!grepl("server|apiUser|apiPass|token", names(args))]
   args$workspace<-workspace

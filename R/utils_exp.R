@@ -214,3 +214,35 @@
   return(sf_points)
 }
 
+
+# Get existing exports
+.get_existing_exports <- function(server, workspace, token, apiUser, apiPass, qid, extype, workStatus) {
+  url <- if (!is.null(token)) {
+    .baseurl_token(server, workspace, token, "export", version = "v2")
+  } else {
+    .baseurl_baseauth(server, workspace, apiUser, apiPass, "export", version = "v2")
+  }
+  url_w_query <- .addQuery(url, exportType = extype, interviewStatus = workStatus, questionnaireIdentity = qid, hasFile = TRUE)
+  resp <- tryCatch(httr2::req_perform(url_w_query), error = function(e) .http_error_handler(e, "exp"))
+  if (httr2::resp_has_body(resp) && httr2::resp_content_type(resp) == "application/json") {
+    return(data.table::as.data.table(httr2::resp_body_json(resp, simplifyVector = TRUE)))
+  } else {
+    return(data.table::data.table(character(0)))
+  }
+}
+
+# Function to clear string for eval command
+.remove_na_patterns <- function(input_string) {
+  # Remove '& is.na(NA)'
+  modified_string <- gsub("& is\\.na\\(NA\\)", "", input_string)
+  
+  # Remove '& !is.na(NA)'
+  modified_string <- gsub("& !is\\.na\\(NA\\)", "", modified_string)
+  
+  # Trim leading and trailing whitespace
+  modified_string <- trimws(modified_string)
+  
+  return(modified_string)
+}
+
+
