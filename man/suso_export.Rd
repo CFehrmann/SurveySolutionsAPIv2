@@ -26,7 +26,8 @@ suso_export(
   verbose = FALSE,
   weight_file = NULL,
   process_mapquestions = FALSE,
-  combineFiles = TRUE
+  combineFiles = TRUE,
+  addsysfiles = FALSE
 )
 }
 \arguments{
@@ -77,6 +78,16 @@ if yes, gps and all types of mapquestions will be added to the list at their cor
 \emph{(experimental!)}}
 
 \item{combineFiles}{if TRUE, the export will be combined into single data.table, see details for the processing steps}
+
+\item{addsysfiles}{if TRUE Survey Solutions system files, i.e.
+\itemize{
+\item assignment__actions.tab
+\item interview__actions.tab
+\item interview__comments.tab
+\item interview__diagnostics.tab
+\item interview__errors.tab
+}
+are also included. Ignored when \code{combineFiles=TRUE}.}
 }
 \value{
 a single exportClass data.table or a list of exportClass data.tables, see details.

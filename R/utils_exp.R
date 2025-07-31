@@ -16,20 +16,21 @@
 }
 
 # list export tab files for processing
-.list_export_tab_files <- function(directory) {
+.list_export_tab_files <- function(directory, addsysfiles=FALSE) {
   # List all files in the directory
-  all_files <- list.files(directory, pattern = "\\.tab$", full.names = TRUE)
+  valid_files <- list.files(directory, pattern = "\\.tab$", full.names = TRUE)
 
   # List of files to exclude
-  exclude_files <- c("assignment__actions.tab",
-                     "interview__actions.tab",
-                     "interview__comments.tab",
-                     "interview__diagnostics.tab",
-                     "interview__errors.tab")
-
-  # Filter out the excluded files
-  valid_files <- all_files[!basename(all_files) %in% exclude_files]
-
+  if(!addsysfiles) {
+    exclude_files <- c("assignment__actions.tab",
+                       "interview__actions.tab",
+                       "interview__comments.tab",
+                       "interview__diagnostics.tab",
+                       "interview__errors.tab")
+    
+    # Filter out the excluded files
+    valid_files <- valid_files[!basename(valid_files) %in% exclude_files]
+  }
   return(valid_files)
 }
 

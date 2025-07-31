@@ -1,7 +1,7 @@
 Package: SurveySolutionsAPIv2
 Title: Comprehensive API access to your Survey Solutions Server ('httr2'
     version)
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: 
     person("Michael", "Wild", , "mwild@worldbank.org", role = c("aut", "cre", "cph"))
 Description: A comprehensive suite of functions for interfacing

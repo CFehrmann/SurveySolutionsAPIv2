@@ -1,3 +1,8 @@
+# SurveySolutionsAPIv2 0.1.1
+
+* added system files (parameter: addsysfiles) like interviewer comments, errors etc. to suso_export
+* smaller bug fixes & improvements
+
 # SurveySolutionsAPIv2 0.1.0
 
 * added new classes: UserClass exportClass and methods, like boxplot_summary.exportClass, summaryTable.exportClass

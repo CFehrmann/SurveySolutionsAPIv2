@@ -30,7 +30,15 @@
 #' if yes, gps and all types of mapquestions will be added to the list at their corresponding roster level, and with the prefix "sf_"
 #' \emph{(experimental!)}
 #' @param combineFiles if TRUE, the export will be combined into single data.table, see details for the processing steps
-#'
+#' @param addsysfiles if TRUE Survey Solutions system files, i.e. 
+#'    \itemize{ 
+#'     \item assignment__actions.tab
+#'     \item interview__actions.tab
+#'     \item interview__comments.tab
+#'     \item interview__diagnostics.tab
+#'     \item interview__errors.tab
+#'     }
+#'     are also included. Ignored when \code{combineFiles=TRUE}.
 #'
 #' @details
 #'
@@ -105,7 +113,8 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
                       verbose = FALSE,
                       weight_file = NULL,
                       process_mapquestions = FALSE,
-                      combineFiles = TRUE) {
+                      combineFiles = TRUE,
+                      addsysfiles = FALSE) {
   
   extype<-"Tabular"
   # workspace default
@@ -439,7 +448,6 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
   if(!dir.exists(tmpdir)) dir.create(tmpdir)
   # unzip file
   zip::unzip(tmp, exdir = tmpdir)
-  
   # get the questionnaire content
   # i. unpack the json
   zip::unzip(file.path(tmpdir, "Questionnaire", "content.zip"), exdir = file.path(tmpdir, "Questionnaire"))
@@ -702,13 +710,12 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
   
   
   # get the survey data
-  files<-.list_export_tab_files(tmpdir)
-  
+  files<-.list_export_tab_files(tmpdir, addsysfiles)
   ###################################################################################################
   ##                            DATA PROCESSING                                                     #
-  ##            All data is extracted into a list seperated by its hirarichial positin in the
+  ##            All data is extracted into a list separated by its hierarchical position in the
   ##            questionnaire. The structure is
-  ##            [DF name]$main ... inferview comments, level 0
+  ##            [DF name]$main ... interview comments, interview_diagnostics,level 0
   ##            [DF name]$R1   ... level 1
   ##            [DF name]$R2   ... level 2 etc.
   ###################################################################################################
@@ -732,7 +739,7 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
     # read the file
     tmp_file<-tryCatch(data.table::fread(file_zip),
                        error=function(e) return(NULL))
-    
+
     # remove empty columns
     tmp_file<-.export_remove_na_columns(tmp_file)
     NOdata<-nrow(tmp_file)==0
@@ -797,8 +804,26 @@ suso_export<-function(server = suso_get_api_key("susoServer"),
       }
       #if(is.null(tmp_file)) {print(paste("ERROR in dta file:", file_zip));next()}
     }
-    
-    # get L1 data
+    ########################################
+    # Add system files
+    # 
+    if(!combineFiles && addsysfiles){
+      if(name=="interview__comments"){
+        file_collector.main[[name]] <- tmp_file
+      }
+      if(name=="interview__diagnostics"){
+        file_collector.main[[name]] <- tmp_file
+      }
+      if(name=="assignment__actions"){
+        file_collector.main[[name]] <- tmp_file
+      }
+      if(name=="interview__actions"){
+        file_collector.main[[name]] <- tmp_file
+      }
+      if(name=="interview__errors"){
+        file_collector.main[[name]] <- tmp_file
+      }
+    }# get L1 data
     if(exists("roster_titlesL1") && name%in%roster_titlesL1$VariableName){
       if(NOdata) next
       # convert factor vars
