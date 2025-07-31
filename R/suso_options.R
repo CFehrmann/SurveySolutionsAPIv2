@@ -7,6 +7,8 @@
 #' Bellow is a list of options, with their default values.
 #'
 #' \itemize{
+#'   \item \option{suso.url.http} if TRUE allows for non SSL connections, which is generally not recommended for publicly facing set-ups, however
+#'   may be required for testing purposes.
 #'   \item \option{suso.maxpar.req} specifies the maximum number of parallel requests, default is 100.
 #'   \item \option{suso.maxpar.con} specifies the maximum number of parallel connections,
 #'   and must always be equal or greater than suso.maxpar.req, default is 100.

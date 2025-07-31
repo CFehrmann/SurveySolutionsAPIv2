@@ -2,6 +2,7 @@
 
 * added system files (parameter: addsysfiles) like interviewer comments, errors etc. to suso_export
 * smaller bug fixes & improvements
+* added option for http connections issue #8
 
 # SurveySolutionsAPIv2 0.1.0
 

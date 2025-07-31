@@ -102,20 +102,20 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
   ##          SETUP
   # workspace default
   workspace<-.ws_default(ws = workspace)
-
+  
   # check (.helpers.R)
   .check_basics(token, server, apiUser, apiPass)
-
+  
   # check if workStatus is valid
   workStatus<-match.arg(workStatus)
-
+  
   # check if questID is provided & correct
   if(is.null(questID)){
     stop("Please provide a questionnaire ID")
   } else {
     .checkUUIDFormat(questID)
   }
-
+  
   # check if version is provided & numeric
   if(is.null(version)){
     stop("Please provide a questionnaire version")
@@ -124,68 +124,68 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
   } else {
     .checkNum(version)
   }
-
+  
   # parse questID and version to id$version
   qid<-paste0(questID, "$", version)
   qid<-stringr::str_remove_all(qid, "-")
-
+  
   # check from_date if provided
   if(!is.null(from_date)){
     .checkDate(from_date)
   }
-
+  
   # check to_date if provided, if not and from_date is provided, set to_date to today
   if(!is.null(to_date)){
     .checkDate(to_date)
   } else if(!is.null(from_date)){
     to_date<-lubridate::today()
   }
-
+  
   # check if from_date is before to_date
   if(!is.null(from_date) & !is.null(to_date)){
     .checkDateRange(from_date, to_date)
   }
-
+  
   # build from datetime and to datetime
   if(!is.null(from_date)){
     from_datetime<-paste(from_date, from_time)
-
+    
     # if to_time is not provided, set to_time to 23:59:59
     if(is.null(to_time)){
       nt<-now()
       to_time<-format(nt, "%H:%M:%S")
     }
-
+    
     to_datetime<-paste(to_date, to_time)
     .checkDateTimeRange(from_datetime, to_datetime)
   } else {
     from_datetime<-NULL
     to_datetime<-NULL
   }
-
-
+  
+  
   # Build the URL, first for token, then for base auth
   if(!is.null(token)){
     url<-.baseurl_token(server, workspace, token, "export", version = "v2")
   } else {
     url<-.baseurl_baseauth(server, workspace, apiUser, apiPass, "export", version = "v2")
   }
-
+  
   # get argument for class
   args<-.getargsforclass(workspace = workspace)
-
+  
   url_w_query<-.addQuery(url, exportType="Paradata",
                          interviewStatus=workStatus,
                          questionnaireIdentity = qid,
                          exportStatus="Completed",
                          hasFile=TRUE)
-
-
+  
+  
   # check if export file with same parameters is is available
   tryCatch(
     { resp<-url_w_query |>
       httr2::req_perform()
-
+    
     # get the response data
     if(resp_has_body(resp)){
       # get body by content type
@@ -199,7 +199,7 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
     },
     error = function(e) .http_error_handler(e, "exp")
   )
-
+  
   # CHECK for existing files
   if(nrow(exlist)>0) {
     exlist<-exlist[ExportType==extype]
@@ -207,14 +207,14 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
     # 1. Check qid
     exlist_sub<-exlist[QuestionnaireId==qid]
     exlist_sub<-exlist_sub[HasExportFile==T]
-
+    
     # 2. Check other paramters -->TD
-
+    
     # 3. Check reload time diff (= difference between last file in
     # exlist start time)
     if(nrow(exlist_sub)>0) {
       .checkNum(reloadTimeDiff)
-
+      
       # Check for from/to date/time
       if(!is.null(from_datetime) && !is.null(to_datetime)) {
         # create new when from/to is provided
@@ -241,7 +241,7 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
             )
           }
           exlist_sub<-exlist_sub[1]
-
+          
         } else {
           if(interactive()){
             cli::cli_alert_info(
@@ -254,22 +254,22 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
       } else {
         cli::cli_abort(c("x" = "You have to either provide a value for the reload time difference, or a from_date/time."))
       }
-
+      
     }
   } else {
     exlist_sub<-data.table(character(0))
   }
-
+  
   if(nrow(exlist_sub)>0) {
     # Get latest available file id (data sorted by date)
     jobid<-exlist_sub[1,JobId]
-
+    
     if(interactive()){
       cli::cli_alert_success(
         "\nDownloading existing file with JobID {jobid}.\n"
       )
     }
-
+    
     url<-url |>
       req_method("GET") |>
       req_url_path_append(jobid, "file") |>
@@ -279,20 +279,20 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
         unrestricted_auth = 0L,
         tcp_keepalive = 1L
       )
-
+    
   } else {
     # if exlist_sub is empty, start new export file
-
+    
     if(interactive()){
       cli::cli_alert_info(
         "\nCreating new export file. This may take a while.\n"
       )
     }
-
+    
     # add method post
     url<-url |>
       req_method("POST")
-
+    
     # creat body list
     js_body<-list(
       ExportType = "Paradata", #required
@@ -303,18 +303,18 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
       TranslationId = NULL, #!!!MUST BE INCLUDED AND SET TO NULL OTHERWISE EXP IN SEC
       IncludeMeta = FALSE #required to be TRUE because otherwise, export is in SECONDS
     )
-
+    
     # add body
     url<-url |>
       req_body_json(
         js_body
       )
-
+    
     # create new export file
     tryCatch(
       { resp<-url |>
         httr2::req_perform()
-
+      
       # get the response data
       if(resp_has_body(resp)){
         # get body by content type
@@ -331,7 +331,7 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
       },
       error = function(e) .http_error_handler(e, "exp")
     )
-
+    
     # check file status, and if creation completed, download
     jobid<-exlist1$JobId[1]
     status<-exlist1$ExportStatus[1]
@@ -342,7 +342,7 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
     url<-url |>
       req_method("GET") |>
       req_url_path_append(jobid)
-
+    
     # perform request in while loop until file is ready
     # i. add progress bar
     cli::cli_progress_bar(getOption("suso.progressbar.message"), total = 150, type = "iterator")
@@ -354,7 +354,7 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
       tryCatch(
         { resp<-url |>
           httr2::req_perform()
-
+        
         # get the response data
         if(resp_has_body(resp)){
           # get body by content type
@@ -372,7 +372,7 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
       prog<-ifelse(status=="Completed", 98, prog)
       if(status!= "Completed") cli::cli_progress_update(set = prog) else cli::cli_progress_done()
     }
-
+    
     # when finished get file
     url<-url |>
       req_method("GET") |>
@@ -383,9 +383,9 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
         unrestricted_auth = 0L,
         tcp_keepalive = 1L
       )
-
+    
   }
-
+  
   # PROCESSING OF DOWNLOAD
   # DEBUG: print all inputs for check
   if(verbose){
@@ -405,8 +405,8 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
     cat("In Shiny App: ", inShinyApp, "\n")
     cat("\n\n")
   }
-
-
+  
+  
   # temp zip file
   tmp<-tempfile(fileext = ".zip")
   # download file
@@ -416,52 +416,52 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
     },
     error = function(e) .http_error_handler(e, "exp")
   )
-
+  
   # unzip file with unzip package
   # create temp directory jobid
   tmpdir<-file.path(tempdir(), jobid)
   if(!dir.exists(tmpdir)) dir.create(tmpdir)
   # unzip file
   zip::unzip(tmp, exdir = tmpdir)
-
+  
   # iii. created list with questions and validations
   allcontent<-suso_getQuestDetails(questID = questID, version = version, workspace = workspace, apiUser = apiUser, apiPass = apiPass,
                                    server = server, operation.type = "structure")
   allquestions<-allcontent$q
   qgps<-.questionnaire_gpsquestion(allquestions)
   if(nrow(qgps)>0) qgps<-qgps[type1 == "GPS"]
-
+  
   #aaa<-data.table::fread(file.path(tempdir(), 19474, "paradata.tab"), sep = "\t")
   fp<-file.path(tmpdir, "paradata.tab")
-
+  
   ## UNPACK
   paradata_files<-.unpack(fp=fp, allResponses = allResponses, inShinyServer = inShinyApp)
-
+  
   # aaa$AnswerSet[var!= "<NA>",.(av_duration=mean(duration)), by=.(var)]
-
+  
   ## ALERT when empty, BUT RETUNR EMPTY DATA.TABLE
   if (is.null(paradata_files)) {
     if(interactive()) cli::cli_alert_danger("No data with work status: {workStatus}")
-
+    
     return(data.table::data.table(NULL))
   }
   if(inShinyApp) incProgress(amount = 0.25, message = "Transformation completed")
   ## TRANSFORMATIONS
   ## A add rid if it doesnt exist
   if (!("rid" %in% names(paradata_files))) paradata_files[,rid:=0]
-
+  
   para_data<-list()
-
+  
   ##################################################################
   ##  2.1. Get Start/End date
   #fromDate<-as.character(min(paradata_files$date, na.rm = T), "%d %B, %Y")
   #toDate<-as.character(max(paradata_files$date, na.rm = T), "%d %B, %Y")
-
+  
   paradata_files<-paradata_files[,VariableName:=var]
   paradata_files <- merge(paradata_files, allquestions[,.(VariableName, type, QuestionText, Featured)], all.x = T, by = "VariableName")
   paradata_files[,VariableName:=NULL]
-
-
+  
+  
   ##################################################################
   ##  2.2. GET ALL ACTION COUNTS
   actionDistr<-paradata_files[,.(count=.N), by=.(action)]
@@ -474,7 +474,7 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
   ##  2.4. GET ALL ROLE COUNTS
   roleDistr<-paradata_files[,.(count=.N), by=.(role)]
   setorderv(roleDistr, "count", order = -1)
-
+  
   ##  2.5. Extract questionnaire ID and Key
   KeyAssigned<-paradata_files[action=="KeyAssigned"][,c("responsible", "role", "var_resp", "rid"):=NULL]
   setnames(KeyAssigned, "var", "key")
@@ -506,7 +506,7 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
   ##  2.8. AnswerSet
   para1_answer<-paradata_files[action=="AnswerSet"|action=="Paused"]
   para1_answer[,action:=droplevels(action)]
-
+  
   ##  3. Time Difference (SORT by counter)
   ##  3.1. Function (use shift/lead, and check lead date is the same)
   cat("\nCalculating Response Timings.\n")
@@ -524,7 +524,7 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
   para1_answer[,var:=as.factor(var)]
   para1_answer_merge<-para1_answer[,.SD[1], by=.(interview__id, role)]
   para1_answer_merge<-para1_answer_merge[ ,.(interview__id, responsible, role)]
-
+  
   ##  2. GPS extract -->if no name, try identification through grepl
   varNames<-levels(para1_answer$var)
   if(is.na(gpsVarName)) {
@@ -535,7 +535,7 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
                              use gpsVarName argument.\n')
       }
       gpsVarMain<-qgps$VariableName[1]
-
+      
     } else {
       if(interactive()){
         cli::cli_alert_danger('No GPS questions have been identified. Proceeding without GPS.\n')
@@ -551,7 +551,7 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
       gpsVarMain<-gpsVarName[1]
     }
   }
-
+  
   ## create gps file when exists
   if (length(gpsVarMain)>0) {
     ## Select first gps variable
@@ -560,13 +560,17 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
     gps_file<-para1_answer[var==gpsVar]
     if(nrow(gps_file)==0) {
       cli::cli_alert_danger("No GPS data found with: {gpsVar}.")
+      ##  IF NO GPS AVAILABLE
+      gps_file_merge<-data.table(interview__id = "a0", lat = 0, long = 0)
+      #gps_file_merge<-gps_file_merge[,.SD[1], by=.(interview__id)]
+      setkeyv(gps_file_merge, "interview__id")
     } else {
       if (!allResponses) {
         gp<-gps_file[,tstrsplit(response, ",", fixed=T, fill = "<NA>", names = TRUE)][]
         gps_file<-cbind(gps_file, gp)
         setnames(gps_file, c("V1", "V2"), c("response1", "response2"))
       }
-
+      
       gps_file<-gps_file[, .(interview__id, responsible, time, var_resp, var,
                              date, durationNOBREAK, response1, response2)]
       gps_file<-gps_file[,c("long"):=tstrsplit(response2, "[", fixed=T ,keep=c(1))][]
@@ -596,6 +600,11 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
       gps_file_merge<-gps_file_merge[,.SD[1], by=.(interview__id)]
       setkeyv(gps_file_merge, "interview__id")
     }
+  } else if(length(gpsVarMain)==0) {
+    ##  IF NO GPS AVAILABLE
+    gps_file_merge<-data.table(interview__id = "a0", lat = 0, long = 0)
+    #gps_file_merge<-gps_file_merge[,.SD[1], by=.(interview__id)]
+    setkeyv(gps_file_merge, "interview__id")
   }
   ##  Subset with function, key and lapply
   ## loop over levels of action with LAPPLY
@@ -606,16 +615,16 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
     file<-x[dt]
     return(file)
   }
-
+  
   # get number of processes
   simu<-length(levels(droplevels(paradata_files$action)))
-
+  
   if (is.null(multiCore)) {
     progressr::handler_cli()
     if(!(shiny::isRunning())){
       # progressr::handlers(global = T)
       # on.exit(progressr::handlers(global = F))
-
+      
       progressr::with_progress({
         p<-progressr::progressor(along = 1:simu)
         para_data <- .process_para_foreach(simu = simu, para_data = para_data,
@@ -627,14 +636,14 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
                                            onlyActiveEvents = onlyActiveEvents,
                                            para1_answer = para1_answer,
                                            parallel = FALSE)
-
+        
       })
     }
     para_data[["actionDistr"]]<-actionDistr
     para_data[["userDistr"]]<-userDistr
     para_data[["roleDistr"]]<-roleDistr
     cat("\nExport & Transformation finished.\n")
-
+    
   } else if(is.numeric(multiCore) && multiCore>1) {
     ###############################
     ## MULTICORE:
@@ -651,7 +660,7 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
     ncores<-getOption("suso.para.maxcore")
     multiCore <- min(simu, ncores)
     cat("\nStarting Multicore with:\t", multiCore, " cores.\n")
-
+    
     # launching the future backend
     # get the options
     oplan<-future::plan("multisession")
@@ -675,7 +684,7 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
     #   progressr::handlers(global = T)
     #   on.exit(progressr::handlers(global = F))
     # }
-
+    
     # for non-shiny
     if(!(shiny::isRunning())){
       progressr::with_progress({
@@ -718,7 +727,7 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
   } else {
     cli::cli_abort(c("x" = "If multiCore is not NULL, it must be numeric and greater 1. Please check your inputs!"))
   }
-
+  
   # return list or exportClass data.table
   if(!onlyActiveEvents | asList) {
     return(para_data)
@@ -736,30 +745,30 @@ suso_export_paradata<-function(server = suso_get_api_key("susoServer"),
     pdmain[,c("var_resp", "rid"):=NULL][]
     # para_data<-para_data[allquestions[,.(VariableName, type, QuestionText, Featured)], on="VariableName"]
     # para_data <- merge(para_data, allquestions[,.(VariableName, type, QuestionText, Featured)], all.x = T)
-
+    
     # set key for index
     setkeyv(pdmain, c("interview__id", "counter"))
     para_data_all[["paradata"]]<-pdmain
-
+    
     # get other elements already calculated
     para_data_all[["action"]]<-para_data[["actionDistr"]]
     para_data_all[["user"]]<-para_data[["userDistr"]]
     para_data_all[["role"]]<-para_data[["roleDistr"]]
     rm(para_data); gc()
-
-
+    
+    
     # add to export class
     # bbb[VariableName!= "<NA>",.(av_response_time=mean(resp_time)), by=.(VariableName)]
     # bbb[VariableName!= "<NA>",.(int_duration=sum(resp_time, na.rm = T)/60), by=.(interview__id)]
     # bbb[type!= "<NA>",.(av_resp_time=sum(resp_time, na.rm = T)/60), by=.(type)]
-
+    
     # convert to export class
     para_data_all<-exportClass(para_data_all, NULL, args)
     return(para_data_all)
-
+    
   }
-
-
-
+  
+  
+  
   ############################  FINFINFIN   #####################################
 }

@@ -63,6 +63,7 @@
   ## splitting response variable
   #names(file)<-
   ## Exract the VARIABLENAME
+  resps<-file[,tstrsplit(var_resp, "||", fixed=T, names = T, fill = "<NA>")][]
   file[,var:=resps[,.(V1)]]
   if (allResponses) {
     ## Extract all responses if TRUE

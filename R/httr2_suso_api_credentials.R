@@ -42,7 +42,9 @@ suso_keys <- function() getOption("SurveySolutionsAPI")
 #' Use \code{suso_set_key} to make API keys available for all the \code{suso_}
 #' functions, so you don't need to specify the credentials parameter within those
 #' functions. The server address can be provided with or without https:\\ suffix,
-#' nevertheless if it is missing, then the suffix will be added.
+#' nevertheless if it is missing, then the suffix will be added. For testing purposes
+#' it also allows for http connections, however for publicly accessible servers
+#' we do not recommend unencrypted connections.
 #'
 #' In case \emph{suso_token} is provided, only token authentication will be attempted. For details on token authentication
 #' in Survey Solutions please see \url{https://docs.mysurvey.solutions/headquarters/accounts/token-based-authentication/}.
@@ -62,9 +64,16 @@ suso_set_key <- function(
   workspace<-.ws_default(ws = workspace)
   # get options
   options <- getOption("SurveySolutionsAPI")
+  ###########################################
   # sanitize string to ssl (http?)
-  suso_server<-ifelse(stringr::str_count(suso_server, "https://")==1,
-                      suso_server, paste0("https://", suso_server))
+  if(!getOption("suso.url.http")){ 
+    suso_server<-ifelse(stringr::str_count(suso_server, "https://")==1,
+                        suso_server, paste0("https://", suso_server))
+  } else if(getOption("suso.url.http")){ 
+    suso_server<-ifelse(stringr::str_count(suso_server, "http://")==1,
+                        suso_server, paste0("http://", suso_server))
+  } 
+  
   # check if ends w slash
   suso_server<-.addSlashToEnd(suso_server)
   # add to object

@@ -15,7 +15,11 @@
     attr(options, "class") <- "suso_api"
     options(SurveySolutionsAPI = options)
   }
-
+  
+  # add http option
+  if(is.null(getOption("suso.url.http"))) {
+    options(suso.url.http = FALSE)
+  }
   # parallel requests
   if(is.null(getOption("suso.maxpar.req"))) {
     options(suso.maxpar.req = 100)

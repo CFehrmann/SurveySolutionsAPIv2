@@ -30,7 +30,9 @@ Sets API credentials so it's available for all API calls. See details
 Use \code{suso_set_key} to make API keys available for all the \code{suso_}
 functions, so you don't need to specify the credentials parameter within those
 functions. The server address can be provided with or without https:\\ suffix,
-nevertheless if it is missing, then the suffix will be added.
+nevertheless if it is missing, then the suffix will be added. For testing purposes
+it also allows for http connections, however for publicly accessible servers
+we do not recommend unencrypted connections.
 
 In case \emph{suso_token} is provided, only token authentication will be attempted. For details on token authentication
 in Survey Solutions please see \url{https://docs.mysurvey.solutions/headquarters/accounts/token-based-authentication/}.
