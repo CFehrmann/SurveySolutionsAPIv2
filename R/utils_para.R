@@ -60,21 +60,22 @@
   if(nrow(file)==0) return(NULL)
   ## message if large file
   if(nrow(file)>100000) cat("There are", nrow(file), "individual events. Processing may take a while!")
-
   ## splitting response variable
   #names(file)<-
   ## Exract the VARIABLENAME
-  resps<-file[,tstrsplit(var_resp, "||", fixed=T, names = T, fill = "<NA>")][]
   file[,var:=resps[,.(V1)]]
   if (allResponses) {
     ## Extract all responses if TRUE
     resps1<-resps[,tstrsplit(V2, "(\\|)|(,)", fixed=F, names = T, fill = "<NA>")][]
-    resps2<-resps[,tstrsplit(V3, "(,)", fixed=F, names = T, fill = "<NA>")][]
-    splits <- (length(resps1))
     file[,c(paste0("response", 1:(length(resps1)))):=resps1]
-    file[,c(paste0("rid", 1:(length(resps2)))):=resps2]
+    splits <- (length(resps1))
+    # Check if V3 exists in names
+    if("V3" %in% names(resps)){
+      resps2<-resps[,tstrsplit(V3, "(,)", fixed=F, names = T, fill = "<NA>")][]
+      file[,c(paste0("rid", 1:(length(resps2)))):=resps2]
+    }
   } else {
-    ## Extract only singel vector-->FASTER
+    ## Extract only single vector-->FASTER
     file[,response:=resps[,.(V2)]]
   }
 
