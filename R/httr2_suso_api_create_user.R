@@ -134,7 +134,8 @@ suso_createUSER <- function(userlist = NULL,
     # H.3. Perform requests in parallel
     responses <- httr2::req_perform_parallel(
       requests,
-      pool = curl::new_pool(host_con = 100, total_con = 100),
+      connections = 100,
+      host_con = 100,
       on_error = "continue"
     )
 
